@@ -25,7 +25,7 @@ VIDEO. Include a demo video of your game here (you don't have to wait until the 
 
 ## Your Group
 
-GROUP PHOTO. Add a group photo here.
+![GROUP PHOTO](workshop/week01/微信图片_20260129151517_145.jpg)
 
 | username | name | email | role |
 |---------|---------|----------|----|
