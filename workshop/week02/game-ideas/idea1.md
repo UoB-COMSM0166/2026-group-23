@@ -34,7 +34,8 @@ This game is a 2D casual game. Players control the character to move around the 
 ---
 
 ## III. Technical Challenges and Optimization Directions 
-| Challenges | Analysis and Solution Strategies | |------|----------------|
+| Challenges | Analysis and Solution Strategies | 
+|------|----------------|
 | Collision Detection and Performance | The core logic is simple, but simultaneous detection of multiple objects may affect frame rate; partitioned detection or quad-tree optimization can be adopted |
 | Smooth Animation | The movements of characters and creatures require smooth interpolation and reasonable frame rate control to avoid screen lag |
 | Rendering Optimization | Reduce the number of redraws per frame, merge the rendering of static elements, and ensure smooth operation on low-end devices |
