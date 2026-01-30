@@ -1,74 +1,54 @@
-# 游戏设计方案：大鱼吃小鱼 / 割草类 2D 休闲游戏
-
-## 一、游戏概述
-
-本游戏属于 2D 休闲类，玩家通过控制角色在场景中移动，捕食小型生物以实现成长，同时避免被更大型生物捕食。游戏机制简单直观，适合轻度娱乐和移动端短时游玩。
-
-**核心玩法：**
-
-- 玩家通过鼠标或键盘控制角色移动
-- 场景中存在多种小型生物，具备基础 AI 行为
-- 吃掉小型生物后，玩家角色体积增长，同时移动速度略微下降
-- 场景内音效和视觉反馈增强沉浸感
-
+# Game Design Concept: Big Fish Eating Small Fish / Mowing Lawn Type 2D Casual Game 
+## 1. Game Overview 
+This game is a 2D casual game. Players control the character to move around the scene, hunt small creatures to grow, and avoid being preyed upon by larger creatures. The game mechanism is simple and intuitive, suitable for light entertainment and short-term mobile gameplay. 
+**Core Gameplay: ** 
+- Players control the character's movement using the mouse or keyboard.
+- There are various small creatures in the scene, with basic AI behaviors.
+- After eating the small creatures, the player character's size increases, while the movement speed slightly decreases.
+- The sound effects and visual feedback in the scene enhance the immersion. 
 ---
 
-## 二、游戏系统设计
-
-### 1. 控制系统
-
-- **玩家输入**：鼠标或键盘控制角色移动  
-- **移动优化**：平滑插值移动，使角色运动流畅自然  
-- **边界处理**：场景边缘碰撞检测，防止角色移动出画布范围  
-
-### 2. 生物行为系统
-
-- **小型生物 AI**：
-  - 随机移动，形成自然游动效果
-  - 遇到玩家或更大型生物时加速逃跑或追击  
-- **成长机制**：
-  - 玩家吃掉小生物后角色体积增加
-  - 角色速度随体积略微下降，形成平衡机制
-
-### 3. 碰撞检测
-
-- **基础方法**：
-  - 圆形碰撞检测：$(x_1 - x_2)^2 + (y_1 - y_2)^2 < (r_1 + r_2)^2$
-  - 或矩形碰撞检测，用于方形或矩形元素
-- **优化考虑**：
-  - 尽量减少每帧碰撞检测数量
-  - 减少画布重绘次数，提高帧率稳定性
-
-### 4. 音效与反馈
-
-- 使用背景音乐与事件音效增强玩家沉浸感
-- 捕食和被捕食事件应有明确音效提示
-- 可适当加入视觉反馈，如生物缩放或闪光效果
-
+## 2. Game System Design 
+1. Control System 
+- **Player Input**: Movement of the character is controlled by mouse or keyboard. 
+- **Movement Optimization**: Smooth interpolation for movement to ensure a smooth and natural motion of the character. 
+- **Boundary Handling**: Collision detection at the scene edges to prevent the character from moving out of the canvas range. 
+2. Biological Behavior System 
+- **Small Biological AI**:
+  - Move randomly to create a natural swimming effect
+  - Accelerate in escape or pursuit when encountering players or larger creatures
+- **Growth Mechanism**:
+  - The character's size increases after the player eats the small creatures
+  - The character's speed slightly decreases as the size increases, creating a balance mechanism 
+3. Collision Detection 
+- **Basic Method**:
+  - Circular Collision Detection: $(x_1 - x_2)^2 + (y_1 - y_2)^2 < (r_1 + r_2)^2$
+  - Or Rectangular Collision Detection, used for square or rectangular elements
+- **Optimization Considerations**:
+  - Minimize the number of collision detections per frame
+  - Reduce the number of canvas redrawing operations to enhance the stability of frame rate 
+4. Sound Effects and Feedback 
+- Use background music and event sound effects to enhance the player's immersion experience.
+- There should be clear sound cues for hunting and being hunted events.
+- Visual feedback such as creature scaling or flashing effects can be appropriately added. 
 ---
 
-## 三、技术难点与优化方向
-
-| 难点 | 分析与解决策略 |
-|------|----------------|
-| 碰撞检测与性能 | 核心逻辑简单，但多对象同时检测可能影响帧率；可采用分区检测或四叉树优化 |
-| 流畅动画 | 角色和生物运动需要平滑插值和合理帧率控制，避免画面卡顿 |
-| 渲染优化 | 减少每帧 redraw 次数，合并静态元素渲染，确保低端设备也能流畅运行 |
-| AI 行为 | 小生物行为要自然，但逻辑简单，避免复杂状态机增加性能负担 |
-
+## III. Technical Challenges and Optimization Directions 
+| Challenges | Analysis and Solution Strategies | |------|----------------|
+| Collision Detection and Performance | The core logic is simple, but simultaneous detection of multiple objects may affect frame rate; partitioned detection or quad-tree optimization can be adopted |
+| Smooth Animation | The movements of characters and creatures require smooth interpolation and reasonable frame rate control to avoid screen lag |
+| Rendering Optimization | Reduce the number of redraws per frame, merge the rendering of static elements, and ensure smooth operation on low-end devices |
+| AI Behavior | The behaviors of small creatures should be natural, but the logic should be simple to avoid the performance burden caused by complex state machines | 
 ---
 
-## 四、游戏体验与设计亮点
-
-- 直观易上手的休闲玩法，适合短时娱乐  
-- 逐步成长机制增强玩家目标感和成就感  
-- AI 行为和生物互动提升场景丰富度  
-- 可扩展性强：可增加更多生物种类、技能或道具，丰富玩法  
-
+## IV. Game Experience and Design Highlights 
+- Intuitive and easy-to-understand casual gameplay, suitable for short-term entertainment
+- Gradual growth mechanism enhances players' sense of purpose and achievement
+- AI behaviors and biological interactions enhance the richness of the scene
+- Highly scalable: More types of creatures, skills or items can be added to enrich the gameplay 
 ---
 
-## 五、开发周期参考
-
-- 单人开发基础版：约 1–2 周  
-- 增加高级动画、复杂生物行为和道具系统：约 3–4 周  
-- 可选择使用 Canvas 2D、SVG 或轻量化游戏库实现
+## V. Development Cycle Reference 
+- Single-player development of the basic version: approximately 1-2 weeks
+- Adding advanced animations, complex creature behaviors and item systems: approximately 3-4 weeks
+- Optional use of Canvas 2D, SVG or lightweight game libraries for implementation
