@@ -15,11 +15,13 @@ You will be developing your game using [P5.js](https://p5js.org) a javascript li
 
 ## Quantum Drop
 
+### STRAPLINE
 Defense Protocol — Strong sci-fi identity; high-tech appeal.
 
-IMAGE. Add an image of your game here, keep this updated with a snapshot of your latest development.
+### IMAGE
+[![Game Screenshot](docs/Game_v1.3_screenshot.png)](https://uob-comsm0166.github.io/2026-group-23/Game_v1.3/)
 
-LINK. Add a link here to your deployed game, you can also make the image above link to your game if you wish. Your game lives in the [/docs](/docs) folder, and is published using Github pages. 
+### LINK
 - [demo](https://uob-comsm0166.github.io/2026-group-23/)
 - [game v_1.3](https://uob-comsm0166.github.io/2026-group-23/Game_v1.3/)
 
