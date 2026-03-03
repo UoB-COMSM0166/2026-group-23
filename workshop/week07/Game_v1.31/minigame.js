@@ -170,21 +170,30 @@ function triggerGate(ball, gate) {
   gate.flash = 30;
 
   if (gate.type === 'mul') {
-    // ×门：原球消失，扇形生成 value 个子球
-    ball.alive    = false;
+  // ×门：原球消失，扇形生成 value 个子球
+    ball.vx *= 0.6;
+    ball.vy *= 0.6;
+    ball.alive = false;
     ball.lastGate = gate;
 
-    const spd = max(Math.hypot(ball.vx, ball.vy), 1.5);
-    const arc = 0.4; // 散射半角（弧度 ≈ ±23°）
+    const baseAng = atan2(ball.vy, ball.vx);
+    const baseSpd = max(Math.hypot(ball.vx, ball.vy), 1.5);
+    const spd = baseSpd * 0.85 +0.3;
+    const arc = 0.4;
+
     for (let i = 0; i < gate.value; i++) {
-      const t   = gate.value === 1 ? 0 : (i / (gate.value - 1) - 0.5) * 2;
-      const ang = t * arc + random(-0.04, 0.04);
-      spawnQueue.push({
-        x: gate.x + random(-gate.w * 0.2, gate.w * 0.2),
-        y: gate.y + GATE_H / 2 + B_R + 2,
-        vx: sin(ang) * spd,
-        vy: abs(cos(ang)) * spd * 0.6 + 0.5,
-        alive: true, lastGate: gate,
+
+      const t = gate.value === 1
+       ? 0
+       : (i / (gate.value - 1) - 0.5) * 2;
+       const ang = baseAng + t * arc + random(-0.04, 0.04);
+        spawnQueue.push({
+          x: ball.x,
+          y: ball.y,
+          vx: cos(ang) * spd,
+          vy: sin(ang) * spd,
+          alive: true,
+          lastGate: gate,
       });
     }
 
