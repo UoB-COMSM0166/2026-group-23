@@ -32,7 +32,7 @@ const TOWER_DEFS = {
       { dmg: 75, range: 160, fireRate: 80, upgradeCost: 180 },
       { dmg: 140, range: 190, fireRate: 70, upgradeCost: 0 }
     ],
-    projSpd: 5, color: [160, 80, 255], antiAir: true,
+    projSpd: 5, color: [160, 80, 255], antiAir: false,
   },
 };
 
@@ -84,34 +84,50 @@ class Tower {
   // ... findTarget() 和 update() 逻辑保持不变 ...
   findTarget() {
     if (!manager) return null;
-    const inRange = manager.getMonstersInRange(this.px, this.py, this.range, this.antiAir);
+    // 逻辑建议：如果 antiAir 为 true，应该能搜寻所有怪物；
+    // 如果为 false，则只能搜寻非飞行怪物。
+    const inRange = manager.getMonstersInRange(this.px, this.py, this.range, this.antiAir); 
+    // 注意：此处需要确认 manager 内部逻辑是否支持“全域攻击”
     if (inRange.length === 0) return null;
     return inRange.reduce((best, m) => m.progress > best.progress ? m : best, inRange[0]);
   }
 
   update() {
-    this.pulseTime += 0.05;
-    if (this.buildAnim > 0) this.buildAnim = max(0, this.buildAnim - 0.06);
-    if (this.shootFlash > 0) this.shootFlash--;
-    if (this.upgradeEffect > 0) this.upgradeEffect--;
-    if (typeof jammedUntilFrame !== 'undefined' && frameCount < jammedUntilFrame) return;
-    
-    this.timer++;
-    const target = this.findTarget();
-    if (!target) return;
-    
-    const dx = target.pos.x - this.px, dy = target.pos.y - this.py;
-    this.angle = Math.atan2(dy, dx);
-    
-    if (this.timer >= this.fireRate) {
-      this.timer = 0; 
-      this.shootFlash = 8;
-      projectiles.push(new Projectile(
-        this.px, this.py, this.angle,
-        this.projSpd, this.dmg, this.col, this.antiAir, this.type, this.level
-      ));
-    }
-  }
+   this.pulseTime += 0.05;
+   if (this.buildAnim > 0) this.buildAnim = max(0, this.buildAnim - 0.06);
+   if (this.shootFlash > 0) this.shootFlash--;
+   
+   this.timer++;
+   
+   // 范围塔逻辑：不需要锁定目标，只要射程内有敌人就全方位开火
+   const hasTarget = this.findTarget() !== null; 
+   if (!hasTarget) return;
+ 
+   if (this.timer >= this.fireRate) {
+     this.timer = 0;
+     this.shootFlash = 12;
+   
+     if (this.type === 'area') {
+       // --- 核心修改：发射一圈子弹 ---
+       const numProjectiles = 8; // 每一圈发射8颗子弹
+       for (let i = 0; i < numProjectiles; i++) {
+         let angle = (TWO_PI / numProjectiles) * i + (this.pulseTime); // 随时间旋转起始角，更帅
+         projectiles.push(new Projectile(
+           this.px, this.py, angle,
+           this.projSpd, this.dmg, this.col, this.antiAir, this.type, this.level
+         ));
+       }
+     } else {
+       // 基础塔和快速塔维持原有的单发/双发逻辑
+       const target = this.findTarget();
+       this.angle = Math.atan2(target.pos.y - this.py, target.pos.x - this.px);
+       projectiles.push(new Projectile(
+         this.px, this.py, this.angle,
+         this.projSpd, this.dmg, this.col, this.antiAir, this.type, this.level
+       ));
+     }
+   }
+ }
 
   draw() {
     push(); translate(this.px, this.py);
@@ -229,30 +245,29 @@ class Projectile {
     this.level = level;
     this.alive = true; this.life = 1.0;
   }
-
+  
   update() {
     this.x += this.vx; this.y += this.vy;
-    this.life -= 0.015;
+    this.life -= 0.012; // 稍长的存活时间以覆盖整个射程
     
-    if (this.life <= 0 || this.x < 0 || this.x > width || this.y < 0 || this.y > height) {
-      this.alive = false; return;
-    }
+    if (this.life <= 0) { this.alive = false; return; }
 
     const isArea = (this.towerType === 'area');
-    const hitRadius = isArea ? 15 : 10;
+    // 增加范围塔子弹的判定半径，确保散弹更容易击中目标
+    const hitRadius = isArea ? 18 : 10; 
     const hits = manager.getMonstersInRange(this.x, this.y, hitRadius, this.antiAir);
 
     if (hits.length > 0) {
       if (isArea) {
-        // 范围伤害随等级扩大
-        const splashRange = 50 + this.level * 15;
+        // 范围塔子弹碰撞后产生小型爆炸
+        const splashRange = 40 + this.level * 10;
         manager.damageInRadius(this.x, this.y, splashRange, this.dmg, this.antiAir);
-        spawnParticles(this.x, this.y, color(...this.col), 10 + this.level * 5);
+        spawnParticles(this.x, this.y, color(...this.col), 8);
       } else {
         manager.damageAt(this.x, this.y, this.dmg, this.antiAir, false);
-        spawnParticles(this.x, this.y, color(...this.col), 4 + this.level * 2);
+        spawnParticles(this.x, this.y, color(...this.col), 4);
       }
-      this.alive = false;
+      this.alive = false; // 碰撞后消失
     }
   }
 
