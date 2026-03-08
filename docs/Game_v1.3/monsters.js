@@ -315,6 +315,7 @@ class MechRobot extends Monster {
 class MechPhoenix extends Monster {
   constructor(path) {
     super(path, 70, 1.85, 30);
+    this.isFlying = true;
     this.radius = 16; this.deathColor = color(200, 50, 5);
     this.baseSpd = 1.85; this.wingTime = 0; this.diveTimer = 0;
     this.diving = false; this.floatY = 0; this.trail = []; this.boneAngle = 0;

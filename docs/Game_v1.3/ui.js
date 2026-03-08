@@ -123,43 +123,73 @@ function drawWaveUI() {
 // ============================================================
 //  建造菜单（刘博文）
 // ============================================================
+// ui.js 核心修改部分
+
+// ui.js
+
 function drawBuildMenu() {
   textFont('monospace'); noStroke();
-  fill(5, 10, 22, 200); stroke(0, 130, 200, 100); strokeWeight(1);
-  rect(0, BUILD_BTN_Y, 3*110+4, 44, 0, 0, 4, 4);
+  
+  // 6个塔，每个宽105 + 间隔，总宽约 640
+  const btnW = 100;
+  const spacing = 6;
+  const menuWidth = 6 * (btnW + spacing) + 4;
+  
+  // 背景板
+  fill(5, 10, 22, 220); stroke(0, 130, 200, 120); strokeWeight(1.5);
+  rect(0, BUILD_BTN_Y, menuWidth, 48, 0, 0, 6, 0);
 
-  const types = ['basic', 'rapid', 'area'];
+  const types = ['basic', 'rapid', 'area', 'sniperAA', 'laser', 'frost'];
+  const displayNames = {
+    basic: "SENTRY",
+    rapid: "STINGER",
+    area: "NOVA",
+    sniperAA: "SKYFALL",
+    laser: "BEAM",
+    frost: "GLACIER"
+  };
+
   for (let i = 0; i < types.length; i++) {
     const type = types[i], def = TOWER_DEFS[type];
     const [r, g, b] = def.color;
-    const bx = 4 + i*110, by = BUILD_BTN_Y + 4;
-    const bw = 106, bh = 36;
+    const bx = 6 + i * (btnW + spacing), by = BUILD_BTN_Y + 6;
+    const bw = btnW, bh = 36;
+    
     const selected = selectedTowerType === type;
     const canAfford = coins >= def.cost;
 
-    if (selected)       { fill(r,g,b,60); stroke(r,g,b,220); strokeWeight(1.5); }
-    else if (!canAfford){ fill(10,15,28,180); stroke(60,60,80,100); strokeWeight(1); }
-    else                { fill(12,20,38,180); stroke(r,g,b,130); strokeWeight(1); }
-    rect(bx, by, bw, bh, 3);
-
-    fill(canAfford?color(r,g,b,230):color(100,100,110,180)); noStroke(); textSize(10);
-    text(def.label, bx+8, by+15);
-    fill(canAfford?color(255,210,50,220):color(160,80,80,180)); textSize(9);
-    text('¥'+def.cost, bx+8, by+29);
-    fill(r,g,b,canAfford?180:80); noStroke(); ellipse(bx+bw-18, by+bh/2, 14, 14);
-
-    if (selected) {
-      fill(r,g,b,230); noStroke(); textSize(8); textAlign(RIGHT,CENTER);
-      text('▶ 选中', bx+bw-6, by+bh/2); textAlign(LEFT,BASELINE);
+    // 按钮样式
+    if (selected) { 
+      fill(r, g, b, 80); stroke(r, g, b, 255); strokeWeight(2); 
+    } else if (!canAfford) { 
+      fill(15, 15, 25, 150); stroke(60, 60, 70, 100); strokeWeight(1); 
+    } else { 
+      fill(10, 20, 40, 200); stroke(r, g, b, 120); strokeWeight(1); 
     }
+    rect(bx, by, bw, bh, 4);
+
+    // 塔名与价格
+    noStroke();
+    fill(canAfford ? color(r, g, b) : color(120)); 
+    textSize(10); textAlign(LEFT, TOP);
+    text(displayNames[type], bx + 8, by + 6);
+    
+    fill(canAfford ? color(255, 215, 0) : color(150, 80, 80)); 
+    textSize(9); textAlign(LEFT, BOTTOM);
+    text('¥' + def.cost, bx + 8, by + 30);
+    
+    // 装饰色块
+    fill(r, g, b, canAfford ? 200 : 80);
+    rect(bx + bw - 12, by + 8, 4, 20, 1);
   }
 
-  // 取消按钮
+  // 取消按钮 (紧跟在最后)
   if (selectedTowerType) {
-    const bx = 4+3*110, by = BUILD_BTN_Y+4;
-    fill(60,20,20,180); stroke(200,60,60,160); strokeWeight(1); rect(bx,by,60,36,3);
-    fill(255,100,100,220); noStroke(); textSize(9); textAlign(CENTER,CENTER);
-    text('取消', bx+30, by+18); textAlign(LEFT,BASELINE);
+    const bx = 6 + 6 * (btnW + spacing), by = BUILD_BTN_Y + 6;
+    fill(80, 20, 20, 200); stroke(255, 60, 60, 180);
+    rect(bx, by, 40, 36, 4);
+    fill(255, 100, 100); textAlign(CENTER, CENTER); textSize(12);
+    text('✕', bx + 20, by + 18);
   }
 }
 
@@ -264,20 +294,33 @@ function drawPlacementPreview() {
 // ============================================================
 function handlePlacementClick(mx, my) {
   // 建造菜单区域
-  if (my >= BUILD_BTN_Y && my < BUILD_BTN_Y + 44) {
-    const types = ['basic', 'rapid', 'area'];
+  const btnW = 100;    // 必须与 drawBuildMenu 中的按钮宽度一致
+  const spacing = 6;   // 必须与 drawBuildMenu 中的间距一致
+
+  // 建造菜单区域高度判定
+  if (my >= BUILD_BTN_Y && my < BUILD_BTN_Y + 48) {
+    // 包含所有 6 种塔的类型数组
+    const types = ['basic', 'rapid', 'area', 'sniperAA', 'laser', 'frost'];
+    
     for (let i = 0; i < types.length; i++) {
-      const bx = 4 + i*110;
-      if (mx >= bx && mx < bx+106) {
-        selectedTowerType = selectedTowerType===types[i] ? null : types[i];
+      // 计算第 i 个按钮的左侧起始 X 坐标
+      const bx = 6 + i * (btnW + spacing);
+      
+      // 检查鼠标点击是否在该按钮的宽度范围内
+      if (mx >= bx && mx < bx + btnW) {
+        selectedTowerType = (selectedTowerType === types[i]) ? null : types[i];
         if (selectedTowerType) selectedTower = null;
-        return true;
+        return true; // 拦截点击，防止穿透到地图
       }
     }
-    if (selectedTowerType && mx >= 4+3*110 && mx < 4+3*110+60) {
-      selectedTowerType = null; return true;
+
+    // 取消按钮 (X) 的判定：位置在第 6 个塔之后
+    const cancelX = 6 + 6 * (btnW + spacing);
+    if (selectedTowerType && mx >= cancelX && mx < cancelX + 40) {
+      selectedTowerType = null;
+      return true;
     }
-    return true;
+    return true; // 点击了菜单空白处也进行拦截
   }
 
   // 升级按钮

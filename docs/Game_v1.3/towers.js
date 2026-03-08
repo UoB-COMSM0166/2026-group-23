@@ -34,6 +34,42 @@ const TOWER_DEFS = {
     ],
     projSpd: 5, color: [160, 80, 255], antiAir: false,
   },
+  
+  // 1. 对空神弩：只打飞行怪，高伤害，超远射程
+  sniperAA: {
+    name: '对空神弩', label: 'A-AIR',
+    cost: 150,
+    levels: [
+      { dmg: 120, range: 250, fireRate: 40, upgradeCost: 150 }, 
+      { dmg: 240, range: 300, fireRate: 35, upgradeCost: 250 },
+      { dmg: 500, range: 380, fireRate: 25, upgradeCost: 0 }
+    ],
+    projSpd: 15, color: [255, 50, 50], antiAir: true, onlyAir: true, // 新增属性限制
+  },
+
+  // 2. 激光塔：持续伤害，对地
+  laser: {
+    name: '激光切割者', label: 'LASER',
+    cost: 200,
+    levels: [
+      { dmg: 5, range: 150, fireRate: 5, upgradeCost: 180 }, // 每帧造成5点伤害
+      { dmg: 9, range: 170, fireRate: 5, upgradeCost: 280 },
+      { dmg: 16, range: 200, fireRate: 5, upgradeCost: 0 }
+    ],
+    projSpd: 0, color: [0, 255, 150], antiAir: false,
+  },
+
+  // 3. 霜冻塔：群体减速，辅助型
+  frost: {
+    name: '霜冻塔', label: 'FROST',
+    cost: 130,
+    levels: [
+      { dmg: 10, range: 110, fireRate: 70, upgradeCost: 100 },
+      { dmg: 20, range: 130, fireRate: 60, upgradeCost: 180 },
+      { dmg: 40, range: 160, fireRate: 50, upgradeCost: 0 }
+    ],
+    projSpd: 6, color: [150, 220, 255], antiAir: false, slowEffect: 0.5,
+  }
 };
 
 class Tower {
@@ -83,51 +119,71 @@ class Tower {
 
   // ... findTarget() 和 update() 逻辑保持不变 ...
   findTarget() {
-    if (!manager) return null;
-    // 逻辑建议：如果 antiAir 为 true，应该能搜寻所有怪物；
-    // 如果为 false，则只能搜寻非飞行怪物。
-    const inRange = manager.getMonstersInRange(this.px, this.py, this.range, this.antiAir); 
-    // 注意：此处需要确认 manager 内部逻辑是否支持“全域攻击”
-    if (inRange.length === 0) return null;
-    return inRange.reduce((best, m) => m.progress > best.progress ? m : best, inRange[0]);
+  if (!manager) return null;
+  const def = TOWER_DEFS[this.type];
+  
+  // 获取范围内怪物
+  let inRange = manager.getMonstersInRange(this.px, this.py, this.range, this.antiAir);
+  
+  // 如果是对空神弩，过滤掉地面单位
+  if (def.onlyAir) {
+    inRange = inRange.filter(m => m.isFlying);
+  } else if (!this.antiAir) {
+    // 普通对地塔过滤掉飞行单位
+    inRange = inRange.filter(m => !m.isFlying);
   }
 
+  if (inRange.length === 0) return null;
+  // 优先攻击进度最前面的怪
+  return inRange.reduce((best, m) => m.progress > best.progress ? m : best, inRange[0]);
+}
+
   update() {
-   this.pulseTime += 0.05;
-   if (this.buildAnim > 0) this.buildAnim = max(0, this.buildAnim - 0.06);
-   if (this.shootFlash > 0) this.shootFlash--;
-   
-   this.timer++;
-   
-   // 范围塔逻辑：不需要锁定目标，只要射程内有敌人就全方位开火
-   const hasTarget = this.findTarget() !== null; 
-   if (!hasTarget) return;
- 
-   if (this.timer >= this.fireRate) {
-     this.timer = 0;
-     this.shootFlash = 12;
-   
-     if (this.type === 'area') {
-       // --- 核心修改：发射一圈子弹 ---
-       const numProjectiles = 8; // 每一圈发射8颗子弹
-       for (let i = 0; i < numProjectiles; i++) {
-         let angle = (TWO_PI / numProjectiles) * i + (this.pulseTime); // 随时间旋转起始角，更帅
-         projectiles.push(new Projectile(
-           this.px, this.py, angle,
-           this.projSpd, this.dmg, this.col, this.antiAir, this.type, this.level
-         ));
-       }
-     } else {
-       // 基础塔和快速塔维持原有的单发/双发逻辑
-       const target = this.findTarget();
-       this.angle = Math.atan2(target.pos.y - this.py, target.pos.x - this.px);
-       projectiles.push(new Projectile(
-         this.px, this.py, this.angle,
-         this.projSpd, this.dmg, this.col, this.antiAir, this.type, this.level
-       ));
-     }
-   }
- }
+  this.pulseTime += 0.05;
+  if (this.shootFlash > 0) this.shootFlash--;
+  this.timer++;
+
+  const target = this.findTarget();
+  if (!target) {
+    this.laserTarget = null;
+    return;
+  }
+
+  // 瞄准角度
+  this.angle = Math.atan2(target.pos.y - this.py, target.pos.x - this.px);
+
+  if (this.type === 'laser') {
+    // 激光塔逻辑：每一帧都造成伤害
+    this.laserTarget = target;
+    manager.damageAt(target.pos.x, target.pos.y, this.dmg, false, false);
+    // 激光粒子
+    if (frameCount % 2 === 0) spawnParticles(target.pos.x, target.pos.y, color(...this.col), 1);
+  } 
+  else if (this.timer >= this.fireRate) {
+    this.timer = 0;
+    this.shootFlash = 10;
+    
+    // 逻辑分发
+    if (this.type === 'area') {
+      // 之前的全方位散弹逻辑...
+      // --- 核心修改：发射一圈子弹 ---
+      const numProjectiles = 8; // 每一圈发射8颗子弹
+      for (let i = 0; i < numProjectiles; i++) {
+        let angle = (TWO_PI / numProjectiles) * i + (this.pulseTime); // 随时间旋转起始角，更帅
+        projectiles.push(new Projectile(
+          this.px, this.py, angle,
+          this.projSpd, this.dmg, this.col, this.antiAir, this.type, this.level
+        ));
+      }
+    } else {
+      // 普通弹丸攻击（神弩、霜冻等）
+      projectiles.push(new Projectile(
+        this.px, this.py, this.angle,
+        this.projSpd, this.dmg, this.col, this.antiAir, this.type, this.level
+      ));
+    }
+  }
+}
 
   draw() {
     push(); translate(this.px, this.py);
@@ -157,6 +213,9 @@ class Tower {
     if (this.type === 'basic') this._drawBasic(r, g, b);
     else if (this.type === 'rapid') this._drawRapid(r, g, b);
     else if (this.type === 'area')  this._drawArea(r, g, b);
+    else if (this.type === 'laser') this._drawLaser(r, g, b);
+    else if (this.type === 'frost')  this._drawFrost(r, g, b);
+    else if (this.type === 'sniperAA') this._drawSniper(r, g, b);
 
     // 等级指示器 (UI)
     this._drawRankStars();
@@ -173,65 +232,207 @@ class Tower {
 
   // --- 进化视觉逻辑 ---
 
+  // ============================================================
+//  重新设计的“进化视觉”逻辑 - 更加复杂、酷炫、体积随等级增长
+// ============================================================
+
   _drawBasic(r, g, b) {
     push(); rotate(this.angle);
     const lv = this.level;
-    // 炮管
-    fill(20, 30, 50); stroke(r, g, b); strokeWeight(1.5);
+    const sizeBase = 20 + lv * 6; // 体积随等级增大
+
+    // 1. 强化装甲支架
+    stroke(r, g, b, 150); strokeWeight(1);
+    fill(30, 35, 50);
+    rect(2, 0, sizeBase, sizeBase * 0.8, 2);
+
+    // 2. 炮管系统
+    fill(20, 25, 40); stroke(r, g, b); strokeWeight(1.5 + lv * 0.5);
     if (lv === 1) {
-      rect(6, -3, 16, 6, 1); // 单管
+      rect(10, -4, 22, 8, 2); // 重型单管
     } else if (lv === 2) {
-      rect(6, -6, 18, 5, 1); rect(6, 1, 18, 5, 1); // 双管
+      rect(12, -10, 24, 7, 2); rect(12, 3, 24, 7, 2); // 强化双管
     } else {
-      rect(6, -8, 22, 6, 1); rect(6, 2, 22, 6, 1); // 强化双管 + 核心
-      fill(r, g, b, 150); rect(4, -2, 12, 4);
+      // 满级：三管齐下 + 侧翼挡板
+      rect(14, -13, 28, 6, 1); rect(16, -3, 30, 6, 1); rect(14, 7, 28, 6, 1);
+      fill(r, g, b, 100);
+      triangle(0, -20, 15, -15, 0, -10); triangle(0, 20, 15, 15, 0, 10);
     }
-    // 主体
-    fill(15, 25, 45); 
-    ellipse(0, 0, 18 + lv * 4, 18 + lv * 4);
+
+    // 3. 顶部能量舱
+    fill(15, 20, 35); stroke(r, g, b);
+    ellipse(0, 0, sizeBase, sizeBase);
+    fill(r, g, b, 180 + sin(this.pulseTime * 4) * 50);
+    noStroke();
+    ellipse(0, 0, sizeBase * 0.4, sizeBase * 0.4); // 呼吸灯核心
     pop();
   }
 
   _drawRapid(r, g, b) {
     push(); rotate(this.angle);
     const lv = this.level;
-    const speed = this.pulseTime * 2;
-    // 旋转炮头
-    rotate(lv === 3 ? speed * 0.5 : 0);
-    for (let i = 0; i < (lv + 1); i++) {
+    const rotSpd = this.pulseTime * (2 + lv); // 等级越高转得越疯狂
+
+    // 1. 底盘旋转齿轮
+    push(); rotate(-rotSpd * 0.5);
+    stroke(r, g, b, 100); fill(20);
+    for(let i=0; i<6; i++) {
+      rotate(PI/3);
+      rect(12 + lv*2, 0, 6, 4);
+    }
+    pop();
+
+    // 2. 加特林炮管组
+    push(); rotate(rotSpd);
+    const count = 3 + lv; 
+    for (let i = 0; i < count; i++) {
       push();
-      rotate((TWO_PI / (lv + 1)) * i);
-      fill(r, g, b, 180);
-      rect(8, -2, 10 + lv * 2, 3, 1);
+      rotate((TWO_PI / count) * i);
+      fill(40); stroke(r, g, b); strokeWeight(1);
+      rect(10, -2, 12 + lv * 4, 4, 1);
+      // 枪口红热效果
+      if (this.shootFlash > 0) {
+        fill(255, 100, 0);
+        rect(20 + lv * 4, -2, 5, 4);
+      }
       pop();
     }
-    // 能量核心
-    const p = sin(this.pulseTime * 2) * 5;
-    fill(r, g, b, 200);
-    ellipse(0, 0, 8 + p, 8 + p);
+    pop();
+
+    // 3. 核心轴承
+    fill(r, g, b); ellipse(0, 0, 10 + lv*2, 10 + lv*2);
+    fill(255, 200); ellipse(0, 0, 4 + lv, 4 + lv);
     pop();
   }
 
   _drawArea(r, g, b) {
     const lv = this.level;
-    const p = sin(this.pulseTime) * 3;
-    // 浮动装甲板
-    for (let i = 0; i < 3 + lv; i++) {
-      const a = (TWO_PI / (3 + lv)) * i + this.pulseTime * 0.5;
-      const d = 14 + lv * 3 + p;
-      fill(10, 10, 30); stroke(r, g, b, 200);
-      push(); translate(cos(a) * d, sin(a) * d); rotate(a);
-      rect(0, 0, 6, 10, 2);
+    const bounce = sin(this.pulseTime * 2) * 5;
+    
+    // 1. 外围浮游轨道
+    noFill(); stroke(r, g, b, 80); strokeWeight(1);
+    ellipse(0, 0, (40 + lv*10) * 2, (40 + lv*10) * 2);
+
+    // 2. 浮游炮塔/反射板
+    for (let i = 0; i < 2 + lv; i++) {
+      const a = (TWO_PI / (2 + lv)) * i + this.pulseTime;
+      const d = 30 + lv * 8 + bounce;
+      push(); translate(cos(a) * d, sin(a) * d); rotate(a + PI/2);
+      fill(15, 15, 30); stroke(r, g, b);
+      // 等级越高，浮游炮形状越复杂
+      if(lv < 3) {
+        rect(0, 0, 10, 15, 2);
+      } else {
+        triangle(-8, 10, 8, 10, 0, -15); // 满级变棱形炮
+      }
+      // 能量连接线
+      stroke(r, g, b, 50); line(0, 0, -cos(a)*d, -sin(a)*d);
       pop();
     }
-    // 核心
-    fill(r, g, b, 100 + p * 10);
-    ellipse(0, 0, 12 + lv * 5, 12 + lv * 5);
-    fill(255, 255, 255, 150);
-    ellipse(0, 0, 4 + lv, 4 + lv);
+
+    // 3. 地震波发生器主体
+    fill(20); stroke(r, g, b, 200); strokeWeight(2);
+    rect(0, 0, 20+lv*5, 20+lv*5, 4);
+    fill(r, g, b, 150 + bounce * 10);
+    ellipse(0, 0, 10+lv*4, 10+lv*4);
+  }
+
+  _drawSniper(r, g, b) {
+    push(); rotate(this.angle);
+    const lv = this.level;
+    const length = 35 + lv * 10;
+
+    // 1. 超长导轨
+    fill(30); stroke(r, g, b); strokeWeight(2);
+    rect(length/2 - 5, 0, length, 8, 2);
+    
+    // 2. 复合弩翼 (多层结构)
+    for(let i=0; i<lv; i++) {
+        const offset = i * 8;
+        stroke(r, g, b, 200 - i*40);
+        noFill();
+        bezier(0, 0, 10, -20-offset, 20, -30-offset, -10, -40-offset);
+        bezier(0, 0, 10, 20+offset, 20, 30+offset, -10, 40+offset);
+    }
+
+    // 3. 瞄准激光束 (装饰用)
+    stroke(255, 0, 0, 100); strokeWeight(1);
+    line(10, 0, this.range, 0);
+
+    // 4. 蓄能核心
+    fill(255, 50, 50); noStroke();
+    rect(5, 0, 12, 12, 2);
+    if(lv === 3) {
+        // 满级增加电弧特效
+        stroke(255, 255, 255, 200);
+        line(5, -6, 5 + random(-5,5), -15);
+        line(5, 6, 5 + random(-5,5), 15);
+    }
+    pop();
+  }
+
+  _drawLaser(r, g, b) {
+    push(); rotate(this.angle);
+    const lv = this.level;
+    
+    // 1. 环形约束装置
+    for(let i=0; i<lv; i++) {
+        const s = 25 + i * 10;
+        noFill(); stroke(r, g, b, 150 - i*30);
+        strokeWeight(2);
+        arc(0, 0, s, s, QUARTER_PI, PI-QUARTER_PI);
+        arc(0, 0, s, s, PI+QUARTER_PI, TWO_PI-QUARTER_PI);
+    }
+
+    // 2. 聚焦镜头
+    fill(10); stroke(255); strokeWeight(1);
+    rect(12, 0, 10 + lv*4, 6 + lv*2, 1);
+    
+    // 3. 核心球体
+    let pulse = sin(this.pulseTime * 10) * 5;
+    fill(r, g, b, 100); ellipse(0, 0, 20+lv*2, 20+lv*2);
+    fill(255); ellipse(0, 0, 8+pulse, 8+pulse);
+
+    // 4. 激光渲染 (在 update 逻辑中已有，这里增加枪口光晕)
+    if (this.laserTarget) {
+      fill(r, g, b, 200);
+      ellipse(15 + lv*4, 0, 10 + pulse, 10 + pulse);
+    }
+    pop();
+  }
+
+  _drawFrost(r, g, b) {
+    const lv = this.level;
+    const rot = this.pulseTime * 0.5;
+
+    // 1. 寒冰领域环
+    noFill(); stroke(r, g, b, 50); 
+    strokeWeight(10 + lv * 5);
+    ellipse(0, 0, 50 + lv * 10);
+
+    // 2. 旋转冰晶簇
+    for(let i=0; i < (4 + lv * 2); i++) {
+      let a = rot + (TWO_PI / (4 + lv * 2)) * i;
+      let d = 25 + lv * 5;
+      push();
+      translate(cos(a) * d, sin(a) * d);
+      rotate(a + PI/4);
+      fill(255, 200); stroke(r, g, b); strokeWeight(1);
+      // 冰晶形状：等级越高越尖锐
+      beginShape();
+      vertex(0, -8-lv*2); vertex(4, 0); vertex(0, 8+lv*2); vertex(-4, 0);
+      endShape(CLOSE);
+      pop();
+    }
+
+    // 3. 中心冷冻核心
+    fill(r, g, b, 100);
+    for(let j=0; j<3; j++) {
+        rotate(rot * (j+1));
+        rect(0, 0, 15+lv*3, 15+lv*3, 2);
+    }
   }
 }
-
 // ============================================================
 //  Projectile 子弹类 (微调以支持等级视觉)
 // ============================================================
