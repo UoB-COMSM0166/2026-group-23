@@ -22,7 +22,7 @@ Defense Protocol — Strong sci-fi identity; high-tech appeal.
 [![Game Screenshot](docs/Game_v1.3_screenshot.png)](https://uob-comsm0166.github.io/2026-group-23/Game_v1.3/)
 
 ### LINK
-- [demo](https://uob-comsm0166.github.io/2026-group-23/demo_v0.3/)
+- [game_v0.3](https://uob-comsm0166.github.io/2026-group-23/Game_v0.3/)
 - [game_v1.3](https://uob-comsm0166.github.io/2026-group-23/Game_v1.3/)
 
 VIDEO. Include a demo video of your game here (you don't have to wait until the end, you can insert a work in progress video)
