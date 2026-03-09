@@ -137,9 +137,9 @@ function handleMinigameMove(mx, my) {
 //  布局：6 行，每行 2~3 个门，横向错开
 //  类型比例：约 2 个加/乘门、1 个减门
 // ============================================================
-// 只有 × 门（金色/橙色）和 - 门（红色）
-// × 门倍率 2~9，高倍率概率递减（用权重池实现）
-const MUL_POOL = [
+// ── 门池配置 ──
+// × 门：标准权重池（困难/默认）
+const MUL_POOL_NORMAL = [
   { value:2, label:'×2', col:[255, 210,  0], weight:35 },
   { value:3, label:'×3', col:[255, 175,  0], weight:28 },
   { value:4, label:'×4', col:[255, 140,  0], weight:18 },
@@ -149,16 +149,46 @@ const MUL_POOL = [
   { value:8, label:'×8', col:[240,  30, 50], weight: 1 },
   { value:9, label:'×9', col:[220,  10, 60], weight: 1 },
 ];
-const SUB_POOL = [
+// × 门：简单权重池（高倍率概率大幅提升）
+const MUL_POOL_EASY = [
+  { value:2, label:'×2', col:[255, 210,  0], weight:15 },
+  { value:3, label:'×3', col:[255, 175,  0], weight:20 },
+  { value:4, label:'×4', col:[255, 140,  0], weight:22 },
+  { value:5, label:'×5', col:[255, 105, 10], weight:18 },
+  { value:6, label:'×6', col:[255,  75, 20], weight:13 },
+  { value:7, label:'×7', col:[255,  50, 35], weight: 7 },
+  { value:8, label:'×8', col:[240,  30, 50], weight: 4 },
+  { value:9, label:'×9', col:[220,  10, 60], weight: 1 },
+];
+// - 门：简单模式（小扣）
+const SUB_POOL_EASY = [
   { value:2, label:'-2', col:[220, 55, 55] },
   { value:3, label:'-3', col:[210, 40, 40] },
 ];
+// - 门：困难模式（大扣）
+const SUB_POOL_HARD = [
+  { value:4, label:'-4', col:[230, 40, 40] },
+  { value:5, label:'-5', col:[220, 25, 25] },
+  { value:6, label:'-6', col:[200, 10, 10] },
+];
+
+// 兼容旧引用
+const MUL_POOL = MUL_POOL_NORMAL;
+const SUB_POOL = SUB_POOL_EASY;
 
 function pickMul() {
-  const total = MUL_POOL.reduce((s, m) => s + m.weight, 0);
+  const pool = (typeof gameDifficulty !== 'undefined' && gameDifficulty === 'easy')
+    ? MUL_POOL_EASY : MUL_POOL_NORMAL;
+  const total = pool.reduce((s, m) => s + m.weight, 0);
   let r = random(total);
-  for (const m of MUL_POOL) { r -= m.weight; if (r <= 0) return m; }
-  return MUL_POOL[0];
+  for (const m of pool) { r -= m.weight; if (r <= 0) return m; }
+  return pool[0];
+}
+
+function pickSub() {
+  const pool = (typeof gameDifficulty !== 'undefined' && gameDifficulty === 'difficult')
+    ? SUB_POOL_HARD : SUB_POOL_EASY;
+  return random(pool);
 }
 
 function generateGates() {
@@ -171,22 +201,21 @@ function generateGates() {
   const innerL  = MG.x + 28;
   const innerW  = MG.w - 56;
 
-  // 门宽：1/7 ~ 1/4 屏幕，允许每行放 2~3 个
   const minGW = floor(MG.w / 7);
   const maxGW = floor(MG.w / 4);
 
-  // × 门总数目标：3~6 随机
-  const TARGET_MUL = floor(random(3, 7)); // 3,4,5,6
+  const TARGET_MUL = floor(random(3, 7));
   let mulCount = 0;
+
+  // 弹跳门：0~2 个，记录哪些行/列位置已放置，后面插入
+  const bounceCount  = floor(random(3));   // 0, 1, 2
+  const bounceSlots  = [];   // { row, col } 记录坑位
 
   for (let row = 0; row < rows; row++) {
     const y = MG.y + 80 + stepY * (row + 1);
-
-    // 本行门数：1~3，根据剩余空间动态决定
     const rCount = random();
     const count = rCount < 0.25 ? 1 : rCount < 0.75 ? 2 : 3;
 
-    // 分配宽度
     const widths = Array.from({length: count}, () => floor(random(minGW, maxGW)));
     const rawTotal = widths.reduce((a, b) => a + b, 0);
     const maxTotal = innerW - 16 * (count + 1);
@@ -201,11 +230,9 @@ function generateGates() {
 
     let curX = innerL + gaps_n[0];
 
-    // 决定本行各门类型：剩余×门配额 + 随机
     for (let c = 0; c < count; c++) {
-      const remaining = rows - row;          // 剩余行数
+      const remaining = rows - row;
       const mulLeft   = TARGET_MUL - mulCount;
-      // 必须放×：剩余行放不完配额时强制；否则按概率
       const mustMul   = mulLeft >= remaining * count;
       const mulBias   = row < 3 ? 0.60 : 0.35;
       const placeMul  = mulCount < TARGET_MUL && (mustMul || random() < mulBias);
@@ -216,7 +243,7 @@ function generateGates() {
         def = { type:'mul', value: m.value, label: m.label, col: [...m.col] };
         mulCount++;
       } else {
-        const s = random(SUB_POOL);
+        const s = pickSub();
         def = { type:'sub', value: s.value, label: s.label, col: [...s.col] };
       }
 
@@ -230,8 +257,27 @@ function generateGates() {
         triggered: false,
         flashTimer: 0,
       });
+      bounceSlots.push({ gateIdx: mgGates.length - 1, row, col: c });
 
       curX += finalW[c] + gaps_n[c + 1];
+    }
+  }
+
+  // ── 随机替换 bounceCount 个普通门为弹跳门 ──
+  if (bounceCount > 0 && bounceSlots.length > 0) {
+    // 打乱并取前 bounceCount 个
+    for (let i = bounceSlots.length - 1; i > 0; i--) {
+      const j = floor(random(i + 1));
+      [bounceSlots[i], bounceSlots[j]] = [bounceSlots[j], bounceSlots[i]];
+    }
+    for (let k = 0; k < min(bounceCount, bounceSlots.length); k++) {
+      const idx = bounceSlots[k].gateIdx;
+      const g   = mgGates[idx];
+      g.type      = 'bounce';
+      g.value     = 0;
+      g.label     = '↯';
+      g.col       = [180, 60, 255];
+      g.triggered = false;   // 弹跳门可多次触发（每球触发一次）
     }
   }
 }
@@ -318,6 +364,23 @@ function updateMgGates() {
 }
 
 function triggerGate(g, ball) {
+  if (g.type === 'bounce') {
+    // 每个球维护一个已弹跳过的门的 Set，弹过的门永远不再重复触发
+    if (!ball._bouncedGates) ball._bouncedGates = new Set();
+    if (ball._bouncedGates.has(g)) return;
+    ball._bouncedGates.add(g);
+    g.flashTimer = 35;
+
+    // 强力弹飞：反转 vy，随机偏转 vx
+    const spd = Math.max(Math.hypot(ball.vx, ball.vy), 2.2);
+    const ang  = random(-PI * 0.35, PI * 0.35);
+    ball.vx = sin(ang) * spd * random(1.1, 1.6);
+    ball.vy = -abs(cos(ang)) * spd * random(1.0, 1.4);  // 向上弹
+
+    spawnMgPart(g.x, g.y, color(...g.col), 10);
+    return;
+  }
+
   if (g.type === 'mul') {
     // × 门：每个球独立分裂，不限制触发次数
     // 用 ball 身上的标记防止同一帧重复触发同一门
@@ -332,7 +395,6 @@ function triggerGate(g, ball) {
     const baseSpd = Math.max(Math.hypot(ball.vx, ball.vy), 1.5);
 
     for (let i = 0; i < g.value; i++) {
-      // 均匀扇形散射：在 -22° ~ +22° 内均匀分布
       const totalArc = PI * 0.24;
       const ang = -totalArc / 2 + (i / (g.value - 1 || 1)) * totalArc + random(-0.06, 0.06);
       const spd = baseSpd * random(0.85, 1.15);
@@ -342,7 +404,9 @@ function triggerGate(g, ball) {
         vx: sin(ang) * spd,
         vy: abs(cos(ang)) * spd * 0.5 + 0.6,
         alive: true, settled: false,
-        _lastGate: g,   // 新球不再被同一门重新触发
+        _lastGate: g,
+        // 子球继承父球已弹跳过的门集合（拷贝一份，避免共享引用）
+        _bouncedGates: ball._bouncedGates ? new Set(ball._bouncedGates) : new Set(),
       });
     }
     spawnMgPart(g.x, g.y, color(...g.col), 16);
@@ -412,7 +476,55 @@ function drawMgGates() {
     const alpha  = faded ? 55 : 215;
     const isMul  = g.type === 'mul';
 
-    // ── 外发光（×门更亮；高倍率额外光晕） ──
+    // ── 弹跳门专属外观 ──
+    if (g.type === 'bounce') {
+      const [r2, g2, b2] = g.col;
+      const t2 = sin(frameCount * 0.22) * 0.5 + 0.5;
+      // 外发光
+      noStroke(); fill(r2, g2, b2, 18 + t2 * 28);
+      rect(g.x - g.w/2 - 10, g.y - g.h/2 - 10, g.w + 20, g.h + 20, 14);
+      // 门底色
+      fill(r2 * 0.2, g2 * 0.2, b2 * 0.3, 220);
+      rect(g.x - g.w/2, g.y - g.h/2, g.w, g.h, 8);
+      // 门面渐变（紫到蓝紫）
+      fill(r2, g2, b2, 180 + t2 * 60);
+      rect(g.x - g.w/2, g.y - g.h/2, g.w, g.h - 5, 8);
+      // 高光
+      fill(220, 180, 255, 80 + t2 * 80);
+      rect(g.x - g.w/2 + 5, g.y - g.h/2 + 4, g.w - 10, 4, 3);
+      // 闪电锯齿线
+      stroke(220, 160, 255, 160 + t2 * 80); strokeWeight(1.8);
+      const zx1 = g.x - g.w/2 + 10, zx2 = g.x + g.w/2 - 10;
+      const zy  = g.y;
+      const segs = 5;
+      beginShape();
+      for (let s = 0; s <= segs; s++) {
+        const tx = lerp(zx1, zx2, s / segs);
+        const ty = zy + (s % 2 === 0 ? -6 : 6) * t2;
+        vertex(tx, ty);
+      }
+      endShape();
+      // 角落闪电小图标
+      noStroke(); fill(255, 220, 255, 140 + t2 * 100);
+      textSize(9); textAlign(CENTER, CENTER);
+      text('⚡', g.x - g.w/2 + 9, g.y - g.h/2 + 10);
+      text('⚡', g.x + g.w/2 - 9, g.y - g.h/2 + 10);
+      // 标签
+      fill(255, 240, 255, 230 + t2 * 25);
+      textSize(g.w < 70 ? 13 : g.w < 95 ? 16 : 18);
+      text('↯ BOUNCE', g.x, g.y);
+      // 触发闪光
+      if (g.flashTimer > 0) {
+        const fv = g.flashTimer / 35;
+        noFill(); stroke(r2, g2, b2, fv * 240); strokeWeight(2 + fv * 6);
+        rect(g.x - g.w/2 - (1-fv)*12, g.y - g.h/2 - (1-fv)*12,
+             g.w + (1-fv)*24, g.h + (1-fv)*24, 12);
+      }
+      textAlign(LEFT, BASELINE);
+      continue;   // 跳过后面的通用绘制
+    }
+
+
     if (!faded) {
       noStroke();
       fill(r, gn, b, isMul ? 28 + flash * 35 : 18 + flash * 20);
