@@ -4,12 +4,6 @@ const GRID_COLS  = 14;
 const GRID_ROWS  = 12;
 const HUD_HEIGHT = 46;
 
-// ── 难度系统 ──
-// 'easy' | 'difficult'  (在难度选择界面设定)
-let gameDifficulty = null;
-// 游戏阶段：'select'（难度选择）→ 'playing'
-let gamePhase = 'select';
-
 // ── 游戏核心数值 ──
 let coins   = 200;
 let baseHp        = 50;
@@ -36,11 +30,7 @@ let AIR_PATH_PX  = null;
 function setup() {
   createCanvas(GRID_COLS * CELL_SIZE, GRID_ROWS * CELL_SIZE);
   textFont('monospace');
-  // 先不初始化游戏逻辑，等难度选择后再初始化
-}
 
-// 难度选定后调用，真正初始化游戏
-function initGame() {
   initMap();
 
   manager = new MonsterManager();
@@ -49,19 +39,13 @@ function initGame() {
 
   initTowers();
   initUI();
+  if (typeof initTutorial === 'function') initTutorial();
 
   // 启动第一波倒计时
   beginAutoWave();
 }
 
 function draw() {
-  // ── 难度选择阶段 ──
-  if (gamePhase === 'select') {
-    drawDifficultySelect();
-    return;
-  }
-
-  // ── 正式游戏阶段 ──
   // 1. 背景 & 路径
   drawBackground();
   drawPaths();
@@ -84,19 +68,15 @@ function draw() {
 
   // 7. 全部UI
   drawUI();
+
+  // 8. 新手教程（最上层 overlay）
+  if (typeof updateTutorial === 'function') updateTutorial();
+  if (typeof drawTutorial === 'function') drawTutorial();
 }
 
 function mousePressed() {
-  // 难度选择阶段
-  if (gamePhase === 'select') {
-    handleDifficultyClick(mouseX, mouseY);
-    return;
-  }
-
-  // 波次结束确认面板优先消费点击
-  if (typeof handleWaveEndClick === 'function' && handleWaveEndClick(mouseX, mouseY)) {
-    return;
-  }
+  // 教程按钮优先（只消费按钮点击）
+  if (typeof handleTutorialClick === 'function' && handleTutorialClick(mouseX, mouseY)) return;
 
   // 小游戏优先消费点击
   if (minigameState !== 'idle') {

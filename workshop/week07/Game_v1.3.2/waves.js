@@ -46,9 +46,8 @@ function updateWaveSystem() {
   if (waveState === 'waiting')  return;
 
   if (waveState === 'countdown') {
-    // 如果小游戏刚结束（idle），且当前没有波次结束确认面板，才激活倒计时
-    const panelActive = (typeof waveEndPanelVisible !== 'undefined') && waveEndPanelVisible;
-    if (!waveCountdownActive && minigameState === 'idle' && !panelActive) {
+    // 如果小游戏刚结束（idle），激活倒计时
+    if (!waveCountdownActive && minigameState === 'idle') {
       waveCountdownActive = true;
       waveCountdownEnd    = frameCount + COUNTDOWN_FRAMES;
     }
@@ -64,14 +63,11 @@ function updateWaveSystem() {
       if (waveNum >= TOTAL_WAVES) {
         waveState = 'complete';
       } else {
-        // 本波结束 → 切到 countdown，由 UI 弹出确认面板，确认后再进入小游戏
+        // 本波结束 → 切到 countdown，先触发小游戏
         waveState = 'countdown';
         waveCountdownActive = false;
         waveCountdownEnd    = 0;
-        if (typeof showWaveEndPanel === 'function') {
-          showWaveEndPanel();
-        } else if (typeof startMinigame === 'function' && minigameState === 'idle') {
-          // 兜底：若无 UI 面板实现，则保持旧行为，直接进入小游戏
+        if (typeof startMinigame === 'function' && minigameState === 'idle') {
           startMinigame();
         }
       }

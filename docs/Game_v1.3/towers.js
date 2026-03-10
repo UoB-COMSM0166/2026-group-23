@@ -52,9 +52,9 @@ const TOWER_DEFS = {
     name: '激光切割者', label: 'LASER',
     cost: 200,
     levels: [
-      { dmg: 5, range: 150, fireRate: 5, upgradeCost: 180 }, // 每帧造成5点伤害
-      { dmg: 9, range: 170, fireRate: 5, upgradeCost: 280 },
-      { dmg: 16, range: 200, fireRate: 5, upgradeCost: 0 }
+      { dmg: 2, range: 150, fireRate: 10, upgradeCost: 180 }, // 每帧造成5点伤害
+      { dmg: 3, range: 170, fireRate: 10, upgradeCost: 280 },
+      { dmg: 4, range: 200, fireRate: 5, upgradeCost: 0 }
     ],
     projSpd: 0, color: [0, 255, 150], antiAir: false,
   },

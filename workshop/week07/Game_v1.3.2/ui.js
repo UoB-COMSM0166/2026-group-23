@@ -5,133 +5,7 @@
 //  依赖：globals.js, map.js, towers.js
 // ============================================================
 
-// ============================================================
-//  难度选择界面
-// ============================================================
-function drawDifficultySelect() {
-  background(4, 7, 18);
-  // 网格背景
-  stroke(0, 150, 220, 10); strokeWeight(1);
-  for (let x = 0; x < width; x += 50) line(x, 0, x, height);
-  for (let y = 0; y < height; y += 50) line(0, y, width, y);
-
-  textFont('monospace'); textAlign(CENTER, CENTER);
-
-  // 标题
-  const pulse = sin(frameCount * 0.07) * 0.3 + 0.7;
-  noStroke();
-  fill(0, 200, 255, 220 * pulse); textSize(28);
-  text('Quantum Drop', width / 2, height / 2 - 155);
-  fill(0, 140, 200, 160 * pulse); textSize(11);
-  text('SELECT DIFFICULTY', width / 2, height / 2 - 118);
-
-  // 分割线
-  stroke(0, 180, 255, 60); strokeWeight(1);
-  line(width / 2 - 200, height / 2 - 105, width / 2 + 200, height / 2 - 105);
-
-  // ── EASY 卡片 ──
-  const eX = width / 2 - 210, eY = height / 2 - 90, eW = 190, eH = 240;
-  _drawDiffCard(eX, eY, eW, eH,
-    [0, 220, 120],
-    'EASY',
-    '简单模式',
-    [
-      '× 门倍率提升',
-      '更多高倍率机会',
-      '-门数值正常',
-      '推荐初学者',
-    ]
-  );
-
-  // ── DIFFICULT 卡片 ──
-  const dX = width / 2 + 20, dY = height / 2 - 90, dW = 190, dH = 240;
-  _drawDiffCard(dX, dY, dW, dH,
-    [255, 100, 40],
-    'DIFFICULT',
-    '困难模式',
-    [
-      '× 门倍率正常',
-      '-门扣除数值↑↑',
-      '生存压力倍增',
-      '挑战高手专属',
-    ]
-  );
-
-  // 底部提示
-  noStroke(); fill(0, 140, 200, 120 * pulse); textSize(10);
-  text('choose a difficulty level to start the game', width / 2, height / 2 + 175);
-  textAlign(LEFT, BASELINE);
-}
-
-function _drawDiffCard(x, y, w, h, col, title, subtitle, lines) {
-  const [r, g, b] = col;
-  const mx = mouseX, my = mouseY;
-  const hovered = mx >= x && mx <= x + w && my >= y && my <= y + h;
-
-  // 外发光
-  noStroke();
-  fill(r, g, b, hovered ? 22 : 10);
-  rect(x - 8, y - 8, w + 16, h + 16, 18);
-
-  // 背景
-  fill(hovered ? color(r*0.25, g*0.25, b*0.25, 230) : color(8, 14, 28, 215));
-  stroke(r, g, b, hovered ? 200 : 90); strokeWeight(hovered ? 2 : 1.2);
-  rect(x, y, w, h, 12);
-
-  // 顶部色条
-  noStroke(); fill(r, g, b, hovered ? 200 : 140);
-  rect(x, y, w, 6, 12, 12, 0, 0);
-
-  // 标题
-  fill(r, g, b, 230); textSize(20); textAlign(CENTER, CENTER);
-  text(title, x + w / 2, y + 32);
-
-  // 副标题
-  fill(r, g, b, 150); textSize(10);
-  text(subtitle, x + w / 2, y + 54);
-
-  // 分割线
-  stroke(r, g, b, 60); strokeWeight(1);
-  line(x + 16, y + 66, x + w - 16, y + 66);
-
-  // 特性列表
-  noStroke();
-  for (let i = 0; i < lines.length; i++) {
-    fill(200, 220, 240, 190); textSize(10); textAlign(LEFT, CENTER);
-    text('◈  ' + lines[i], x + 18, y + 88 + i * 28);
-  }
-
-  // 按钮
-  const btnY = y + h - 46;
-  fill(r, g, b, hovered ? 200 : 120); noStroke();
-  rect(x + 16, btnY, w - 32, 30, 8);
-  fill(hovered ? color(255, 255, 255, 240) : color(r, g, b, 220));
-  textSize(12); textAlign(CENTER, CENTER);
-  text(hovered ? '▶  START' : 'SELECT', x + w / 2, btnY + 15);
-
-  textAlign(LEFT, BASELINE);
-}
-
-function handleDifficultyClick(mx, my) {
-  // EASY 区域
-  const eX = width / 2 - 210, eY = height / 2 - 90, eW = 190, eH = 240;
-  if (mx >= eX && mx <= eX + eW && my >= eY && my <= eY + eH) {
-    gameDifficulty = 'easy';
-    gamePhase      = 'playing';
-    initGame();
-    return;
-  }
-  // DIFFICULT 区域
-  const dX = width / 2 + 20, dY = height / 2 - 90, dW = 190, dH = 240;
-  if (mx >= dX && mx <= dX + dW && my >= dY && my <= dY + dH) {
-    gameDifficulty = 'difficult';
-    gamePhase      = 'playing';
-    initGame();
-    return;
-  }
-}
-
-
+// ── 放置系统状态 ──
 let selectedTowerType = null;
 let selectedTower     = null;
 
@@ -206,89 +80,11 @@ function drawHUD() {
   // 例如：道具栏、技能冷却、波次奖励预览等
 }
 
-//暂时添加：波次结束面板，于承印临时实现
-// ── 波次结束面板状态 ──
-let waveEndPanelVisible = false;
-let waveEndButtonRect   = null;
-
-function showWaveEndPanel() {
-  waveEndPanelVisible = true;
-  waveEndButtonRect   = null;
-  // 清空当前建造/升级选择，避免误操作残留
-  selectedTowerType = null;
-  selectedTower     = null;
-}
-
-function handleWaveEndClick(mx, my) {
-  if (!waveEndPanelVisible) return false;
-  // 只要面板在，就拦截所有点击，避免穿透到建造/升级
-  if (waveEndButtonRect &&
-      mx >= waveEndButtonRect.x &&
-      mx <= waveEndButtonRect.x + waveEndButtonRect.w &&
-      my >= waveEndButtonRect.y &&
-      my <= waveEndButtonRect.y + waveEndButtonRect.h) {
-    waveEndPanelVisible = false;
-    waveEndButtonRect   = null;
-    // 用户确认后再进入投球小游戏
-    if (typeof startMinigame === 'function' && minigameState === 'idle') {
-      startMinigame();
-    }
-    return true;
-  }
-  return true;
-}
-
 // ============================================================
 //  波次倒计时 & 通关提示（李卓伦负责，以下为临时实现）
 // ============================================================
 function drawWaveUI() {
   textFont('monospace');
-
-  // 优先绘制“波次结束确认”面板；暂时更改
-  if (waveEndPanelVisible && waveState === 'countdown' && minigameState === 'idle') {
-    const w = width * 0.7;
-    const h = 140;
-    const x = (width - w) / 2;
-    const y = height / 2 - h / 2;
-    const pulse = sin(frameCount * 0.12) * 0.3 + 0.7;
-
-    noStroke();
-    fill(5, 10, 25, 210);
-    rect(x, y, w, h, 10);
-
-    stroke(0, 180, 255, 160);
-    strokeWeight(1.6);
-    line(x, y + 32, x + w, y + 32);
-
-    noStroke();
-    fill(0, 210, 255, 235);
-    textSize(16); textAlign(CENTER, CENTER);
-    text('WAVE ' + nf(waveNum, 2) + ' CLEARED', x + w / 2, y + 18);
-
-    fill(210, 230, 255, 230);
-    textSize(12);
-    text('点击“确定”进入下一阶段投球小游戏，结算奖励并准备下一波敌人。', x + w / 2, y + 54);
-
-    // 确认按钮
-    const btnW = 120, btnH = 30;
-    const btnX = x + w / 2 - btnW / 2;
-    const btnY = y + h - 18 - btnH;
-    waveEndButtonRect = { x: btnX, y: btnY, w: btnW, h: btnH };
-
-    fill(0, 180, 110, 200 + 30 * pulse);
-    stroke(0, 230, 150, 210);
-    strokeWeight(1.4);
-    rect(btnX, btnY, btnW, btnH, 6);
-
-    noStroke();
-    fill(230, 255, 240, 245);
-    textSize(13);
-    text('确定', btnX + btnW / 2, btnY + btnH / 2);
-
-    textAlign(LEFT, BASELINE);
-    return;
-  }
-
   if (waveState === 'countdown') {
     const nextW = waveNum + 1;
     const pulse = sin(frameCount*0.15)*0.3+0.7;
@@ -327,73 +123,43 @@ function drawWaveUI() {
 // ============================================================
 //  建造菜单（刘博文）
 // ============================================================
-// ui.js 核心修改部分
-
-// ui.js
-
 function drawBuildMenu() {
   textFont('monospace'); noStroke();
-  
-  // 6个塔，每个宽105 + 间隔，总宽约 640
-  const btnW = 100;
-  const spacing = 6;
-  const menuWidth = 6 * (btnW + spacing) + 4;
-  
-  // 背景板
-  fill(5, 10, 22, 220); stroke(0, 130, 200, 120); strokeWeight(1.5);
-  rect(0, BUILD_BTN_Y, menuWidth, 48, 0, 0, 6, 0);
+  fill(5, 10, 22, 200); stroke(0, 130, 200, 100); strokeWeight(1);
+  rect(0, BUILD_BTN_Y, 3*110+4, 44, 0, 0, 4, 4);
 
-  const types = ['basic', 'rapid', 'area', 'sniperAA', 'laser', 'frost'];
-  const displayNames = {
-    basic: "SENTRY",
-    rapid: "STINGER",
-    area: "NOVA",
-    sniperAA: "SKYFALL",
-    laser: "BEAM",
-    frost: "GLACIER"
-  };
-
+  const types = ['basic', 'rapid', 'area'];
   for (let i = 0; i < types.length; i++) {
     const type = types[i], def = TOWER_DEFS[type];
     const [r, g, b] = def.color;
-    const bx = 6 + i * (btnW + spacing), by = BUILD_BTN_Y + 6;
-    const bw = btnW, bh = 36;
-    
+    const bx = 4 + i*110, by = BUILD_BTN_Y + 4;
+    const bw = 106, bh = 36;
     const selected = selectedTowerType === type;
     const canAfford = coins >= def.cost;
 
-    // 按钮样式
-    if (selected) { 
-      fill(r, g, b, 80); stroke(r, g, b, 255); strokeWeight(2); 
-    } else if (!canAfford) { 
-      fill(15, 15, 25, 150); stroke(60, 60, 70, 100); strokeWeight(1); 
-    } else { 
-      fill(10, 20, 40, 200); stroke(r, g, b, 120); strokeWeight(1); 
-    }
-    rect(bx, by, bw, bh, 4);
+    if (selected)       { fill(r,g,b,60); stroke(r,g,b,220); strokeWeight(1.5); }
+    else if (!canAfford){ fill(10,15,28,180); stroke(60,60,80,100); strokeWeight(1); }
+    else                { fill(12,20,38,180); stroke(r,g,b,130); strokeWeight(1); }
+    rect(bx, by, bw, bh, 3);
 
-    // 塔名与价格
-    noStroke();
-    fill(canAfford ? color(r, g, b) : color(120)); 
-    textSize(10); textAlign(LEFT, TOP);
-    text(displayNames[type], bx + 8, by + 6);
-    
-    fill(canAfford ? color(255, 215, 0) : color(150, 80, 80)); 
-    textSize(9); textAlign(LEFT, BOTTOM);
-    text('¥' + def.cost, bx + 8, by + 30);
-    
-    // 装饰色块
-    fill(r, g, b, canAfford ? 200 : 80);
-    rect(bx + bw - 12, by + 8, 4, 20, 1);
+    fill(canAfford?color(r,g,b,230):color(100,100,110,180)); noStroke(); textSize(10);
+    text(def.label, bx+8, by+15);
+    fill(canAfford?color(255,210,50,220):color(160,80,80,180)); textSize(9);
+    text('¥'+def.cost, bx+8, by+29);
+    fill(r,g,b,canAfford?180:80); noStroke(); ellipse(bx+bw-18, by+bh/2, 14, 14);
+
+    if (selected) {
+      fill(r,g,b,230); noStroke(); textSize(8); textAlign(RIGHT,CENTER);
+      text('▶ 选中', bx+bw-6, by+bh/2); textAlign(LEFT,BASELINE);
+    }
   }
 
-  // 取消按钮 (紧跟在最后)
+  // 取消按钮
   if (selectedTowerType) {
-    const bx = 6 + 6 * (btnW + spacing), by = BUILD_BTN_Y + 6;
-    fill(80, 20, 20, 200); stroke(255, 60, 60, 180);
-    rect(bx, by, 40, 36, 4);
-    fill(255, 100, 100); textAlign(CENTER, CENTER); textSize(12);
-    text('✕', bx + 20, by + 18);
+    const bx = 4+3*110, by = BUILD_BTN_Y+4;
+    fill(60,20,20,180); stroke(200,60,60,160); strokeWeight(1); rect(bx,by,60,36,3);
+    fill(255,100,100,220); noStroke(); textSize(9); textAlign(CENTER,CENTER);
+    text('取消', bx+30, by+18); textAlign(LEFT,BASELINE);
   }
 }
 
@@ -498,33 +264,20 @@ function drawPlacementPreview() {
 // ============================================================
 function handlePlacementClick(mx, my) {
   // 建造菜单区域
-  const btnW = 100;    // 必须与 drawBuildMenu 中的按钮宽度一致
-  const spacing = 6;   // 必须与 drawBuildMenu 中的间距一致
-
-  // 建造菜单区域高度判定
-  if (my >= BUILD_BTN_Y && my < BUILD_BTN_Y + 48) {
-    // 包含所有 6 种塔的类型数组
-    const types = ['basic', 'rapid', 'area', 'sniperAA', 'laser', 'frost'];
-    
+  if (my >= BUILD_BTN_Y && my < BUILD_BTN_Y + 44) {
+    const types = ['basic', 'rapid', 'area'];
     for (let i = 0; i < types.length; i++) {
-      // 计算第 i 个按钮的左侧起始 X 坐标
-      const bx = 6 + i * (btnW + spacing);
-      
-      // 检查鼠标点击是否在该按钮的宽度范围内
-      if (mx >= bx && mx < bx + btnW) {
-        selectedTowerType = (selectedTowerType === types[i]) ? null : types[i];
+      const bx = 4 + i*110;
+      if (mx >= bx && mx < bx+106) {
+        selectedTowerType = selectedTowerType===types[i] ? null : types[i];
         if (selectedTowerType) selectedTower = null;
-        return true; // 拦截点击，防止穿透到地图
+        return true;
       }
     }
-
-    // 取消按钮 (X) 的判定：位置在第 6 个塔之后
-    const cancelX = 6 + 6 * (btnW + spacing);
-    if (selectedTowerType && mx >= cancelX && mx < cancelX + 40) {
-      selectedTowerType = null;
-      return true;
+    if (selectedTowerType && mx >= 4+3*110 && mx < 4+3*110+60) {
+      selectedTowerType = null; return true;
     }
-    return true; // 点击了菜单空白处也进行拦截
+    return true;
   }
 
   // 升级按钮

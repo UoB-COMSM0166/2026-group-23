@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数字塔防 — 主页</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #08090f; color: #e8f3ff; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .wrap { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+    .card {
+      width: min(720px, 100%);
+      background: rgba(5, 10, 22, 0.92);
+      border: 1px solid rgba(0, 180, 255, 0.35);
+      border-radius: 12px;
+      padding: 18px 18px 16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.5);
+    }
+    h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 8px; color: rgba(0, 210, 255, 0.95); }
+    p { font-size: 12px; line-height: 1.5; opacity: 0.92; margin-bottom: 14px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    a.btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 38px; padding: 0 14px; border-radius: 8px;
+      text-decoration: none; color: #e8f3ff;
+      border: 1px solid rgba(0, 180, 255, 0.35);
+      background: rgba(12, 20, 38, 0.9);
+    }
+    a.btn.primary { background: rgba(0, 150, 90, 0.55); border-color: rgba(0, 220, 120, 0.55); }
+    a.btn.warn { background: rgba(90, 30, 30, 0.55); border-color: rgba(255, 120, 120, 0.45); }
+    .hint { margin-top: 12px; font-size: 11px; opacity: 0.75; }
+    code { background: rgba(0,0,0,0.25); padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>数字塔防 · Number Defense</h1>
+      <p>入口页（预留主页接口）。你可以从这里打开游戏或单独打开新手教程页面。</p>
+
+      <div class="actions">
+        <a class="btn primary" href="./play.html">开始游戏</a>
+        <a class="btn" href="./play.html?tutorial=1" target="_blank" rel="noopener">打开新手教程（新页面）</a>
+        <a class="btn warn" href="./play.html?tutorial=1">在当前页面打开教程</a>
+      </div>
+
+      <div class="hint">
+        提示：教程是可选模式，靠 URL 参数控制。示例：<code>play.html?tutorial=1</code>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
