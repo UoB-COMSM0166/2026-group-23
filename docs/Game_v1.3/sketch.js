@@ -31,6 +31,7 @@ let manager      = null;
 let MAIN_PATH_PX = null;
 let EDGE_PATH_PX = null;
 let AIR_PATH_PX  = null;
+let homeTowers   = []; // 科幻基地（路径终点）
 
 
 function setup() {
@@ -43,9 +44,24 @@ function setup() {
 function initGame() {
   initMap();
 
+  // 在路径终点放置科幻基地
+  homeTowers = [];
+  if (MAIN_PATH_PX && MAIN_PATH_PX.length > 0) {
+    const ep = MAIN_PATH_PX[MAIN_PATH_PX.length - 1];
+    homeTowers.push(new HomeTower(ep.x, ep.y));
+  }
+  if (EDGE_PATH_PX && EDGE_PATH_PX.length > 0) {
+    const ep2 = EDGE_PATH_PX[EDGE_PATH_PX.length - 1];
+    const ep1 = MAIN_PATH_PX[MAIN_PATH_PX.length - 1];
+    if (Math.hypot(ep2.x - ep1.x, ep2.y - ep1.y) > 40)
+      homeTowers.push(new HomeTower(ep2.x, ep2.y));
+  }
+
   manager = new MonsterManager();
   manager.onKilled = m => { coins += m.reward; };
-  manager.onReach  = m => { baseHp = max(0, baseHp - 1); };
+  manager.onReach  = (m, dmg) => {
+    baseHp = max(0, baseHp - (dmg || 1));
+  };
 
   initTowers();
   initUI();
@@ -75,6 +91,9 @@ function draw() {
   // 4. 塔 & 子弹
   updateAndDrawTowers();
 
+  // 4.5 Home基地
+  for (const ht of homeTowers) { ht.update(); ht.draw(); }
+
   // 5. 粒子
   updateParticles();
 
@@ -90,11 +109,6 @@ function mousePressed() {
   // 难度选择阶段
   if (gamePhase === 'select') {
     handleDifficultyClick(mouseX, mouseY);
-    return;
-  }
-
-  // 波次结束确认面板优先消费点击
-  if (typeof handleWaveEndClick === 'function' && handleWaveEndClick(mouseX, mouseY)) {
     return;
   }
 

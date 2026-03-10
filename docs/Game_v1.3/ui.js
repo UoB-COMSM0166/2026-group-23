@@ -169,7 +169,7 @@ function drawHUD() {
   fill(255, 210, 40); textSize(18); text(nf(coins, 5), 12, 34);
 
   fill(0, 160, 255); textSize(13); text('◈ BASE HP', 145, 15);
-  fill(lerpColor(color(220,30,30), color(0,220,140), baseHp/20));
+  fill(lerpColor(color(220,30,30), color(0,220,140), baseHp/baseHpMax));
   textSize(18); text(nf(baseHp, 2) + '/' + baseHpMax, 145, 34);
   
   fill(0, 160, 255); textSize(13); text('◈ WAVE', 285, 15);
@@ -206,89 +206,11 @@ function drawHUD() {
   // 例如：道具栏、技能冷却、波次奖励预览等
 }
 
-//暂时添加：波次结束面板，于承印临时实现
-// ── 波次结束面板状态 ──
-let waveEndPanelVisible = false;
-let waveEndButtonRect   = null;
-
-function showWaveEndPanel() {
-  waveEndPanelVisible = true;
-  waveEndButtonRect   = null;
-  // 清空当前建造/升级选择，避免误操作残留
-  selectedTowerType = null;
-  selectedTower     = null;
-}
-
-function handleWaveEndClick(mx, my) {
-  if (!waveEndPanelVisible) return false;
-  // 只要面板在，就拦截所有点击，避免穿透到建造/升级
-  if (waveEndButtonRect &&
-      mx >= waveEndButtonRect.x &&
-      mx <= waveEndButtonRect.x + waveEndButtonRect.w &&
-      my >= waveEndButtonRect.y &&
-      my <= waveEndButtonRect.y + waveEndButtonRect.h) {
-    waveEndPanelVisible = false;
-    waveEndButtonRect   = null;
-    // 用户确认后再进入投球小游戏
-    if (typeof startMinigame === 'function' && minigameState === 'idle') {
-      startMinigame();
-    }
-    return true;
-  }
-  return true;
-}
-
 // ============================================================
 //  波次倒计时 & 通关提示（李卓伦负责，以下为临时实现）
 // ============================================================
 function drawWaveUI() {
   textFont('monospace');
-
-  // 优先绘制“波次结束确认”面板；暂时更改
-  if (waveEndPanelVisible && waveState === 'countdown' && minigameState === 'idle') {
-    const w = width * 0.7;
-    const h = 140;
-    const x = (width - w) / 2;
-    const y = height / 2 - h / 2;
-    const pulse = sin(frameCount * 0.12) * 0.3 + 0.7;
-
-    noStroke();
-    fill(5, 10, 25, 210);
-    rect(x, y, w, h, 10);
-
-    stroke(0, 180, 255, 160);
-    strokeWeight(1.6);
-    line(x, y + 32, x + w, y + 32);
-
-    noStroke();
-    fill(0, 210, 255, 235);
-    textSize(16); textAlign(CENTER, CENTER);
-    text('WAVE ' + nf(waveNum, 2) + ' CLEARED', x + w / 2, y + 18);
-
-    fill(210, 230, 255, 230);
-    textSize(12);
-    text('点击“确定”进入下一阶段投球小游戏，结算奖励并准备下一波敌人。', x + w / 2, y + 54);
-
-    // 确认按钮
-    const btnW = 120, btnH = 30;
-    const btnX = x + w / 2 - btnW / 2;
-    const btnY = y + h - 18 - btnH;
-    waveEndButtonRect = { x: btnX, y: btnY, w: btnW, h: btnH };
-
-    fill(0, 180, 110, 200 + 30 * pulse);
-    stroke(0, 230, 150, 210);
-    strokeWeight(1.4);
-    rect(btnX, btnY, btnW, btnH, 6);
-
-    noStroke();
-    fill(230, 255, 240, 245);
-    textSize(13);
-    text('确定', btnX + btnW / 2, btnY + btnH / 2);
-
-    textAlign(LEFT, BASELINE);
-    return;
-  }
-
   if (waveState === 'countdown') {
     const nextW = waveNum + 1;
     const pulse = sin(frameCount*0.15)*0.3+0.7;
@@ -334,23 +256,24 @@ function drawWaveUI() {
 function drawBuildMenu() {
   textFont('monospace'); noStroke();
   
-  // 6个塔，每个宽105 + 间隔，总宽约 640
-  const btnW = 100;
-  const spacing = 6;
-  const menuWidth = 6 * (btnW + spacing) + 4;
+  // 7个塔，压缩按钮宽度以适应屏幕（14格×70=980px宽）
+  const btnW = 86;
+  const spacing = 5;
+  const menuWidth = 7 * (btnW + spacing) + 4;
   
   // 背景板
   fill(5, 10, 22, 220); stroke(0, 130, 200, 120); strokeWeight(1.5);
   rect(0, BUILD_BTN_Y, menuWidth, 48, 0, 0, 6, 0);
 
-  const types = ['basic', 'rapid', 'area', 'sniperAA', 'laser', 'frost'];
+  const types = ['basic', 'rapid', 'area', 'sniperAA', 'laser', 'nova', 'frost'];
   const displayNames = {
-    basic: "SENTRY",
-    rapid: "STINGER",
-    area: "NOVA",
+    basic:    "SENTRY",
+    rapid:    "STINGER",
+    area:     "ORBIT",
     sniperAA: "SKYFALL",
-    laser: "BEAM",
-    frost: "GLACIER"
+    laser:    "BEAM",
+    nova:     "NOVA",
+    frost:    "GLACIER"
   };
 
   for (let i = 0; i < types.length; i++) {
@@ -389,7 +312,7 @@ function drawBuildMenu() {
 
   // 取消按钮 (紧跟在最后)
   if (selectedTowerType) {
-    const bx = 6 + 6 * (btnW + spacing), by = BUILD_BTN_Y + 6;
+    const bx = 6 + 7 * (btnW + spacing), by = BUILD_BTN_Y + 6;
     fill(80, 20, 20, 200); stroke(255, 60, 60, 180);
     rect(bx, by, 40, 36, 4);
     fill(255, 100, 100); textAlign(CENTER, CENTER); textSize(12);
@@ -403,57 +326,72 @@ function drawBuildMenu() {
 function drawTowerPanel() {
   if (!selectedTower) return;
   const t = selectedTower;
-  const panelW = 170, panelH = 145;
+  const panelW = 178, panelH = 158;
   let px = t.px + 35, py = t.py - 30;
   px = constrain(px, 0, width-panelW-4);
   py = constrain(py, HUD_HEIGHT+4, height-panelH-4);
 
-  fill(5,10,22,220); stroke(0,180,255,160); strokeWeight(1.2);
+  fill(5,10,22,225); stroke(0,180,255,160); strokeWeight(1.2);
   rect(px, py, panelW, panelH, 4);
 
   const def = TOWER_DEFS[t.type];
   const [r,g,b] = t.col;
+  const isMaxed = (t.level >= 3);
+
   fill(r,g,b,220); noStroke(); textFont('monospace'); textSize(10);
-  text(def.name + (t.upgraded?' ★':''), px+8, py+16);
+  text(def.name + '  Lv.' + t.level + (isMaxed ? ' ★MAX' : ''), px+8, py+16);
 
   stroke(0,140,220,100); strokeWeight(1); line(px+6,py+22,px+panelW-6,py+22);
 
   fill(180,220,255,200); noStroke(); textSize(9);
-  text('ATK   ' + t.dmg,  px+10, py+36);
-  text('RNG   ' + t.range, px+10, py+50);
-  text('SPD   ' + (t.upgraded?'↑':'') + Math.round(60/t.fireRate*10)/10 + '/s', px+10, py+64);
-  if (t.antiAir) { fill(255,160,30,200); text('◆ 防空', px+100, py+36); }
+  text('ATK  ' + t.dmg,  px+10, py+36);
+  text('RNG  ' + t.range, px+10, py+50);
+  text('SPD  ' + Math.round(60/t.fireRate*10)/10 + '/s', px+10, py+64);
 
-  if (!t.upgraded) {
-    const btnY = py+76;
+  // 特殊属性行
+  let specialY = py + 78;
+  if (t.type === 'laser') {
+    fill(0, 255, 150, 210); noStroke(); textSize(9);
+    text('◆ 多目标锁定 ×' + t.level, px+10, specialY);
+    specialY += 14;
+  } else if (t.type === 'nova') {
+    fill(255, 160, 50, 210); noStroke(); textSize(9);
+    text('◆ 范围光波  ×' + t.level + '道', px+10, specialY);
+    specialY += 14;
+  } else if (t.antiAir) {
+    fill(255,170,40,200); noStroke(); textSize(9);
+    text('◆ 防空 / JAM免疫', px+10, specialY);
+    specialY += 14;
+  }
+
+  if (!isMaxed) {
+    const btnY = specialY;
     const canUpg = coins >= t.upgradeCost;
-    fill(canUpg?color(0,160,80,200):color(60,60,60,180));
-    stroke(canUpg?color(0,220,100,200):color(100,100,100,120)); strokeWeight(1);
-    rect(px+8, btnY, panelW-16, 22, 3);
-    fill(canUpg?color(180,255,200,230):color(140,140,140,180));
+    fill(canUpg?color(0,150,75,200):color(55,55,55,180));
+    stroke(canUpg?color(0,210,95,200):color(95,95,95,120)); strokeWeight(1);
+    rect(px+8, btnY, panelW-16, 24, 3);
+    fill(canUpg?color(175,255,195,230):color(135,135,135,180));
     noStroke(); textSize(9); textAlign(CENTER,CENTER);
-    text('升级  花费 '+t.upgradeCost+' 金币', px+panelW/2, btnY+11);
+    text('升级至 Lv.'+(t.level+1)+'  ¥'+t.upgradeCost, px+panelW/2, btnY+12);
     textAlign(LEFT,BASELINE);
-    t._btnRect = { x:px+8, y:btnY, w:panelW-16, h:22 };
+    t._btnRect = { x:px+8, y:btnY, w:panelW-16, h:24 };
   } else {
-    fill(255,200,50,160); noStroke(); textSize(9); textAlign(CENTER,CENTER);
-    text('已升级（满级）', px+panelW/2, py+87);
+    fill(255,200,50,155); noStroke(); textSize(9); textAlign(CENTER,CENTER);
+    text('★ 已达满级 MAX', px+panelW/2, specialY+8);
     textAlign(LEFT,BASELINE);
     t._btnRect = null;
   }
 
-// 拆除按钮
-  const delBtnY = py + 104;
-  fill(80, 20, 20, 200);
-  stroke(200, 60, 60, 180); strokeWeight(1);
-  rect(px + 8, delBtnY, panelW - 16, 20, 3);
-  fill(255, 100, 100, 230); noStroke(); textSize(9); textAlign(CENTER, CENTER);
+  const delBtnY = py + panelH - 34;
+  fill(75,18,18,200); stroke(195,55,55,175); strokeWeight(1);
+  rect(px+8, delBtnY, panelW-16, 22, 3);
+  fill(255,100,100,230); noStroke(); textSize(9); textAlign(CENTER,CENTER);
   const refund = Math.floor(TOWER_DEFS[t.type].cost * 0.8);
-  text('拆除  退还 ' + refund + ' 金币', px + panelW / 2, delBtnY + 10);
-  textAlign(LEFT, BASELINE);
-  t._delRect = { x: px + 8, y: delBtnY, w: panelW - 16, h: 20 };
+  text('拆除  退还 ¥' + refund, px+panelW/2, delBtnY+11);
+  textAlign(LEFT,BASELINE);
+  t._delRect = { x:px+8, y:delBtnY, w:panelW-16, h:22 };
 
-  fill(100,140,180,130); noStroke(); textSize(8); textAlign(CENTER,CENTER);
+  fill(95,135,175,125); noStroke(); textSize(8); textAlign(CENTER,CENTER);
   text('[ 点击其他处关闭 ]', px+panelW/2, py+panelH-7);
   textAlign(LEFT,BASELINE);
 }
@@ -498,13 +436,13 @@ function drawPlacementPreview() {
 // ============================================================
 function handlePlacementClick(mx, my) {
   // 建造菜单区域
-  const btnW = 100;    // 必须与 drawBuildMenu 中的按钮宽度一致
-  const spacing = 6;   // 必须与 drawBuildMenu 中的间距一致
+  const btnW = 86;    // 必须与 drawBuildMenu 中的按钮宽度一致
+  const spacing = 5;   // 必须与 drawBuildMenu 中的间距一致
 
   // 建造菜单区域高度判定
   if (my >= BUILD_BTN_Y && my < BUILD_BTN_Y + 48) {
-    // 包含所有 6 种塔的类型数组
-    const types = ['basic', 'rapid', 'area', 'sniperAA', 'laser', 'frost'];
+    // 包含所有 7 种塔的类型数组
+    const types = ['basic', 'rapid', 'area', 'sniperAA', 'laser', 'nova', 'frost'];
     
     for (let i = 0; i < types.length; i++) {
       // 计算第 i 个按钮的左侧起始 X 坐标
@@ -518,8 +456,8 @@ function handlePlacementClick(mx, my) {
       }
     }
 
-    // 取消按钮 (X) 的判定：位置在第 6 个塔之后
-    const cancelX = 6 + 6 * (btnW + spacing);
+    // 取消按钮 (X) 的判定：位置在第 7 个塔之后
+    const cancelX = 6 + 7 * (btnW + spacing);
     if (selectedTowerType && mx >= cancelX && mx < cancelX + 40) {
       selectedTowerType = null;
       return true;

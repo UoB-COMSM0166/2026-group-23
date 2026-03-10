@@ -99,20 +99,25 @@ class Monster {
 // ── 机械蛇 ──
 class MechSnake extends Monster {
   constructor(path) {
-    super(path, 120, 0.85, 20);
+    super(path, 160, 0.95, 18);
     this.radius = 9; this.deathColor = color(160, 30, 5);
     this.waveTime = 0; this.breathe = 0;
     this.history = Array(120).fill(null).map(() => ({ x: path[0].x, y: path[0].y }));
     this.healTimer = 0; this.healEffect = 0;
+    this.HEAL_RADIUS = 260;
   }
   move() {
     this.waveTime += 0.13; this.breathe += 0.08; this.healTimer++;
-    if (this.healTimer >= 900) {
-      this.healTimer = 0; this.healEffect = 50;
+    if (this.healTimer >= 600) {
+      this.healTimer = 0; this.healEffect = 60;
       if (typeof manager !== 'undefined') {
         for (const m of manager.monsters) {
-          if (m.alive && !(m instanceof BossFission) && !(m instanceof BossPhantom) && !(m instanceof BossAntMech))
-            m.hp = min(m.maxHp, m.hp + floor(m.maxHp * 0.05));
+          if (!m.alive) continue;
+          const d = distAB(this.pos, m.pos);
+          if (d > this.HEAL_RADIUS) continue;
+          if (m instanceof BossAntMech) continue;
+          const isBoss = (m instanceof BossFission)||(m instanceof BossPhantom);
+          m.hp = min(m.maxHp, m.hp + floor(m.maxHp * (isBoss ? 0.08 : 0.15)));
         }
       }
     }
@@ -158,11 +163,13 @@ class MechSnake extends Monster {
     noStroke(); fill(210,38,8, 120+sin(this.breathe)*50); ellipse(-1,-4,4,3); ellipse(7,-4,4,3);
     pop(); pop();
     if (this.healEffect > 0) {
-      const t = this.healEffect / 50;
-      noFill(); stroke(30,220,80,t*180); strokeWeight(2);
-      ellipse(this.history[0].x, this.history[0].y, (1-t)*120+10, (1-t)*120+10);
-      fill(80,255,120,t*200); noStroke(); textSize(10); textAlign(CENTER);
-      text('+HEAL ALL', this.history[0].x, this.history[0].y - 28);
+      const t = this.healEffect / 60;
+      noFill(); stroke(30,220,80,t*150); strokeWeight(2.5);
+      ellipse(this.history[0].x, this.history[0].y, (1-t)*this.HEAL_RADIUS*2+10, (1-t)*this.HEAL_RADIUS*2+10);
+      noFill(); stroke(80,255,120,t*80); strokeWeight(1);
+      ellipse(this.history[0].x, this.history[0].y, (1-t)*this.HEAL_RADIUS*2+40, (1-t)*this.HEAL_RADIUS*2+40);
+      fill(80,255,120,t*210); noStroke(); textSize(10); textAlign(CENTER);
+      text('+AREA HEAL', this.history[0].x, this.history[0].y - 28);
     }
   }
 }
@@ -170,11 +177,11 @@ class MechSnake extends Monster {
 // ── 机械天蛛 ──
 class MechSpider extends Monster {
   constructor(path) {
-    super(path, 90, 1.25, 25);
+    super(path, 140, 1.35, 26);
     this.radius = 16; this.deathColor = color(110, 55, 8);
     this.legTime = 0; this.stopTimer = 0; this.stopped = false; this.pulse = 0;
     this.dashTimer = 0; this.dashing = false; this.dashFrames = 0;
-    this.dashEffect = 0; this.baseSpd = 1.25;
+    this.dashEffect = 0; this.baseSpd = 1.35;
   }
   move() {
     this.legTime += 0.16; this.stopTimer++; this.pulse += 0.07; this.dashTimer++;
@@ -232,7 +239,7 @@ class MechSpider extends Monster {
 // ── 机器人 ──
 class MechRobot extends Monster {
   constructor(path) {
-    super(path, 200, 1.0, 25);
+    super(path, 300, 0.95, 30);
     this.radius = 18; this.deathColor = color(60,160,255);
     this.walkTime = 0; this.corePulse = 0;
     this.shielded = false; this.shieldHp = 0; this.shieldPulse = 0; this.shieldTriggered = false;
@@ -314,12 +321,12 @@ class MechRobot extends Monster {
 // ── 机械烈焰鸟 ──
 class MechPhoenix extends Monster {
   constructor(path) {
-    super(path, 70, 1.85, 30);
+    super(path, 95, 1.9, 32);
     this.isFlying = true;
     this.radius = 16; this.deathColor = color(200, 50, 5);
-    this.baseSpd = 1.85; this.wingTime = 0; this.diveTimer = 0;
+    this.baseSpd = 2.0; this.wingTime = 0; this.diveTimer = 0;
     this.diving = false; this.floatY = 0; this.trail = []; this.boneAngle = 0;
-    this.jamTimer = 0; this.jamming = false; this.jamEffect = 0; this.jamRadius = 120;
+    this.jamTimer = 0; this.jamming = false; this.jamEffect = 0; this.jamRadius = 150;
   }
   move() {
     this.wingTime += 0.22; this.diveTimer++;
@@ -380,7 +387,7 @@ class MechPhoenix extends Monster {
 // ── Boss 裂变核心 ──
 class BossFission extends Monster {
   constructor(path) {
-    super(path, 2000, 0.4, 150);
+    super(path, 2200, 0.4, 160);
     this.radius = 28; this.deathColor = color(255,120,20);
     this.armAngle = 0; this.crackLevel = 0; this.overloading = false;
     this.overloadTimer = 0; this.splitDone = false; this.pulseFire = 0;
@@ -477,7 +484,7 @@ class BossFission extends Monster {
 // ── Boss 幽灵协议 ──
 class BossPhantom extends Monster {
   constructor(path) {
-    super(path, 600, 0.9, 250);
+    super(path, 700, 0.88, 260);
     this.radius = 18; this.deathColor = color(180,220,255);
     this.walkTime = 0; this.corePulse = 0;
     this.hitCount = 0; this.invincible = 0; this.ghost = 0;
@@ -578,7 +585,7 @@ class BossPhantom extends Monster {
 // ── Boss 相变战士 ──
 class BossAntMech extends Monster {
   constructor(path) {
-    super(path, 3500, 0.75, 500);
+    super(path, 4200, 0.72, 520);
     this.radius = 18; this.deathColor = color(80,255,120);
     this.walkTime = 0; this.corePulse = 0;
     this.phaseState = 'normal'; this.phaseTimer = 0;
@@ -701,20 +708,55 @@ class BossAntMech extends Monster {
 // ============================================================
 class MonsterManager {
   constructor() { this.monsters=[]; this.queue=[]; this.fc=0; this.onKilled=null; this.onReach=null; }
+
   enqueueWave(type,count,interval,startDelay) {
     interval=interval||60; startDelay=startDelay||0;
     for (let i=0;i<count;i++) this.queue.push({type,frame:this.fc+startDelay+i*interval});
   }
+
   spawn(type) {
-    if (type==='snake')   return new MechSnake(MAIN_PATH_PX);
-    if (type==='spider')  return new MechSpider(EDGE_PATH_PX);
-    if (type==='robot')   return new MechRobot(MAIN_PATH_PX);
-    if (type==='phoenix') return new MechPhoenix(AIR_PATH_PX);
-    if (type==='boss1')   return new BossFission(MAIN_PATH_PX);
-    if (type==='boss2')   return new BossPhantom(MAIN_PATH_PX);
-    if (type==='boss3')   return new BossAntMech(MAIN_PATH_PX);
-    return null;
+    // 蛇/蜘蛛/机器人随机走主路或边路
+    const groundPath = () => (random()<0.5 ? MAIN_PATH_PX : EDGE_PATH_PX);
+    let m = null;
+    if (type==='snake')   m = new MechSnake(groundPath());
+    else if (type==='spider')  m = new MechSpider(groundPath());
+    else if (type==='robot')   m = new MechRobot(groundPath());
+    else if (type==='phoenix') m = new MechPhoenix(AIR_PATH_PX);
+    else if (type==='boss1')   m = new BossFission(MAIN_PATH_PX);
+    else if (type==='boss2')   m = new BossPhantom(MAIN_PATH_PX);
+    else if (type==='boss3')   m = new BossAntMech(MAIN_PATH_PX);
+    if (!m) return null;
+
+    // ── 波次成长系数 ──
+    // 普通怪：每波 HP×1.13，速度×1.04（Wave10 ≈ HP×3.0，速度×1.4）
+    // Boss：每波 HP×1.09（基数大，慢一点）
+    // 奖励同步上涨，后期打怪更值钱
+    const wave = (typeof waveNum !== 'undefined') ? max(1, waveNum) : 1;
+    const n    = wave - 1;
+    const isBoss = (m instanceof BossFission)||(m instanceof BossPhantom)||(m instanceof BossAntMech);
+
+    const hpMult  = isBoss ? pow(1.09, n) : pow(1.13, n);
+    const spdMult = isBoss ? 1            : min(pow(1.04, n), 1.45); // Boss不加速，普通怪限制上限
+    const rewMult = pow(1.10, n);
+
+    const newHp = floor(m.hp * hpMult);
+    m.hp = newHp; m.maxHp = newHp;
+    m.spd *= spdMult;
+    if (m.baseSpd !== undefined) m.baseSpd = m.spd;
+    m.reward = floor(m.reward * rewMult);
+
+    return m;
   }
+
+  // 怪物到达终点扣血量（设计：50HP，小怪漏20只死，Boss漏1只损失惨重）
+  _reachDmg(m) {
+    if (m instanceof BossAntMech)  return 15;
+    if (m instanceof BossFission || m instanceof BossPhantom) return 10;
+    if (m instanceof MechRobot)    return 4;
+    if (m instanceof MechPhoenix)  return 3;
+    return 2; // snake / spider
+  }
+
   damageAt(tx,ty,dmg,antiAir,fromSide) {
     antiAir=antiAir||false; fromSide=fromSide||false;
     for (const m of this.monsters) {
@@ -726,6 +768,7 @@ class MonsterManager {
       }
     }
   }
+
   damageInRadius(cx,cy,radius,dmg,antiAir) {
     antiAir=antiAir||false;
     for (const m of this.monsters) {
@@ -737,6 +780,7 @@ class MonsterManager {
       }
     }
   }
+
   getMonstersInRange(cx,cy,range,antiAir) {
     antiAir=antiAir||false;
     return this.monsters.filter(m=>{
@@ -746,6 +790,7 @@ class MonsterManager {
       return distAB(m.pos,{x:cx,y:cy})<=range;
     });
   }
+
   update() {
     this.fc++;
     for (let i=this.queue.length-1;i>=0;i--) {
@@ -755,11 +800,130 @@ class MonsterManager {
         this.queue.splice(i,1);
       }
     }
+
     for (const m of this.monsters) {
       m.update();
-      if (m.reached&&this.onReach) { this.onReach(m); m.reached=false; }
-      if (!m.alive&&this.onKilled) this.onKilled(m);
+
+      // ── Home塔碰撞：怪物进入基地半径立即死亡并扣血 ──
+      if (m.alive && typeof homeTowers !== 'undefined') {
+        for (const ht of homeTowers) {
+          if (distAB(m.pos, {x:ht.px, y:ht.py}) <= ht.radius + m.radius) {
+            const dmg = this._reachDmg(m);
+            spawnParticles(m.pos.x, m.pos.y, m.deathColor, 18);
+            m.alive = false;
+            ht.triggerHit();
+            if (this.onReach) this.onReach(m, dmg);
+            break;
+          }
+        }
+      }
+
+      // ── 路径终点兜底 ──
+      if (m.alive && m.reached) {
+        const dmg = this._reachDmg(m);
+        m.alive = false;
+        if (typeof homeTowers !== 'undefined' && homeTowers.length > 0) homeTowers[0].triggerHit();
+        if (this.onReach) this.onReach(m, dmg);
+      }
+
+      if (!m.alive && this.onKilled) this.onKilled(m);
     }
-    this.monsters=this.monsters.filter(m=>m.alive&&!m.reached);
+    this.monsters = this.monsters.filter(m => m.alive);
+  }
+}
+
+// ============================================================
+//  HomeTower — 科幻风格基地（路径终点）
+// ============================================================
+class HomeTower {
+  constructor(x, y) {
+    this.px = x; this.py = y;
+    this.pulseTime = 0;
+    this.hitFlash  = 0;
+    this.shieldAngle = 0;
+    this.dmgEffect = 0;
+    this.radius = 30;
+  }
+
+  update() {
+    this.pulseTime  += 0.04;
+    this.shieldAngle += 0.013;
+    if (this.hitFlash  > 0) this.hitFlash--;
+    if (this.dmgEffect > 0) this.dmgEffect--;
+  }
+
+  triggerHit() {
+    this.hitFlash  = 22;
+    this.dmgEffect = 32;
+    spawnParticles(this.px, this.py, color(255, 50, 50), 16);
+  }
+
+  draw() {
+    const p = sin(this.pulseTime) * 0.35 + 0.65;
+    push(); translate(this.px, this.py);
+
+    // 外六边形护盾
+    push(); rotate(this.shieldAngle);
+    const sAlpha = this.hitFlash > 0 ? 240 : 85;
+    const sCol   = this.hitFlash > 0 ? color(255,80,80,sAlpha) : color(0,200,255,sAlpha);
+    noFill(); stroke(sCol); strokeWeight(this.hitFlash>0 ? 2.5 : 1.5);
+    beginShape();
+    for (let k=0;k<6;k++) vertex(cos(k*PI/3)*44, sin(k*PI/3)*44);
+    endShape(CLOSE);
+    pop();
+
+    // 内旋转八边形
+    push(); rotate(-this.shieldAngle*1.7);
+    noFill(); stroke(0,180,255,55*p); strokeWeight(1);
+    beginShape();
+    for (let k=0;k<8;k++) vertex(cos(k*PI/4)*33, sin(k*PI/4)*33);
+    endShape(CLOSE);
+    pop();
+
+    // 受击冲击波
+    if (this.dmgEffect > 0) {
+      const t = this.dmgEffect/32;
+      noFill(); stroke(255,60,60,t*200); strokeWeight(3.5);
+      ellipse(0,0,(1-t)*85+8,(1-t)*85+8);
+    }
+
+    // 主体底座
+    const baseCol = this.hitFlash>0 ? color(75,8,8) : color(8,18,38);
+    fill(baseCol); stroke(this.hitFlash>0?color(255,80,80):color(0,160,255),175); strokeWeight(2);
+    beginShape();
+    vertex(0,-29); vertex(21,-19); vertex(27,0); vertex(21,19);
+    vertex(0,27); vertex(-21,19); vertex(-27,0); vertex(-21,-19);
+    endShape(CLOSE);
+
+    // 核心塔身
+    fill(12,25,52); stroke(0,180,255,195); strokeWeight(1.5);
+    beginShape();
+    vertex(0,-21); vertex(13,-13); vertex(17,0);
+    vertex(13,13); vertex(0,17); vertex(-13,13); vertex(-17,0); vertex(-13,-13);
+    endShape(CLOSE);
+
+    // 中央能量核
+    const cSize = 9 + sin(this.pulseTime*3)*2.2;
+    const cCol  = this.hitFlash>0 ? color(255,80,60) : color(0,220,255);
+    fill(cCol); noStroke(); ellipse(0,0,cSize,cSize);
+    fill(255,255,255,175); ellipse(0,0,cSize*0.38,cSize*0.38);
+
+    // 四炮台
+    for (let k=0;k<4;k++) {
+      push(); rotate(k*HALF_PI + this.shieldAngle*0.28);
+      fill(15,30,58); stroke(0,155,215,150); strokeWeight(1);
+      rectMode(CENTER); rect(15,0,9,7,2);
+      fill(0,195,255,130+sin(this.pulseTime+k)*55); noStroke(); ellipse(20,0,4.5,4.5);
+      pop();
+    }
+
+    // 标签
+    noStroke(); fill(0,215,255,195*p);
+    textFont('monospace'); textSize(7); textAlign(CENTER,CENTER);
+    text('[ HOME BASE ]', 0, -42);
+    const hpRatio = baseHp/baseHpMax;
+    fill(lerpColor(color(255,30,30),color(0,215,140),hpRatio), 200);
+    textSize(6.5); text('HP  '+baseHp+'/'+baseHpMax, 0, -52);
+    pop();
   }
 }
