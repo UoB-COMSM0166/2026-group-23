@@ -21,7 +21,7 @@ function drawDifficultySelect() {
   const pulse = sin(frameCount * 0.07) * 0.3 + 0.7;
   noStroke();
   fill(0, 200, 255, 220 * pulse); textSize(28);
-  text('数字塔防  NUMBER DEFENSE', width / 2, height / 2 - 155);
+  text('Quantum Drop', width / 2, height / 2 - 155);
   fill(0, 140, 200, 160 * pulse); textSize(11);
   text('SELECT DIFFICULTY', width / 2, height / 2 - 118);
 
@@ -59,7 +59,7 @@ function drawDifficultySelect() {
 
   // 底部提示
   noStroke(); fill(0, 140, 200, 120 * pulse); textSize(10);
-  text('点击卡片选择难度，游戏立即开始', width / 2, height / 2 + 175);
+  text('choose a difficulty level to start the game', width / 2, height / 2 + 175);
   textAlign(LEFT, BASELINE);
 }
 
@@ -107,7 +107,7 @@ function _drawDiffCard(x, y, w, h, col, title, subtitle, lines) {
   rect(x + 16, btnY, w - 32, 30, 8);
   fill(hovered ? color(255, 255, 255, 240) : color(r, g, b, 220));
   textSize(12); textAlign(CENTER, CENTER);
-  text(hovered ? '▶  开始游戏' : '选择', x + w / 2, btnY + 15);
+  text(hovered ? '▶  START' : 'SELECT', x + w / 2, btnY + 15);
 
   textAlign(LEFT, BASELINE);
 }

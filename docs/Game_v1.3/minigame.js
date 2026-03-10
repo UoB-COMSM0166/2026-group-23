@@ -656,7 +656,8 @@ function drawAimUI() {
 
   // 提示
   fill(0, 200, 255, 200); textSize(13);
-  text('移动鼠标瞄准  点击发射', MG.x + MG.w / 2, MG.y + MG.h / 2);
+  text('Click to launch', MG.x + MG.w / 2, MG.y + MG.h / 2);
+  text('Click to launch', MG.x + MG.w / 2, MG.y + MG.h / 2);
   textAlign(LEFT, BASELINE);
 }
 
@@ -678,7 +679,7 @@ function drawResultUI() {
   text('— MINIGAME SETTLEMENT —', cx, cy - 68);
 
   fill(0, 255, 175, 220); textSize(14);
-  text('落底小球：' + landedBalls + ' 个', cx, cy - 32);
+  text('LandedBalls：' + landedBalls + ' ', cx, cy - 32);
 
   fill(255, 215, 40, 240); textSize(34);
   text('+ ¥' + minigameResult, cx, cy + 12);
