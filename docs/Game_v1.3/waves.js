@@ -1,22 +1,30 @@
 // ============================================================
 //  waves.js — 波次配置与波次推进系统
-//  负责人：张洵
 // ============================================================
 
 const WAVE_CONFIG = [
-  [ ['snake',6,190,0] ],
-  [ ['snake',7,175,0], ['spider',6,185,60] ],
-  [ ['snake',5,160,0], ['spider',4,170,50], ['boss1',1,9999,20] ],
-  [ ['snake',8,155,0], ['spider',7,160,40], ['robot',5,180,80], ['phoenix',3,220,160] ],
-  [ ['snake',6,145,0], ['spider',5,150,30], ['robot',5,165,80], ['phoenix',4,200,160], ['boss2',1,9999,40] ],
-  [ ['snake',9,140,0], ['spider',8,145,35], ['robot',6,160,80], ['phoenix',5,190,150] ],
-  [ ['snake',10,125,0], ['spider',9,130,30], ['robot',8,145,65], ['phoenix',6,175,130] ],
-  [ ['snake',12,110,0], ['spider',10,115,25], ['robot',9,130,60], ['phoenix',8,155,120] ],
-  [ ['snake',12,100,0], ['spider',11,105,20], ['robot',10,120,55], ['phoenix',9,140,110] ],
-  [ ['snake',8,120,0], ['spider',7,125,30], ['robot',6,140,70], ['phoenix',5,165,130], ['boss3',1,9999,50] ],
+  // Wave 1 — 入门：蛇+蜘蛛
+  [ ['snake',6,190,0], ['spider',4,185,60] ],
+  // Wave 2 — 加入坦克
+  [ ['snake',7,175,0], ['spider',6,185,60], ['tank',2,240,90] ],
+  // Wave 3 — Boss1 + 两种空中怪，错开出场（随机offset由launchWave动态处理）
+  [ ['snake',5,160,0], ['spider',4,170,50], ['phoenix',2,220,100], ['ghostbird',2,220,160], ['boss1',1,9999,20] ],
+  // Wave 4 — 机器人，两鸟错开
+  [ ['snake',8,155,0], ['spider',7,160,40], ['robot',5,180,80], ['phoenix',3,210,130], ['ghostbird',3,200,185] ],
+  // Wave 5 — Boss2 + 坦克
+  [ ['snake',6,145,0], ['spider',5,150,30], ['robot',5,165,80], ['tank',3,200,60], ['phoenix',4,195,120], ['ghostbird',4,185,175], ['boss2',1,9999,40] ],
+  // Wave 6
+  [ ['snake',9,140,0], ['spider',8,145,35], ['robot',6,160,80], ['tank',3,190,60], ['phoenix',5,185,110], ['ghostbird',5,175,165] ],
+  // Wave 7
+  [ ['snake',10,125,0], ['spider',9,130,30], ['robot',8,145,65], ['tank',4,175,50], ['phoenix',6,170,100], ['ghostbird',6,160,150] ],
+  // Wave 8
+  [ ['snake',12,110,0], ['spider',10,115,25], ['robot',9,130,60], ['tank',4,160,45], ['phoenix',8,150,90], ['ghostbird',8,140,140] ],
+  // Wave 9
+  [ ['snake',12,100,0], ['spider',11,105,20], ['robot',10,120,55], ['tank',5,150,40], ['phoenix',9,135,80], ['ghostbird',9,125,130] ],
+  // Wave 10 — 最终关：全部怪 + Boss3
+  [ ['snake',8,120,0], ['spider',7,125,30], ['robot',6,140,70], ['tank',3,180,50], ['phoenix',5,160,100], ['ghostbird',5,150,155], ['boss3',1,9999,50] ],
 ];
 
-// 波次间隔倒计时（小游戏结束后才开始计）
 let waveCountdownActive = false;
 
 function launchWave(n) {
@@ -26,15 +34,19 @@ function launchWave(n) {
   if (n <= 0 || n > WAVE_CONFIG.length) return;
   const cfg = WAVE_CONFIG[n - 1];
   for (const [type, count, interval, delay] of cfg) {
-    manager.enqueueWave(type, count, interval, delay);
+    // 给两种飞行怪各加随机偏移，让它们不会并排贴着出现
+    let actualDelay = delay;
+    if (type === 'phoenix' || type === 'ghostbird') {
+      actualDelay = delay + Math.floor(Math.random() * 80);
+    }
+    manager.enqueueWave(type, count, interval, actualDelay);
   }
 }
 
-// 游戏启动时调用，先触发小游戏，小游戏结束后再开始倒计时
 function beginAutoWave() {
   waveNum = 0;
   waveState = 'countdown';
-  waveCountdownActive = false;   // 等小游戏结束后才激活
+  waveCountdownActive = false;
   waveCountdownEnd    = 0;
   if (typeof startMinigame === 'function') {
     startMinigame();
@@ -46,13 +58,11 @@ function updateWaveSystem() {
   if (waveState === 'waiting')  return;
 
   if (waveState === 'countdown') {
-    // 如果小游戏刚结束（idle），且当前没有波次结束确认面板，才激活倒计时
     const panelActive = (typeof waveEndPanelVisible !== 'undefined') && waveEndPanelVisible;
     if (!waveCountdownActive && minigameState === 'idle' && !panelActive) {
       waveCountdownActive = true;
       waveCountdownEnd    = frameCount + COUNTDOWN_FRAMES;
     }
-    // 倒计时激活后才推进
     if (waveCountdownActive && frameCount >= waveCountdownEnd) {
       launchWave(waveNum + 1);
     }
@@ -64,14 +74,12 @@ function updateWaveSystem() {
       if (waveNum >= TOTAL_WAVES) {
         waveState = 'complete';
       } else {
-        // 本波结束 → 切到 countdown，由 UI 弹出确认面板，确认后再进入小游戏
         waveState = 'countdown';
         waveCountdownActive = false;
         waveCountdownEnd    = 0;
         if (typeof showWaveEndPanel === 'function') {
           showWaveEndPanel();
         } else if (typeof startMinigame === 'function' && minigameState === 'idle') {
-          // 兜底：若无 UI 面板实现，则保持旧行为，直接进入小游戏
           startMinigame();
         }
       }

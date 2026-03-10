@@ -73,7 +73,19 @@ class Monster {
     }
   }
   move() {
-    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd);
+    // 应用磁场减速（由 MAGNET 塔每帧设置）
+    let spdMult = 1.0;
+    if (this._magnetFactor !== undefined && this._magnetFactor < 1.0) {
+      const curFrame = typeof frameCount !== 'undefined' ? frameCount : 0;
+      // 只在刚刚被设置的帧（同帧）生效
+      if (this._magnetFrame === curFrame) {
+        spdMult = this._magnetFactor;
+      } else {
+        this._magnetFactor = 1.0; // 超过一帧未刷新，失效
+      }
+    }
+    const effectiveSpd = this.spd * spdMult;
+    const r = moveAlongPath(this.pos, this.seg, this.path, effectiveSpd);
     this.pos = r.pos; this.seg = r.seg;
     this.progress = calcProgress(this.pos, this.seg, this.path);
     if (this.seg >= this.path.length - 1) this.reached = true;
@@ -99,7 +111,7 @@ class Monster {
 // ── 机械蛇 ──
 class MechSnake extends Monster {
   constructor(path) {
-    super(path, 160, 0.95, 18);
+    super(path, 320, 0.95, 18);
     this.radius = 9; this.deathColor = color(160, 30, 5);
     this.waveTime = 0; this.breathe = 0;
     this.history = Array(120).fill(null).map(() => ({ x: path[0].x, y: path[0].y }));
@@ -177,7 +189,7 @@ class MechSnake extends Monster {
 // ── 机械天蛛 ──
 class MechSpider extends Monster {
   constructor(path) {
-    super(path, 140, 1.35, 26);
+    super(path, 280, 1.35, 26);
     this.radius = 16; this.deathColor = color(110, 55, 8);
     this.legTime = 0; this.stopTimer = 0; this.stopped = false; this.pulse = 0;
     this.dashTimer = 0; this.dashing = false; this.dashFrames = 0;
@@ -239,7 +251,7 @@ class MechSpider extends Monster {
 // ── 机器人 ──
 class MechRobot extends Monster {
   constructor(path) {
-    super(path, 300, 0.95, 30);
+    super(path, 825, 0.95, 30);
     this.radius = 18; this.deathColor = color(60,160,255);
     this.walkTime = 0; this.corePulse = 0;
     this.shielded = false; this.shieldHp = 0; this.shieldPulse = 0; this.shieldTriggered = false;
@@ -321,7 +333,7 @@ class MechRobot extends Monster {
 // ── 机械烈焰鸟 ──
 class MechPhoenix extends Monster {
   constructor(path) {
-    super(path, 95, 1.9, 32);
+    super(path, 190, 1.9, 32);
     this.isFlying = true;
     this.radius = 16; this.deathColor = color(200, 50, 5);
     this.baseSpd = 2.0; this.wingTime = 0; this.diveTimer = 0;
@@ -387,7 +399,7 @@ class MechPhoenix extends Monster {
 // ── Boss 裂变核心 ──
 class BossFission extends Monster {
   constructor(path) {
-    super(path, 2200, 0.4, 160);
+    super(path, 5400, 0.4, 160);
     this.radius = 28; this.deathColor = color(255,120,20);
     this.armAngle = 0; this.crackLevel = 0; this.overloading = false;
     this.overloadTimer = 0; this.splitDone = false; this.pulseFire = 0;
@@ -484,7 +496,7 @@ class BossFission extends Monster {
 // ── Boss 幽灵协议 ──
 class BossPhantom extends Monster {
   constructor(path) {
-    super(path, 700, 0.88, 260);
+    super(path, 5000, 0.88, 260);
     this.radius = 18; this.deathColor = color(180,220,255);
     this.walkTime = 0; this.corePulse = 0;
     this.hitCount = 0; this.invincible = 0; this.ghost = 0;
@@ -585,7 +597,7 @@ class BossPhantom extends Monster {
 // ── Boss 相变战士 ──
 class BossAntMech extends Monster {
   constructor(path) {
-    super(path, 4200, 0.72, 520);
+    super(path, 9000, 0.72, 520);
     this.radius = 18; this.deathColor = color(80,255,120);
     this.walkTime = 0; this.corePulse = 0;
     this.phaseState = 'normal'; this.phaseTimer = 0;
@@ -674,17 +686,169 @@ class BossAntMech extends Monster {
     }
     push(); translate(this.pos.x,this.pos.y); scale(this.scale);
     if (this.phaseState==='giant') {
-      noFill(); stroke(80,255,120,60); strokeWeight(12); ellipse(0,0,55,70);
+      noFill(); stroke(80,255,120,55); strokeWeight(14); ellipse(0,0,90,110);
     }
-    fill(16,34,22); stroke(55,190,80,205); strokeWeight(1.6);
-    beginShape(); vertex(-11,-24); vertex(-8,-34); vertex(8,-34); vertex(11,-24); vertex(13,-10); vertex(11,0); vertex(-11,0); vertex(-13,-10); endShape(CLOSE);
-    fill(16,35,22); stroke(60,200,85,220); strokeWeight(1.8); ellipse(0,-48,26,28);
-    fill(0,200+sin(this.corePulse)*40,50,230); noStroke(); rect(-7,-49,14,3,1);
-    stroke(55,200,80,180); strokeWeight(1.5); line(-5,-60,-9,-72); line(5,-60,9,-72);
-    fill(80,255,100,220); noStroke(); ellipse(-9,-73,5,5); ellipse(9,-73,5,5);
+
+    // ── 正确人体行走骨骼系统 ──
+    // 以髋部为原点，腿向下，头向上
+    // wt 是步伐相位，两腿相差 PI（正常走路）
+    const wt = this.legTime;
+
+    // 身体轻微左右侧倾 & 上下弹跳（重心转移）
+    const bodyLean  = sin(wt) * 1.8;           // 侧倾
+    const bodyBounce = -abs(sin(wt * 2)) * 1.5; // 走一步弹两次（脚落地时最低）
+
+    // 髋关节位置（身体中心下方）
+    const hipY = 8 + bodyBounce;
+
+    // ─ 骨骼绘制函数：从关节A到关节B ─
+    const drawLimb = (x1,y1,x2,y2,w,col) => {
+      stroke(...col,200); strokeWeight(w); line(x1,y1,x2,y2);
+    };
+    const drawJoint = (x,y,r,col) => {
+      fill(...col,230); noStroke(); ellipse(x,y,r,r);
+    };
+
+    // ── 先画腿（在身体后面）──
+    // 大腿长18，小腿长17，用前摆角和后摆角
+    const legThigh = 18, legShin = 17;
+
+    for (const side of [-1, 1]) {
+      // 左腿(side=-1)相位 = wt，右腿(side=1)相位 = wt+PI
+      const phase = wt + (side > 0 ? Math.PI : 0);
+      const thighAngle = sin(phase) * 0.42;  // 大腿前后摆幅（弧度）
+      // 膝盖弯曲：腿向后时弯曲更多（自然步态）
+      const kneeBend = max(0.18, -sin(phase) * 0.5 + 0.22);
+
+      // 髋关节
+      const hipX = side * 7;
+      // 大腿末端（膝盖）
+      const kneeX = hipX + sin(thighAngle) * legThigh;
+      const kneeY = hipY + cos(thighAngle) * legThigh;
+      // 小腿末端（脚踝）
+      const shinAngle = thighAngle + kneeBend;
+      const footX = kneeX + sin(shinAngle) * legShin;
+      const footY = kneeY + cos(shinAngle) * legShin;
+
+      // 大腿
+      drawLimb(hipX,hipY, kneeX,kneeY, 5, [25,105,40]);
+      // 小腿
+      drawLimb(kneeX,kneeY, footX,footY, 4, [20,90,35]);
+      // 膝关节
+      drawJoint(kneeX,kneeY, 7, [40,160,60]);
+      // 靴子（脚掌朝前）
+      fill(15,65,28,230); stroke(40,150,60,190); strokeWeight(1);
+      push(); translate(footX,footY); rotate(shinAngle * 0.3);
+      rectMode(CENTER); rect(2,2,11,5,2); rectMode(CORNER);
+      pop();
+    }
+
+    // ── 躯干 ──
+    const torsoY  = hipY - 16;  // 躯干中心
+    const torsoH  = 22;
+    push(); translate(bodyLean, 0);
+
+    // 骨盆
+    fill(14,40,20); stroke(50,185,70,200); strokeWeight(1.5);
+    rectMode(CENTER); rect(0, hipY, 16, 8, 2); rectMode(CORNER);
+
+    // 躯干主体
+    fill(16,44,22); stroke(55,200,80,210); strokeWeight(1.8);
+    beginShape();
+      vertex(-13, hipY-2); vertex(-15, torsoY-4);
+      vertex(-11, torsoY-torsoH*0.4); vertex(11, torsoY-torsoH*0.4);
+      vertex(15,  torsoY-4); vertex(13, hipY-2);
+    endShape(CLOSE);
+
+    // 胸甲细节线条
+    stroke(45,165,68,120); strokeWeight(0.8);
+    line(-9,torsoY-torsoH*0.3, -9,torsoY+2);
+    line( 9,torsoY-torsoH*0.3,  9,torsoY+2);
+    line(-11,torsoY-6, 11,torsoY-6);
+
+    // 核心发光块（胸口）
+    const coreCol = this.berserk ? color(255,80,50,230) : color(0,215+sin(this.corePulse)*35,65,235);
+    fill(coreCol); noStroke(); rectMode(CENTER);
+    rect(0, torsoY-4, 10, 14, 2);
+    fill(160,255,190,150); rect(0, torsoY-4, 4, 6, 1);
+    rectMode(CORNER);
+
+    // 肩膀
+    fill(22,60,30); stroke(65,215,88,200); strokeWeight(1.5);
+    ellipse(-17, torsoY-torsoH*0.3, 11, 11);
+    ellipse( 17, torsoY-torsoH*0.3, 11, 11);
+
+    // ── 手臂（对侧摆动：右腿前迈时左臂前摆）──
+    const armLen1 = 14, armLen2 = 13;
+    for (const side of [-1, 1]) {
+      // 手臂与对侧腿同相
+      const armPhase = wt + (side < 0 ? Math.PI : 0);
+      const armSwing = sin(armPhase) * 0.38;
+      const elbowBend = max(0.1, abs(sin(armPhase)) * 0.35 + 0.12);
+
+      const shldrX = side * 16, shldrY = torsoY - torsoH * 0.3;
+      const elbowX = shldrX + sin(armSwing) * armLen1 * side * 0.4;
+      const elbowY = shldrY + cos(armSwing) * armLen1 * 0.85 + 6;
+      const handAng = armSwing - elbowBend * side;
+      const handX   = elbowX + sin(handAng) * armLen2 * side * 0.4;
+      const handY   = elbowY + cos(handAng) * armLen2 * 0.85 + 4;
+
+      drawLimb(shldrX,shldrY, elbowX,elbowY, 4, [25,108,44]);
+      drawLimb(elbowX,elbowY, handX,handY,   3, [20,92,38]);
+      drawJoint(elbowX,elbowY, 5.5, [38,155,58]);
+      // 拳头
+      fill(18,85,35,225); stroke(42,162,62,180); strokeWeight(1);
+      rectMode(CENTER); rect(handX,handY,7,6,2); rectMode(CORNER);
+    }
+
+    // ── 头盔（蚁人特征：光滑流线型+眼镜缝+触角）──
+    const headY = torsoY - torsoH * 0.4 - 14;
+    // 颈部
+    fill(14,40,20); stroke(50,180,68,190); strokeWeight(1.2);
+    rectMode(CENTER); rect(0, torsoY-torsoH*0.4-4, 8, 8, 2); rectMode(CORNER);
+    // 头盔主体
+    fill(14,38,20); stroke(62,215,88,225); strokeWeight(2);
+    ellipse(0, headY, 24, 28);
+    // 面罩分割线（上下半球接缝）
+    stroke(45,175,70,160); strokeWeight(1);
+    arc(0, headY, 22, 26, 0.1, PI-0.1);
+    // 眼镜缝（发光）
+    fill(0,230+sin(this.corePulse*1.8)*30,80,240); noStroke();
+    rectMode(CENTER);
+    rect(-5, headY-1, 7, 3, 1);
+    rect( 5, headY-1, 7, 3, 1);
+    rectMode(CORNER);
+    // 中央鼻梁
+    fill(20,60,30,200); noStroke(); rectMode(CENTER); rect(0,headY-1,2,5,1); rectMode(CORNER);
+    // 触角
+    stroke(52,195,78,195); strokeWeight(1.6);
+    const antBase = headY-12;
+    line(-4,antBase, -7,antBase-10);
+    line( 4,antBase,  7,antBase-10);
+    fill(72,245,105,230); noStroke();
+    ellipse(-7,antBase-11,5,5); ellipse(7,antBase-11,5,5);
+
+    pop(); // end bodyLean translate
+
+    // ── 护盾 ──
+    if (this.shielded) {
+      const sp=this.shieldPulse>0?map(this.shieldPulse,25,0,1,0):sin(frameCount*0.045)*0.3+0.7;
+      noFill(); stroke(80,255,120,80*sp); strokeWeight(8);
+      beginShape(); for(let k=0;k<6;k++) vertex(cos(k*PI/3)*42,sin(k*PI/3)*42); endShape(CLOSE);
+    }
+
+    // ── 子弹 ──
+    for (const b of this.bullets) {
+      push(); translate(b.x-this.pos.x, b.y-this.pos.y);
+      rotate(Math.atan2(b.vy,b.vx));
+      noStroke(); fill(0,200,80,b.life*230);
+      beginShape(); vertex(7,0); vertex(2,-2.5); vertex(-4,0); vertex(2,2.5); endShape(CLOSE);
+      pop();
+    }
     pop();
+
     textFont('monospace'); noStroke();
-    const labelY=this.pos.y-max(this.radius,20)-22;
+    const labelY=this.pos.y-max(this.radius,20)*this.scale-22;
     if (this.phaseState==='giant') { fill(80,255,120,220); textSize(11); textAlign(CENTER); text('▲ GIANT MODE',this.pos.x,labelY); }
     else if (this.phaseState==='tiny') { fill(200,255,100,220); textSize(11); textAlign(CENTER); text('▼ TINY MODE',this.pos.x,labelY); }
     if (this.berserk) { fill(255,80,80,200); textSize(10); textAlign(CENTER); text('⚡ BERSERK',this.pos.x,labelY-14); }
@@ -703,6 +867,259 @@ class BossAntMech extends Monster {
   }
 }
 
+// ── 机械坦克（新基础怪：高血量，为附近地面怪提供免疫护盾）──
+class MechTank extends Monster {
+  constructor(path) {
+    super(path, 1200, 0.55, 45);
+    this.radius = 22; this.deathColor = color(180, 140, 40);
+    this.walkTime = 0; this.corePulse = 0;
+    this.shieldTimer = 0;      // 距离下次激活护盾的计时
+    this.shieldActive = false; // 护盾是否正在生效
+    this.shieldDur = 180;      // 护盾持续帧数 (3秒×60)
+    this.shieldCooldown = 900; // 冷却帧数 (15秒×60)
+    this.shieldFrames = 0;     // 护盾剩余帧数
+    this.shieldRadius = 130;   // 覆盖半径
+    this.shieldPulse = 0;
+    this.turretAngle = 0;
+  }
+  takeDamage(dmg) {
+    // 护盾激活时自身也受到免疫保护
+    if (this.shieldActive) return;
+    this.hp -= dmg; this.hitFlash = 6;
+    if (this.hp <= 0) { this.alive = false; spawnParticles(this.pos.x, this.pos.y, this.deathColor, 30); }
+  }
+  move() {
+    this.walkTime += 0.12; this.corePulse += 0.06; this.shieldPulse += 0.08;
+    this.turretAngle += 0.02;
+
+    // 护盾状态机
+    if (this.shieldActive) {
+      this.shieldFrames--;
+      // 每帧给范围内所有地面怪（含BOSS）施加护盾标记
+      if (typeof manager !== 'undefined') {
+        for (const m of manager.monsters) {
+          if (!m.alive || m === this || m.isFlying) continue;
+          if (distAB(this.pos, m.pos) <= this.shieldRadius) {
+            m._tankShielded = this.shieldFrames + 1; // 只要>0就免疫
+          }
+        }
+      }
+      if (this.shieldFrames <= 0) {
+        this.shieldActive = false;
+        this.shieldTimer = 0;
+        // 清除范围内怪的护盾标记
+        if (typeof manager !== 'undefined') {
+          for (const m of manager.monsters) { m._tankShielded = 0; }
+        }
+      }
+    } else {
+      this.shieldTimer++;
+      if (this.shieldTimer >= this.shieldCooldown) {
+        this.shieldActive = true;
+        this.shieldFrames = this.shieldDur;
+        spawnParticles(this.pos.x, this.pos.y, color(255, 200, 50), 20);
+      }
+    }
+
+    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd);
+    this.pos = r.pos; this.seg = r.seg;
+    this.progress = calcProgress(this.pos, this.seg, this.path);
+    if (this.seg >= this.path.length - 1) this.reached = true;
+  }
+  draw() {
+    push(); translate(this.pos.x, this.pos.y);
+
+    // 护盾光环效果
+    if (this.shieldActive) {
+      const p = sin(this.shieldPulse * 3) * 0.4 + 0.6;
+      noFill(); stroke(255, 210, 60, 80 * p); strokeWeight(12);
+      ellipse(0, 0, this.shieldRadius * 2, this.shieldRadius * 2);
+      stroke(255, 230, 100, 120 * p); strokeWeight(3);
+      ellipse(0, 0, this.shieldRadius * 2, this.shieldRadius * 2);
+      fill(255, 220, 80, 20 * p); noStroke();
+      ellipse(0, 0, this.shieldRadius * 2, this.shieldRadius * 2);
+    }
+
+    // 履带（左右）
+    const ls = sin(this.walkTime) * 3;
+    fill(55, 45, 20); stroke(100, 80, 30, 200); strokeWeight(1.2);
+    rect(-20, 8 + ls, 40, 10, 2);
+    rect(-20, -18 - ls, 40, 10, 2);
+    // 履带齿
+    stroke(80, 65, 25, 160); strokeWeight(0.8);
+    for (let i = -18; i < 20; i += 6) {
+      line(i, 8 + ls, i, 18 + ls);
+      line(i, -18 - ls, i, -8 - ls);
+    }
+
+    // 主炮塔底座
+    fill(60, 50, 20); stroke(120, 100, 40, 200); strokeWeight(1.5);
+    ellipse(0, -4, 34, 28);
+
+    // 旋转炮塔
+    push(); rotate(this.turretAngle);
+    fill(50, 42, 18); stroke(130, 110, 45, 220); strokeWeight(1.3);
+    ellipse(0, 0, 26, 26);
+    // 主炮管
+    fill(40, 34, 14); stroke(120, 100, 40); strokeWeight(1.5);
+    rectMode(CENTER); rect(14, 0, 22, 7, 1);
+    // 副炮管
+    stroke(100, 85, 35); strokeWeight(1);
+    rect(10, -8, 14, 4, 1);
+    rect(10, 8, 14, 4, 1);
+    rectMode(CORNER);
+    pop();
+
+    // 核心能量
+    const cr = 7 + sin(this.corePulse) * 1.5;
+    fill(this.shieldActive ? color(255, 220, 60, 220) : color(220, 170, 40, 200));
+    noStroke(); ellipse(0, -4, cr, cr);
+    fill(255, 255, 200, 180); ellipse(0, -4, cr * 0.4, cr * 0.4);
+
+    pop();
+    this.drawHealthBar();
+  }
+  drawHealthBar() {
+    if (this.hitFlash > 0) this.hitFlash--;
+    const bw = 50, bh = 4, bx = this.pos.x - bw/2, by = this.pos.y - this.radius - 16;
+    stroke(180, 140, 40, 140); strokeWeight(1); fill(10, 8, 3, 210);
+    rect(bx-1, by-1, bw+2, bh+2);
+    noStroke();
+    const ratio = max(0, this.hp / this.maxHp);
+    fill(this.hitFlash > 0 ? color(255,240,180) : lerpColor(color(180,80,5), color(220,180,30), ratio));
+    rect(bx, by, bw * ratio, bh);
+    if (this.shieldActive) {
+      fill(255, 220, 80, 200); noStroke(); textSize(8); textAlign(CENTER);
+      text('★ SHIELD', this.pos.x, by - 4); textAlign(LEFT, BASELINE);
+    }
+  }
+}
+
+// ── 幽灵飞鸟（新空中怪：会短暂隐身，隐身期间无法被攻击）──
+class GhostBird extends Monster {
+  constructor(path) {
+    super(path, 120, 2.2, 38);
+    this.isFlying = true;
+    this.radius = 14; this.deathColor = color(180, 100, 255);
+    this.wingTime = 0; this.floatY = 0;
+    this.baseSpd = 2.2;
+    this.ghostTimer = 0;       // 距下次隐身计时
+    this.ghostCooldown = 300;  // 每5秒触发一次隐身
+    this.isGhost = false;      // 是否当前隐身
+    this.ghostDur = 90;        // 隐身持续1.5秒
+    this.ghostFrames = 0;
+    this.ghostPulse = 0;
+    this.trail = [];
+  }
+  takeDamage(dmg) {
+    if (this.isGhost) return; // 隐身期间完全免疫
+    this.hp -= dmg; this.hitFlash = 5;
+    if (this.hp <= 0) { this.alive = false; spawnParticles(this.pos.x, this.pos.y, this.deathColor, 22); }
+  }
+  move() {
+    this.wingTime += 0.25; this.ghostPulse += 0.1;
+    this.floatY = cos(this.wingTime * 0.4) * 7;
+
+    // 隐身状态机
+    if (this.isGhost) {
+      this.ghostFrames--;
+      if (this.ghostFrames <= 0) {
+        this.isGhost = false;
+        this.ghostTimer = 0;
+        spawnParticles(this.pos.x, this.pos.y + this.floatY, color(180, 100, 255), 12);
+      }
+    } else {
+      this.ghostTimer++;
+      if (this.ghostTimer >= this.ghostCooldown) {
+        this.isGhost = true;
+        this.ghostFrames = this.ghostDur;
+        spawnParticles(this.pos.x, this.pos.y + this.floatY, color(200, 150, 255), 15);
+      }
+    }
+
+    // 隐身时略微加速
+    this.spd = this.isGhost ? this.baseSpd * 1.4 : this.baseSpd;
+
+    this.trail.push({ x: this.pos.x, y: this.pos.y + this.floatY, life: 1.0 });
+    if (this.trail.length > 10) this.trail.shift();
+    for (const t of this.trail) t.life -= 0.14;
+
+    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd);
+    this.pos = r.pos; this.seg = r.seg;
+    this.progress = calcProgress(this.pos, this.seg, this.path);
+    if (this.seg >= this.path.length - 1) this.reached = true;
+  }
+  draw() {
+    const alpha = this.isGhost ? 55 : 220; // 隐身时半透明
+    const cx = this.pos.x, cy = this.pos.y + this.floatY;
+
+    // 尾迹
+    for (const t of this.trail) {
+      noStroke();
+      fill(this.isGhost ? color(180,100,255,t.life*40) : color(200,150,255,t.life*70));
+      ellipse(t.x, t.y, 16 * t.life, 16 * t.life);
+    }
+
+    // 隐身提示圈
+    if (this.isGhost) {
+      const p = sin(this.ghostPulse * 5) * 0.4 + 0.6;
+      noFill(); stroke(180, 100, 255, 60 * p); strokeWeight(2);
+      ellipse(cx, cy, 36, 36);
+      fill(180, 100, 255, 30 * p); noStroke(); ellipse(cx, cy, 32, 32);
+    }
+
+    push(); translate(cx, cy);
+    const wa = sin(this.wingTime) * 0.7;
+
+    // 翅膀
+    for (const side of [-1, 1]) {
+      push(); scale(side, 1); rotate(-wa * side - 0.3);
+      fill(80, 40, 130, alpha); stroke(160, 80, 255, alpha); strokeWeight(1.3);
+      beginShape();
+      vertex(0, -1); vertex(6, -3); vertex(22, -8); vertex(28, -4);
+      vertex(20, 2); vertex(6, 4);
+      endShape(CLOSE);
+      // 翅膀纹理
+      stroke(140, 70, 220, alpha * 0.6); strokeWeight(0.7);
+      line(4, 0, 18, -5); line(10, 0, 22, -4);
+      pop();
+    }
+
+    // 身体
+    fill(55, 25, 90, alpha); stroke(150, 70, 240, alpha); strokeWeight(1.4);
+    beginShape();
+    vertex(0, -10); vertex(7, -6); vertex(9, 0); vertex(7, 7);
+    vertex(0, 10); vertex(-7, 7); vertex(-9, 0); vertex(-7, -6);
+    endShape(CLOSE);
+
+    // 眼睛（隐身时发光）
+    fill(this.isGhost ? color(220, 160, 255, 180) : color(200, 100, 255, 220));
+    noStroke(); ellipse(-3, -4, 5, 4); ellipse(3, -4, 5, 4);
+    fill(255, 255, 255, this.isGhost ? 100 : 200);
+    ellipse(-3, -4, 2, 2); ellipse(3, -4, 2, 2);
+
+    // 隐身标签
+    if (this.isGhost) {
+      fill(200, 130, 255, 160); noStroke();
+      textSize(8); textAlign(CENTER);
+      text('GHOST', 0, -22);
+    }
+    pop();
+
+    if (!this.isGhost) this.drawHealthBar();
+  }
+  drawHealthBar() {
+    if (this.hitFlash > 0) this.hitFlash--;
+    const bw = 36, bh = 3, bx = this.pos.x - bw/2, by = this.pos.y + this.floatY - this.radius - 14;
+    stroke(160, 80, 255, 120); strokeWeight(1); fill(8, 4, 14, 200);
+    rect(bx-1, by-1, bw+2, bh+2);
+    noStroke();
+    const ratio = max(0, this.hp / this.maxHp);
+    fill(lerpColor(color(150, 20, 200), color(200, 130, 255), ratio));
+    rect(bx, by, bw * ratio, bh);
+  }
+}
+
 // ============================================================
 //  MonsterManager
 // ============================================================
@@ -715,13 +1132,15 @@ class MonsterManager {
   }
 
   spawn(type) {
-    // 蛇/蜘蛛/机器人随机走主路或边路
+    // 蛇/蜘蛛/机器人/坦克随机走主路或边路
     const groundPath = () => (random()<0.5 ? MAIN_PATH_PX : EDGE_PATH_PX);
     let m = null;
-    if (type==='snake')   m = new MechSnake(groundPath());
+    if (type==='snake')      m = new MechSnake(groundPath());
     else if (type==='spider')  m = new MechSpider(groundPath());
     else if (type==='robot')   m = new MechRobot(groundPath());
+    else if (type==='tank')    m = new MechTank(groundPath());
     else if (type==='phoenix') m = new MechPhoenix(AIR_PATH_PX);
+    else if (type==='ghostbird') m = new GhostBird(AIR_PATH_PX);
     else if (type==='boss1')   m = new BossFission(MAIN_PATH_PX);
     else if (type==='boss2')   m = new BossPhantom(MAIN_PATH_PX);
     else if (type==='boss3')   m = new BossAntMech(MAIN_PATH_PX);
@@ -752,8 +1171,9 @@ class MonsterManager {
   _reachDmg(m) {
     if (m instanceof BossAntMech)  return 15;
     if (m instanceof BossFission || m instanceof BossPhantom) return 10;
+    if (m instanceof MechTank)     return 6;
     if (m instanceof MechRobot)    return 4;
-    if (m instanceof MechPhoenix)  return 3;
+    if (m instanceof MechPhoenix || m instanceof GhostBird)  return 3;
     return 2; // snake / spider
   }
 
@@ -761,8 +1181,12 @@ class MonsterManager {
     antiAir=antiAir||false; fromSide=fromSide||false;
     for (const m of this.monsters) {
       if (!m.alive||m.reached) continue;
-      if (antiAir&&!(m instanceof MechPhoenix)) continue;
-      if (!antiAir&&(m instanceof MechPhoenix)) continue;
+      if (!m.isFlying && m._tankShielded > 0 && !(m instanceof MechTank)) continue;
+      // 幽灵飞鸟隐身期间免疫所有伤害
+      if (m instanceof GhostBird && m.isGhost) continue;
+      const isFlying = m instanceof MechPhoenix || m instanceof GhostBird;
+      if (antiAir && !isFlying) continue;
+      if (!antiAir && isFlying) continue;
       if (distAB(m.pos,{x:tx,y:ty})<=m.radius+5) {
         if (m instanceof MechRobot) m.takeDamage(dmg,fromSide); else m.takeDamage(dmg);
       }
@@ -773,8 +1197,11 @@ class MonsterManager {
     antiAir=antiAir||false;
     for (const m of this.monsters) {
       if (!m.alive||m.reached) continue;
-      if (antiAir&&!(m instanceof MechPhoenix)) continue;
-      if (!antiAir&&(m instanceof MechPhoenix)) continue;
+      if (!m.isFlying && m._tankShielded > 0 && !(m instanceof MechTank)) continue;
+      if (m instanceof GhostBird && m.isGhost) continue;
+      const isFlying = m instanceof MechPhoenix || m instanceof GhostBird;
+      if (antiAir && !isFlying) continue;
+      if (!antiAir && isFlying) continue;
       if (distAB(m.pos,{x:cx,y:cy})<=radius) {
         if (m instanceof MechRobot) m.takeDamage(dmg,false); else m.takeDamage(dmg);
       }
@@ -785,8 +1212,11 @@ class MonsterManager {
     antiAir=antiAir||false;
     return this.monsters.filter(m=>{
       if (!m.alive||m.reached) return false;
-      if (antiAir&&!(m instanceof MechPhoenix)) return false;
-      if (!antiAir&&(m instanceof MechPhoenix)) return false;
+      const isFlying = m instanceof MechPhoenix || m instanceof GhostBird;
+      if (antiAir && !isFlying) return false;
+      if (!antiAir && isFlying) return false;
+      // 隐身的幽灵飞鸟对所有塔不可见（除非是对空且已解锁特殊逻辑）
+      if (m instanceof GhostBird && m.isGhost) return false;
       return distAB(m.pos,{x:cx,y:cy})<=range;
     });
   }

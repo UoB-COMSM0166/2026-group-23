@@ -265,15 +265,15 @@ function drawBuildMenu() {
   fill(5, 10, 22, 220); stroke(0, 130, 200, 120); strokeWeight(1.5);
   rect(0, BUILD_BTN_Y, menuWidth, 48, 0, 0, 6, 0);
 
-  const types = ['basic', 'rapid', 'area', 'sniperAA', 'laser', 'nova', 'frost'];
+  const types = ['rapid', 'laser', 'nova', 'chain', 'magnet', 'ghost', 'scatter'];
   const displayNames = {
-    basic:    "SENTRY",
-    rapid:    "STINGER",
-    area:     "ORBIT",
-    sniperAA: "SKYFALL",
-    laser:    "BEAM",
-    nova:     "NOVA",
-    frost:    "GLACIER"
+    rapid:   'RAPID',
+    laser:   'LASER',
+    nova:    'NOVA',
+    chain:   'CHAIN',
+    magnet:  'MAGNET',
+    ghost:   'GHOST',
+    scatter: 'AA-FAN',
   };
 
   for (let i = 0; i < types.length; i++) {
@@ -310,13 +310,15 @@ function drawBuildMenu() {
     rect(bx + bw - 12, by + 8, 4, 20, 1);
   }
 
-  // 取消按钮 (紧跟在最后)
+  // 取消按钮：紧跟在最后一个塔按钮后面
   if (selectedTowerType) {
-    const bx = 6 + 7 * (btnW + spacing), by = BUILD_BTN_Y + 6;
-    fill(80, 20, 20, 200); stroke(255, 60, 60, 180);
-    rect(bx, by, 40, 36, 4);
-    fill(255, 100, 100); textAlign(CENTER, CENTER); textSize(12);
-    text('✕', bx + 20, by + 18);
+    const cancelX = 6 + types.length * (btnW + spacing);
+    const by = BUILD_BTN_Y + 6;
+    fill(80, 20, 20, 200); stroke(255, 60, 60, 180); strokeWeight(1.2);
+    rect(cancelX, by, 44, 36, 4);
+    fill(255, 100, 100); noStroke(); textAlign(CENTER, CENTER); textSize(12);
+    text('✕', cancelX + 22, by + 18);
+    textAlign(LEFT, BASELINE);
   }
 }
 
@@ -346,22 +348,33 @@ function drawTowerPanel() {
   fill(180,220,255,200); noStroke(); textSize(9);
   text('ATK  ' + t.dmg,  px+10, py+36);
   text('RNG  ' + t.range, px+10, py+50);
-  text('SPD  ' + Math.round(60/t.fireRate*10)/10 + '/s', px+10, py+64);
+  if (t.type === 'magnet') {
+    const factors = [50, 65, 80];
+    text('减速  最高-' + factors[t.level-1] + '%', px+10, py+64);
+  } else {
+    text('SPD  ' + Math.round(60/t.fireRate*10)/10 + '/s', px+10, py+64);
+  }
 
   // 特殊属性行
   let specialY = py + 78;
   if (t.type === 'laser') {
-    fill(0, 255, 150, 210); noStroke(); textSize(9);
-    text('◆ 多目标锁定 ×' + t.level, px+10, specialY);
-    specialY += 14;
+    fill(0,255,150,210); noStroke(); textSize(9);
+    text('◆ 多目标锁定 ×' + t.level, px+10, specialY); specialY += 14;
+  } else if (t.type === 'chain') {
+    fill(100,200,255,210); noStroke(); textSize(9);
+    text('◆ 跳链 ×' + t.level + '次  衰减×0.72', px+10, specialY); specialY += 14;
+  } else if (t.type === 'magnet') {
+    fill(140,100,255,210); noStroke(); textSize(9);
+    text('◆ 无伤害  范围减速辅助', px+10, specialY); specialY += 14;
+  } else if (t.type === 'ghost') {
+    fill(200,100,255,210); noStroke(); textSize(9);
+    text('◆ 追踪导弹 ×' + t.level + '枚  爆炸', px+10, specialY); specialY += 14;
+  } else if (t.type === 'scatter') {
+    const bc=[3,5,7]; fill(255,80,120,210); noStroke(); textSize(9);
+    text('◆ 对空扇射 ×' + bc[t.level-1] + '弹', px+10, specialY); specialY += 14;
   } else if (t.type === 'nova') {
-    fill(255, 160, 50, 210); noStroke(); textSize(9);
-    text('◆ 范围光波  ×' + t.level + '道', px+10, specialY);
-    specialY += 14;
-  } else if (t.antiAir) {
-    fill(255,170,40,200); noStroke(); textSize(9);
-    text('◆ 防空 / JAM免疫', px+10, specialY);
-    specialY += 14;
+    fill(255,160,50,210); noStroke(); textSize(9);
+    text('◆ 穿透直线+落点爆炸', px+10, specialY); specialY += 14;
   }
 
   if (!isMaxed) {
@@ -435,34 +448,29 @@ function drawPlacementPreview() {
 //  返回 true 表示已消费，不传给战斗系统
 // ============================================================
 function handlePlacementClick(mx, my) {
-  // 建造菜单区域
-  const btnW = 86;    // 必须与 drawBuildMenu 中的按钮宽度一致
-  const spacing = 5;   // 必须与 drawBuildMenu 中的间距一致
+  // 必须与 drawBuildMenu 中的参数完全一致
+  const btnW   = 86;
+  const spacing = 5;
+  const types  = ['rapid', 'laser', 'nova', 'chain', 'magnet', 'ghost', 'scatter'];
 
-  // 建造菜单区域高度判定
+  // 建造菜单区域
   if (my >= BUILD_BTN_Y && my < BUILD_BTN_Y + 48) {
-    // 包含所有 7 种塔的类型数组
-    const types = ['basic', 'rapid', 'area', 'sniperAA', 'laser', 'nova', 'frost'];
-    
+    // 7个塔按钮
     for (let i = 0; i < types.length; i++) {
-      // 计算第 i 个按钮的左侧起始 X 坐标
       const bx = 6 + i * (btnW + spacing);
-      
-      // 检查鼠标点击是否在该按钮的宽度范围内
       if (mx >= bx && mx < bx + btnW) {
         selectedTowerType = (selectedTowerType === types[i]) ? null : types[i];
         if (selectedTowerType) selectedTower = null;
-        return true; // 拦截点击，防止穿透到地图
+        return true;
       }
     }
-
-    // 取消按钮 (X) 的判定：位置在第 7 个塔之后
-    const cancelX = 6 + 7 * (btnW + spacing);
-    if (selectedTowerType && mx >= cancelX && mx < cancelX + 40) {
+    // 取消按钮：紧跟在第7个塔后面
+    const cancelX = 6 + types.length * (btnW + spacing);
+    if (selectedTowerType && mx >= cancelX && mx < cancelX + 44) {
       selectedTowerType = null;
       return true;
     }
-    return true; // 点击了菜单空白处也进行拦截
+    return true; // 点击菜单空白处也拦截
   }
 
   // 升级按钮

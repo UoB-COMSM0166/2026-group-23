@@ -11,7 +11,7 @@ let gameDifficulty = null;
 let gamePhase = 'select';
 
 // ── 游戏核心数值 ──
-let coins   = 200;
+let coins   = 20000000;
 let baseHp        = 50;
 let baseHpMax     = 50;
 let waveNum = 0;
