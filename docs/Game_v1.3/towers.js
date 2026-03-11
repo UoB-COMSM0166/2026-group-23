@@ -214,15 +214,35 @@ class Tower {
     }
   }
 
-  // ── CHAIN 跳链电弧（直接锁定目标引用，避免位置命中miss）──
+  // ── CHAIN 链式电弧（无子弹，瞬间伤害+电弧视觉）──
   _updateChain() {
     const target = this.findTarget();
     if (!target) return;
     this.angle = Math.atan2(target.pos.y - this.py, target.pos.x - this.px);
     if (this.timer < this.fireRate) return;
-    this.timer = 0; this.shootFlash = 10;
-    // 直接传入目标引用，子弹会追踪该目标
-    projectiles.push(new Projectile(this.px, this.py, this.angle, this.projSpd, this.dmg, this.col, false, 'chain', this.level, target));
+    this.timer = 0; this.shootFlash = 14;
+    // 塔→第一目标
+    target.takeDamage(this.dmg);
+    spawnParticles(target.pos.x, target.pos.y, color(...this.col), 6);
+    _chainArcs.push({ x1: this.px, y1: this.py, x2: target.pos.x, y2: target.pos.y, life: 16 });
+    // 跳链 Lv1=1跳 Lv2=2跳 Lv3=3跳
+    let lastPos = { x: target.pos.x, y: target.pos.y };
+    const hit = new Set([target]);
+    for (let j = 0; j < this.level; j++) {
+      if (!manager) break;
+      const nearby = manager.monsters.filter(m =>
+        m.alive && !m.reached && !m.isFlying && !hit.has(m) &&
+        Math.hypot(m.pos.x - lastPos.x, m.pos.y - lastPos.y) <= 110
+      );
+      if (nearby.length === 0) break;
+      const next = nearby.reduce((a, b) =>
+        Math.hypot(b.pos.x-lastPos.x,b.pos.y-lastPos.y) < Math.hypot(a.pos.x-lastPos.x,a.pos.y-lastPos.y) ? b : a);
+      next.takeDamage(floor(this.dmg * pow(0.72, j + 1)));
+      spawnParticles(next.pos.x, next.pos.y, color(...this.col), 4);
+      _chainArcs.push({ x1: lastPos.x, y1: lastPos.y, x2: next.pos.x, y2: next.pos.y, life: 14 });
+      lastPos = { x: next.pos.x, y: next.pos.y };
+      hit.add(next);
+    }
   }
 
   // ── MAGNET 磁场减速（每帧主动作用，无子弹）──
@@ -243,18 +263,22 @@ class Tower {
     }
   }
 
-  // ── GHOST 追踪导弹 ──
+  // ── GHOST 追踪导弹（Lv1=1枚 Lv2=2枚 Lv3=3枚，每枚独立锁定不同目标）──
   _updateGhost() {
-    const target = this.findTarget();
-    if (!target) return;
-    this.angle = Math.atan2(target.pos.y - this.py, target.pos.x - this.px);
     if (this.timer < this.fireRate) return;
+    if (!manager) return;
+    const candidates = manager.getMonstersInRange(this.px, this.py, this.range, false)
+                              .filter(m => !m.isFlying)
+                              .sort((a, b) => b.progress - a.progress);
+    if (candidates.length === 0) return;
     this.timer = 0; this.shootFlash = 12;
-    const count = this.level; // 1/2/3枚
-    for (let i = 0; i < count; i++) {
-      const spread = (i - (count - 1) / 2) * 0.18;
-      const a = this.angle + spread;
-      projectiles.push(new Projectile(this.px, this.py, a, this.projSpd, this.dmg, this.col, false, 'ghost', this.level));
+    this.angle = Math.atan2(candidates[0].pos.y - this.py, candidates[0].pos.x - this.px);
+    for (let i = 0; i < this.level; i++) {
+      const tgt = candidates[Math.min(i, candidates.length - 1)];
+      const a = Math.atan2(tgt.pos.y - this.py, tgt.pos.x - this.px);
+      const p = new Projectile(this.px, this.py, a, this.projSpd, this.dmg, this.col, false, 'ghost', this.level);
+      p.target = tgt;
+      projectiles.push(p);
     }
   }
 
@@ -565,22 +589,6 @@ class Projectile {
   }
 
   update() {
-    // Chain：追踪锁定目标移动
-    if (this.towerType === 'chain' && this.chainTarget) {
-      const t = this.chainTarget;
-      if (!t.alive || t.reached) { this.alive = false; return; }
-      const dx = t.pos.x - this.x, dy = t.pos.y - this.y;
-      const dist = Math.hypot(dx, dy);
-      const spd  = Math.hypot(this.vx, this.vy);
-      if (dist <= spd + 4) {
-        // 命中！直接触发跳链
-        this._doChainHit(t);
-        return;
-      }
-      this.vx = (dx / dist) * spd;
-      this.vy = (dy / dist) * spd;
-    }
-
     // Ghost 追踪逻辑
     if (this.towerType === 'ghost' && manager) {
       if (!this.target || !this.target.alive || this.target.reached) {
@@ -653,32 +661,6 @@ class Projectile {
     }
   }
 
-  _doChainHit(first) {
-    if (!first.alive) { this.alive = false; return; }
-    first.takeDamage(this.dmg);
-    spawnParticles(first.pos.x, first.pos.y, color(...this.col), 6);
-    const maxJumps = this.level;
-    let lastPos = { x: first.pos.x, y: first.pos.y };
-    const hit = new Set([first]);
-    for (let j = 0; j < maxJumps; j++) {
-      if (!manager) break;
-      const nearby = manager.monsters.filter(m =>
-        m.alive && !m.reached && !m.isFlying && !hit.has(m) &&
-        Math.hypot(m.pos.x - lastPos.x, m.pos.y - lastPos.y) <= 100
-      );
-      if (nearby.length === 0) break;
-      const next = nearby.reduce((best, m) =>
-        Math.hypot(m.pos.x-lastPos.x, m.pos.y-lastPos.y) < Math.hypot(best.pos.x-lastPos.x, best.pos.y-lastPos.y) ? m : best, nearby[0]);
-      const jDmg = floor(this.dmg * pow(0.72, j + 1));
-      next.takeDamage(jDmg);
-      spawnParticles(next.pos.x, next.pos.y, color(...this.col), 4);
-      _chainArcs.push({ x1: lastPos.x, y1: lastPos.y, x2: next.pos.x, y2: next.pos.y, life: 14 });
-      lastPos = { x: next.pos.x, y: next.pos.y };
-      hit.add(next);
-    }
-    this.alive = false;
-  }
-
   draw() {
     const [r, g, b] = this.col;
     push(); translate(this.x, this.y); rotate(Math.atan2(this.vy, this.vx));
@@ -702,10 +684,6 @@ class Projectile {
       ellipse(0, 0, 5, 5);
       pop();
       return; // 不执行后面的pop
-    } else if (this.towerType === 'chain') {
-      // 电弧弹：蓝白闪光
-      fill(r,g,b,this.life*220); ellipse(0,0,sz*1.4,sz*1.4);
-      fill(220,240,255,this.life*200); ellipse(0,0,sz*0.6,sz*0.6);
     } else if (this.towerType === 'ghost') {
       // 追踪导弹：紫色+发光尾迹
       fill(r,g,b,this.life*230);
@@ -732,14 +710,55 @@ function _drawChainArcs() {
   _chainArcs = _chainArcs.filter(a => a.life > 0);
   for (const a of _chainArcs) {
     a.life--;
-    const t = a.life / 12;
-    // 锯齿电弧
-    const mx = (a.x1+a.x2)/2 + random(-10,10);
-    const my = (a.y1+a.y2)/2 + random(-10,10);
+    const t = a.life / 16;
+    const dx = a.x2 - a.x1, dy = a.y2 - a.y1;
+    const len = Math.hypot(dx, dy);
+    if (len < 1) continue;
+    // 生成5段折线锯齿电弧
+    const segs = 5;
+    const pts = [{x: a.x1, y: a.y1}];
+    for (let i = 1; i < segs; i++) {
+      const frac = i / segs;
+      const bx = a.x1 + dx * frac, by = a.y1 + dy * frac;
+      // 垂直方向随机抖动
+      const perp = random(-len * 0.18, len * 0.18);
+      const nx = -dy / len, ny = dx / len;
+      pts.push({ x: bx + nx * perp, y: by + ny * perp });
+    }
+    pts.push({x: a.x2, y: a.y2});
     push();
-    stroke(100,200,255,t*180); strokeWeight(2); line(a.x1,a.y1,mx,my);
-    stroke(200,235,255,t*150); strokeWeight(1.2); line(mx,my,a.x2,a.y2);
-    noStroke(); fill(100,200,255,t*160); ellipse(a.x2,a.y2,5,5);
+    // 外发光层（宽）
+    noFill();
+    stroke(80, 180, 255, t * 60); strokeWeight(6);
+    beginShape();
+    for (const p of pts) vertex(p.x, p.y);
+    endShape();
+    // 中层
+    stroke(140, 210, 255, t * 140); strokeWeight(2.5);
+    beginShape();
+    for (const p of pts) vertex(p.x, p.y);
+    endShape();
+    // 内核白线
+    stroke(220, 245, 255, t * 220); strokeWeight(1);
+    beginShape();
+    for (const p of pts) vertex(p.x, p.y);
+    endShape();
+    // 起点电击爆散
+    noStroke(); fill(100, 200, 255, t * 180);
+    ellipse(a.x1, a.y1, 7 * t, 7 * t);
+    // 终点命中爆散
+    fill(180, 235, 255, t * 200);
+    ellipse(a.x2, a.y2, 10 * t, 10 * t);
+    fill(255, 255, 255, t * 160);
+    ellipse(a.x2, a.y2, 4 * t, 4 * t);
+    // 辐射短线（命中点）
+    stroke(100, 200, 255, t * 120); strokeWeight(1);
+    for (let k = 0; k < 6; k++) {
+      const ang = k * PI / 3 + a.life * 0.3;
+      const r1 = 4, r2 = 8 + t * 4;
+      line(a.x2 + cos(ang)*r1, a.y2 + sin(ang)*r1,
+           a.x2 + cos(ang)*r2, a.y2 + sin(ang)*r2);
+    }
     pop();
   }
 }
