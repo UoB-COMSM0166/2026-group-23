@@ -9,14 +9,28 @@
     body { background: #050810; display: flex; justify-content: center; align-items: center; height: 100vh; }
     canvas { display: block; }
   </style>
+
+  <!-- 第三方库 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="map.js"></script>
-  <script src="monsters.js"></script>
-  <script src="towers.js"></script>
-  <script src="waves.js"></script>
-  <script src="minigame.js"></script>
-  <script src="ui.js"></script>
-  <script src="sketch.js"></script>
+
+  <!-- ── 游戏核心 ── -->
+  <script src="map.js"></script>           <!-- 路径、背景、格子判定 -->
+  <script src="monsters.js"></script>      <!-- 怪物类、MonsterManager -->
+  <script src="towers.js"></script>        <!-- Tower、Projectile -->
+  <script src="waves.js"></script>         <!-- 波次推进逻辑 -->
+  <script src="minigame.js"></script>      <!-- 投球小游戏 -->
+
+  <!-- ── 战斗 UI ── -->
+  <script src="ui.js"></script>            <!-- HUD、建造菜单、塔面板 -->
+
+  <!-- ── 全屏界面（screens/）── -->
+  <script src="screens/launch-screen.js"></script>      <!-- 启动页 + 测试入口 -->
+  <script src="screens/difficulty-select.js"></script>  <!-- 难度选择 -->
+  <script src="screens/level-map.js"></script>          <!-- 关卡地图 -->
+  <script src="screens/end-panel.js"></script>          <!-- 结算面板 -->
+
+  <!-- ── 主循环（最后加载）── -->
+  <script src="sketch.js"></script>        <!-- setup / draw / 事件路由 -->
 </head>
 <body></body>
 </html>
