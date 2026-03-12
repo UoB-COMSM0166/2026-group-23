@@ -14,12 +14,14 @@
 const TOWER_DEFS = {
   rapid: {
     name: '快速塔', label: 'RAPID', cost: 110,
+    // ★ 唯一能无视机器人护盾的塔
     levels: [
       { dmg: 12, range: 100, fireRate: 20, upgradeCost: 100 },
       { dmg: 22, range: 115, fireRate: 16, upgradeCost: 160 },
       { dmg: 36, range: 132, fireRate: 12, upgradeCost: 0   }
     ],
     projSpd: 11, color: [255, 200, 0], antiAir: false,
+    ignoreRobotShield: true, // 无视机器人护盾
   },
   laser: {
     name: '激光切割者', label: 'LASER', cost: 180,
@@ -44,32 +46,34 @@ const TOWER_DEFS = {
   chain: {
     name: '链式电弧塔', label: 'CHAIN', cost: 160,
     // 命中后跳链：Lv1跳1次  Lv2跳2次  Lv3跳3次，每跳伤害×0.72
+    // ★ 唯一能无视坦克护盾屏障的塔
     levels: [
       { dmg: 75,  range: 135, fireRate: 55,  upgradeCost: 140 },
       { dmg: 120, range: 155, fireRate: 45,  upgradeCost: 220 },
       { dmg: 190, range: 175, fireRate: 36,  upgradeCost: 0   }
     ],
     projSpd: 16, color: [100, 200, 255], antiAir: false,
+    ignoreTankBarrier: true, // 无视坦克护盾屏障
   },
   magnet: {
     name: '磁场干扰塔', label: 'MAGNET', cost: 130,
     // 无伤害，持续减速：Lv1减50%  Lv2减65%  Lv3减80%（越靠近越慢）
-    // range字段当作干扰半径，dmg无效，fireRate无效（每帧持续生效）
     levels: [
       { dmg: 0, range: 110, fireRate: 999, upgradeCost: 110 },
       { dmg: 0, range: 132, fireRate: 999, upgradeCost: 180 },
       { dmg: 0, range: 155, fireRate: 999, upgradeCost: 0   }
     ],
     projSpd: 0, color: [120, 80, 255], antiAir: false,
-    slowFactor: [0.5, 0.35, 0.2], // 最近处的速度乘数（距离插值）
+    slowFactor: [0.5, 0.35, 0.2],
   },
   ghost: {
     name: '幽灵导弹塔', label: 'GHOST', cost: 190,
     // 发射追踪导弹：Lv1=1枚  Lv2=2枚  Lv3=3枚，命中范围爆炸
+    // ★ 攻击范围几乎覆盖大半张地图（升级后接近全图）
     levels: [
-      { dmg: 70,  range: 160, fireRate: 110, upgradeCost: 170 },
-      { dmg: 110, range: 180, fireRate: 95,  upgradeCost: 270 },
-      { dmg: 170, range: 205, fireRate: 80,  upgradeCost: 0   }
+      { dmg: 35,  range: 380, fireRate: 120, upgradeCost: 170 },
+      { dmg: 55,  range: 440, fireRate: 100, upgradeCost: 270 },
+      { dmg: 80,  range: 520, fireRate: 85,  upgradeCost: 0   }
     ],
     projSpd: 3.5, color: [200, 100, 255], antiAir: false,
   },
@@ -82,6 +86,19 @@ const TOWER_DEFS = {
       { dmg: 115, range: 265, fireRate: 40,  upgradeCost: 0   }
     ],
     projSpd: 14, color: [255, 80, 120], antiAir: true, onlyAir: true,
+  },
+  cannon: {
+    name: '轨道巨炮', label: 'CANNON', cost: 350,
+    // 全图攻击范围，超大范围爆炸，同时打击地面与空中
+    // 蓄力时间最长，优先攻击空中目标
+    // Lv1 蓄力5s  Lv2 蓄力4s  Lv3 蓄力3s
+    levels: [
+      { dmg: 280, range: 9999, fireRate: 300, upgradeCost: 320 },
+      { dmg: 420, range: 9999, fireRate: 240, upgradeCost: 500 },
+      { dmg: 600, range: 9999, fireRate: 180, upgradeCost: 0   }
+    ],
+    projSpd: 18, color: [255, 60, 60], antiAir: false,
+    cannonBlastRadius: [90, 115, 145], // 各等级爆炸半径
   },
 };
 
@@ -163,6 +180,7 @@ class Tower {
       case 'magnet':  this._updateMagnet();  break;
       case 'ghost':   this._updateGhost();   break;
       case 'scatter': this._updateScatter(); break;
+      case 'cannon':  this._updateCannon();  break;
     }
   }
 
@@ -173,7 +191,8 @@ class Tower {
     this.angle = Math.atan2(target.pos.y - this.py, target.pos.x - this.px);
     if (this.timer < this.fireRate) return;
     this.timer = 0; this.shootFlash = 8;
-    projectiles.push(new Projectile(this.px, this.py, this.angle, this.projSpd, this.dmg, this.col, false, this.type, this.level));
+    const def = TOWER_DEFS[this.type];
+    projectiles.push(new Projectile(this.px, this.py, this.angle, this.projSpd, this.dmg, this.col, false, this.type, this.level, null, def.ignoreRobotShield || false));
   }
 
   // ── 激光多目标蓄力（修复：坐标系完全在塔本地）──
@@ -214,18 +233,23 @@ class Tower {
     }
   }
 
-  // ── CHAIN 链式电弧（无子弹，瞬间伤害+电弧视觉）──
+  // ── CHAIN 链式电弧（无子弹，瞬间伤害+电弧视觉）── ★无视坦克护盾屏障
   _updateChain() {
-    const target = this.findTarget();
-    if (!target) return;
+    // 链式电弧可以穿透坦克护盾屏障，直接搜索范围内怪物（含被屏障覆盖的）
+    let inRange = manager ? manager.monsters.filter(m =>
+      m.alive && !m.reached && !m.isFlying &&
+      Math.hypot(m.pos.x - this.px, m.pos.y - this.py) <= this.range
+    ).sort((a,b) => b.progress - a.progress) : [];
+    if (inRange.length === 0) return;
+    const target = inRange[0];
     this.angle = Math.atan2(target.pos.y - this.py, target.pos.x - this.px);
     if (this.timer < this.fireRate) return;
     this.timer = 0; this.shootFlash = 14;
-    // 塔→第一目标
+    // 塔→第一目标（无视坦克屏障）
     target.takeDamage(this.dmg);
     spawnParticles(target.pos.x, target.pos.y, color(...this.col), 6);
     _chainArcs.push({ x1: this.px, y1: this.py, x2: target.pos.x, y2: target.pos.y, life: 16 });
-    // 跳链 Lv1=1跳 Lv2=2跳 Lv3=3跳
+    // 跳链 Lv1=1跳 Lv2=2跳 Lv3=3跳（跳链也无视坦克屏障）
     let lastPos = { x: target.pos.x, y: target.pos.y };
     const hit = new Set([target]);
     for (let j = 0; j < this.level; j++) {
@@ -298,6 +322,38 @@ class Tower {
     }
   }
 
+  // ── CANNON 轨道巨炮 —— 全图，空陆两用，优先打空中，蓄力最久 ──
+  _updateCannon() {
+    if (!manager) return;
+    // 优先寻找空中目标，无空中目标则找地面目标
+    let target = null;
+    const airTargets = manager.monsters.filter(m =>
+      m.alive && !m.reached && (m instanceof MechPhoenix || m instanceof GhostBird) && !m.isGhost
+    ).sort((a, b) => b.progress - a.progress);
+    if (airTargets.length > 0) {
+      target = airTargets[0];
+    } else {
+      const groundTargets = manager.monsters.filter(m =>
+        m.alive && !m.reached && !(m instanceof MechPhoenix) && !(m instanceof GhostBird)
+      ).sort((a, b) => b.progress - a.progress);
+      if (groundTargets.length > 0) target = groundTargets[0];
+    }
+    if (!target) return;
+    this.angle = Math.atan2(target.pos.y - this.py, target.pos.x - this.px);
+    this._cannonTarget = target;
+    if (this.timer < this.fireRate) return;
+    this.timer = 0; this.shootFlash = 20;
+    const def = TOWER_DEFS.cannon;
+    const blastR = def.cannonBlastRadius[this.level - 1];
+    const shell = new Projectile(this.px, this.py, this.angle, this.projSpd, this.dmg, this.col, false, 'cannon', this.level);
+    shell.isCannonShell = true;
+    shell.targetX = target.pos.x;
+    shell.targetY = target.pos.y;
+    shell.blastRadius = blastR;
+    shell.life = 1.0;
+    projectiles.push(shell);
+  }
+
   // ============================================================
   //  draw()
   // ============================================================
@@ -332,6 +388,7 @@ class Tower {
       case 'magnet':  this._drawMagnet(r, g, b);  break;
       case 'ghost':   this._drawGhost(r, g, b);   break;
       case 'scatter': this._drawScatter(r, g, b); break;
+      case 'cannon':  this._drawCannon(r, g, b);  break;
     }
 
     this._drawRankStars();
@@ -567,13 +624,96 @@ class Tower {
     fill(r,g,b,200+pulse*50); noStroke(); ellipse(0,0,3,3);
     pop();
   }
-}
+
+  // ── CANNON 轨道巨炮 ──
+  _drawCannon(r, g, b) {
+    const lv = this.level;
+    const charge = min(this.timer / this.fireRate, 1.0);
+    const pulse = sin(this.pulseTime * 3) * 0.5 + 0.5;
+    const ready = charge >= 0.97;
+
+    // 警戒旋转光环（蓄力满时高速旋转）
+    push(); rotate(this.pulseTime * (0.5 + charge * 3));
+    noFill(); strokeWeight(1.2 + lv * 0.4);
+    stroke(r, g, b, 55 + charge * 120);
+    ellipse(0, 0, (22 + lv * 4) * 2, (22 + lv * 4) * 2);
+    // 外旋光点
+    for (let i = 0; i < 4 + lv; i++) {
+      const a = (TWO_PI / (4 + lv)) * i;
+      const rr = 22 + lv * 4;
+      fill(r, g, b, 160 + charge * 80); noStroke();
+      ellipse(cos(a) * rr, sin(a) * rr, 3 + charge * 3, 3 + charge * 3);
+    }
+    pop();
+
+    // 瞄准线（蓄力满时显示目标轨迹）
+    if (ready && this._cannonTarget && this._cannonTarget.alive) {
+      const tx = this._cannonTarget.pos.x - this.px;
+      const ty = this._cannonTarget.pos.y - this.py;
+      stroke(r, g, b, 80 + pulse * 60); strokeWeight(0.8); noFill();
+      // 虚线瞄准
+      const len = Math.hypot(tx, ty);
+      const steps = floor(len / 18);
+      for (let s = 0; s < steps; s += 2) {
+        line(lerp(0,tx,s/steps), lerp(0,ty,s/steps),
+             lerp(0,tx,(s+1)/steps), lerp(0,ty,(s+1)/steps));
+      }
+      // 目标标记圈
+      noFill(); stroke(r, g, b, 180 + pulse * 60); strokeWeight(1.5);
+      ellipse(tx, ty, 28 + pulse * 8, 28 + pulse * 8);
+      stroke(r, g, b, 120); strokeWeight(0.8);
+      line(tx - 14, ty, tx + 14, ty); line(tx, ty - 14, tx, ty + 14);
+    }
+
+    push(); rotate(this.angle);
+    // 巨炮主炮管（粗重）
+    fill(15, 8, 8); stroke(r, g, b, 200); strokeWeight(1.8);
+    rectMode(CENTER);
+    // 炮管底座
+    rect(4, 0, 22, 14 + lv * 2, 2);
+    // 主炮管
+    rect(16 + lv * 3, 0, 22 + lv * 4, 9 + lv, 1);
+    // 炮口
+    fill(r, g, b, 60 + charge * 140); noStroke();
+    rect(26 + lv * 4, 0, 6, 6 + lv, 1);
+    if (this.shootFlash > 0) {
+      noStroke(); fill(255, 180, 80, 240);
+      ellipse(30 + lv * 4, 0, 22, 22);
+      fill(255, 255, 200, 200);
+      ellipse(30 + lv * 4, 0, 10, 10);
+    }
+    // 散热翼
+    for (let i = -1; i <= 1; i += 2) {
+      fill(20, 10, 10); stroke(r, g, b, 140); strokeWeight(0.9);
+      rect(8 + lv, i * (9 + lv), 10 + lv, 4, 1);
+    }
+    pop();
+
+    // 核心（蓄力中发红）
+    const cr = 8 + lv * 2 + charge * 4;
+    fill(r, floor(g * (1 - charge * 0.8)), floor(b * (1 - charge * 0.8)), 80 + charge * 130);
+    noStroke(); ellipse(0, 0, cr * 2, cr * 2);
+    fill(ready ? color(255, 100, 60, 240) : color(r, g, b, 180 + pulse * 60));
+    ellipse(0, 0, cr * 0.5, cr * 0.5);
+    fill(255, 255, 255, 200); ellipse(0, 0, 2.5, 2.5);
+
+    // 蓄力条
+    const bW = 24 + lv * 4, bH = 3, bx = -bW / 2, by = 18 + lv * 2;
+    fill(12, 6, 6); stroke(r, g, b, 80); strokeWeight(0.6);
+    rectMode(CORNER); rect(bx, by, bW, bH, 1);
+    noStroke();
+    fill(ready ? color(255, 80, 40) : lerpColor(color(180, 30, 30), color(255, 120, 40), charge));
+    rect(bx, by, bW * charge, bH, 1);
+    if (ready) { fill(255, 150, 80, 100 + sin(this.pulseTime * 25) * 80); rect(bx, by, bW, bH, 1); }
+    rectMode(CENTER);
+  }
+} // end class Tower
 
 // ============================================================
 //  Projectile — 支持 nova穿透、chain跳链、ghost追踪、scatter对空
 // ============================================================
 class Projectile {
-  constructor(x, y, angle, spd, dmg, col, antiAir, towerType, level, chainTarget) {
+  constructor(x, y, angle, spd, dmg, col, antiAir, towerType, level, chainTarget, ignoreRobotShield) {
     this.x = x; this.y = y;
     this.vx = cos(angle)*spd; this.vy = sin(angle)*spd;
     this.dmg = dmg; this.col = col; this.antiAir = antiAir;
@@ -586,6 +726,12 @@ class Projectile {
     this.turnSpd = 0.08;
     // Nova 发散：越飞越大
     this.novaRadius = 4;
+    // 快速塔专属：无视机器人护盾
+    this.ignoreRobotShield = ignoreRobotShield || false;
+    // 大炮专属
+    this.isCannonShell = false;
+    this.targetX = 0; this.targetY = 0;
+    this.blastRadius = 0;
   }
 
   update() {
@@ -616,8 +762,17 @@ class Projectile {
     }
 
     this.x += this.vx; this.y += this.vy;
-    this.life -= 0.012;
-    if (this.life <= 0) { this.alive = false; return; }
+    if (this.towerType !== 'cannon' && this.towerType !== 'ghost') {
+      this.life -= 0.012;
+      if (this.life <= 0) { this.alive = false; return; }
+    } else {
+      // ghost/cannon 子弹只在命中目标时消亡，不自动衰减
+      // 但超出地图边界时清除
+      if (this.x < -200 || this.x > width + 200 || this.y < -200 || this.y > height + 200) {
+        this.alive = false; return;
+      }
+      this.life = max(this.life - 0.003, 0.1); // 视觉淡出用，不归零
+    }
 
     const isNova    = this.towerType === 'nova';
     const isGhost   = this.towerType === 'ghost';
@@ -639,6 +794,30 @@ class Projectile {
       return; // nova子弹自然消亡（life归零）
     }
 
+    // 大炮炮弹：飞向目标点，到达后范围爆炸（同时伤害空中和地面）
+    if (this.towerType === 'cannon') {
+      const dx = this.targetX - this.x, dy = this.targetY - this.y;
+      const dist2 = Math.hypot(dx, dy);
+      if (dist2 <= Math.hypot(this.vx, this.vy) * 1.5) {
+        // 到达目标点，范围爆炸（同时打击地面+空中）
+        if (manager) {
+          for (const m of manager.monsters) {
+            if (!m.alive || m.reached) continue;
+            if (m instanceof GhostBird && m.isGhost) continue;
+            if (Math.hypot(m.pos.x - this.targetX, m.pos.y - this.targetY) <= this.blastRadius) {
+              m.takeDamage(this.dmg);
+              spawnParticles(m.pos.x, m.pos.y, color(...this.col), 8);
+            }
+          }
+        }
+        // 爆炸粒子
+        spawnParticles(this.targetX, this.targetY, color(...this.col), 30);
+        _cannonBlasts.push({ x: this.targetX, y: this.targetY, r: this.blastRadius, life: 30 });
+        this.alive = false;
+      }
+      return;
+    }
+
     const hitR = isGhost ? 14 : isScatter ? 16 : 10;
     let hits = manager ? manager.getMonstersInRange(this.x, this.y, hitR, this.antiAir) : [];
     if (this.antiAir) hits = hits.filter(m => m.isFlying);
@@ -654,8 +833,8 @@ class Projectile {
       spawnParticles(this.x, this.y, color(...this.col), 6);
       this.alive = false;
     } else {
-      // rapid 等普通单体
-      manager.damageAt(this.x, this.y, this.dmg, false, false);
+      // rapid 等普通单体（rapid传入ignoreRobotShield）
+      manager.damageAt(this.x, this.y, this.dmg, false, false, false, this.ignoreRobotShield);
       spawnParticles(this.x, this.y, color(...this.col), 4);
       this.alive = false;
     }
@@ -684,6 +863,24 @@ class Projectile {
       ellipse(0, 0, 5, 5);
       pop();
       return; // 不执行后面的pop
+    } else if (this.towerType === 'cannon') {
+      // 大炮炮弹：大圆球+火焰尾迹
+      pop(); push(); translate(this.x, this.y); rotate(Math.atan2(this.vy, this.vx));
+      const cs = 7 + this.level * 2;
+      // 尾迹火焰
+      noStroke(); fill(r, g, b, this.life * 80);
+      ellipse(-cs * 2, 0, cs * 3, cs * 1.5);
+      fill(255, 160, 60, this.life * 140);
+      ellipse(-cs * 1.2, 0, cs * 2, cs);
+      // 炮弹主体
+      fill(r, g, b, this.life * 240);
+      ellipse(0, 0, cs * 2, cs * 1.6);
+      fill(255, 200, 120, this.life * 200);
+      ellipse(0, 0, cs * 0.8, cs * 0.8);
+      fill(255, 255, 255, this.life * 180);
+      ellipse(0, 0, 3, 3);
+      pop();
+      return;
     } else if (this.towerType === 'ghost') {
       // 追踪导弹：紫色+发光尾迹
       fill(r,g,b,this.life*230);
@@ -705,6 +902,8 @@ class Projectile {
 
 // 跳链电弧视觉（全局列表，每帧衰减）
 let _chainArcs = [];
+// 大炮爆炸效果（全局列表）
+let _cannonBlasts = [];
 
 function _drawChainArcs() {
   _chainArcs = _chainArcs.filter(a => a.life > 0);
@@ -765,13 +964,33 @@ function _drawChainArcs() {
 
 let towers = [], projectiles = [];
 
+function _drawCannonBlasts() {
+  _cannonBlasts = _cannonBlasts.filter(b => b.life > 0);
+  for (const b of _cannonBlasts) {
+    b.life--;
+    const t = b.life / 30;
+    push(); translate(b.x, b.y);
+    // 外冲击波环
+    noFill(); stroke(255, 100, 40, t * 180); strokeWeight(3 + (1 - t) * 6);
+    ellipse(0, 0, b.r * 2 * (1.4 - t * 0.4), b.r * 2 * (1.4 - t * 0.4));
+    // 内爆炸圆
+    noStroke(); fill(255, 80, 20, t * 120);
+    ellipse(0, 0, b.r * 1.2 * t, b.r * 1.2 * t);
+    fill(255, 200, 100, t * 160);
+    ellipse(0, 0, b.r * 0.5 * t, b.r * 0.5 * t);
+    // 核心白点
+    fill(255, 255, 255, t * 200);
+    ellipse(0, 0, 12 * t, 12 * t);
+    pop();
+  }
+}
+
 function updateAndDrawTowers() {
   for (const t of towers) { t.update(); t.draw(); }
-  // 磁场减速：每帧生效后消费掉（怪物移动前已被设置）
-  // 跳链电弧视觉
   _drawChainArcs();
+  _drawCannonBlasts();
   projectiles = projectiles.filter(p => p.alive);
   for (const p of projectiles) { p.update(); p.draw(); }
 }
 
-function initTowers() { towers = []; projectiles = []; _chainArcs = []; }
+function initTowers() { towers = []; projectiles = []; _chainArcs = []; _cannonBlasts = []; }

@@ -256,16 +256,16 @@ function drawWaveUI() {
 function drawBuildMenu() {
   textFont('monospace'); noStroke();
   
-  // 7个塔，压缩按钮宽度以适应屏幕（14格×70=980px宽）
+  // 8个塔，压缩按钮宽度以适应屏幕（14格×70=980px宽）
   const btnW = 86;
   const spacing = 5;
-  const menuWidth = 7 * (btnW + spacing) + 4;
+  const menuWidth = 8 * (btnW + spacing) + 4;
   
   // 背景板
   fill(5, 10, 22, 220); stroke(0, 130, 200, 120); strokeWeight(1.5);
   rect(0, BUILD_BTN_Y, menuWidth, 48, 0, 0, 6, 0);
 
-  const types = ['rapid', 'laser', 'nova', 'chain', 'magnet', 'ghost', 'scatter'];
+  const types = ['rapid', 'laser', 'nova', 'chain', 'magnet', 'ghost', 'scatter', 'cannon'];
   const displayNames = {
     rapid:   'RAPID',
     laser:   'LASER',
@@ -274,6 +274,7 @@ function drawBuildMenu() {
     magnet:  'MAGNET',
     ghost:   'GHOST',
     scatter: 'AA-FAN',
+    cannon:  'CANNON',
   };
 
   for (let i = 0; i < types.length; i++) {
@@ -375,6 +376,13 @@ function drawTowerPanel() {
   } else if (t.type === 'nova') {
     fill(255,160,50,210); noStroke(); textSize(9);
     text('◆ 穿透直线+落点爆炸', px+10, specialY); specialY += 14;
+  } else if (t.type === 'cannon') {
+    const def = TOWER_DEFS.cannon;
+    const br = def.cannonBlastRadius[t.level-1];
+    fill(255,80,80,210); noStroke(); textSize(9);
+    text('◆ 全图轨道炮  空陆两用', px+10, specialY); specialY += 14;
+    fill(255,140,60,200); noStroke(); textSize(9);
+    text('◆ 爆炸半径 ' + br + '  优先打空中', px+10, specialY); specialY += 14;
   }
 
   if (!isMaxed) {
@@ -451,7 +459,7 @@ function handlePlacementClick(mx, my) {
   // 必须与 drawBuildMenu 中的参数完全一致
   const btnW   = 86;
   const spacing = 5;
-  const types  = ['rapid', 'laser', 'nova', 'chain', 'magnet', 'ghost', 'scatter'];
+  const types  = ['rapid', 'laser', 'nova', 'chain', 'magnet', 'ghost', 'scatter', 'cannon'];
 
   // 建造菜单区域
   if (my >= BUILD_BTN_Y && my < BUILD_BTN_Y + 48) {
