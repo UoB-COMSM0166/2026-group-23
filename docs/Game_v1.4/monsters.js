@@ -258,8 +258,20 @@ class MechRobot extends Monster {
     this.shootTimer = 0; this.shootCooldown = 100; this.muzzleFlash = 0; this.bullets = [];
     this.aimDx = 1; this.aimDy = 0; this.aimAngle = 0;
   }
-  takeDamage(dmg, fromSide) {
+  takeDamage(dmg, fromSide, ignoreShield) {
     this.hitFlash = 7;
+    if (ignoreShield) {
+      // 快速塔专属：完全无视护盾，直接造成全额伤害
+      this.shielded = false;
+      this.hp -= dmg;
+      if (!this.shieldTriggered && this.hp > 0 && this.hp/this.maxHp <= 0.6) {
+        this.shieldTriggered = true; this.shielded = true;
+        this.shieldHp = floor(this.maxHp * 0.2); this.shieldPulse = 25;
+        spawnParticles(this.pos.x, this.pos.y, color(60,180,255), 14);
+      }
+      if (this.hp <= 0) { this.alive = false; spawnParticles(this.pos.x,this.pos.y,this.deathColor,26); }
+      return;
+    }
     if (this.shielded) {
       if (!fromSide) dmg = floor(dmg * 0.5);
       this.shieldHp -= dmg; this.shieldPulse = 14;
@@ -1177,33 +1189,44 @@ class MonsterManager {
     return 2; // snake / spider
   }
 
-  damageAt(tx,ty,dmg,antiAir,fromSide) {
+  // ignoreTankBarrier: 无视坦克护盾（链式电弧塔专属）
+  // ignoreRobotShield: 无视机器人护盾（快速塔专属，相当于 fromSide=true 且穿透护盾）
+  damageAt(tx,ty,dmg,antiAir,fromSide,ignoreTankBarrier,ignoreRobotShield) {
     antiAir=antiAir||false; fromSide=fromSide||false;
+    ignoreTankBarrier=ignoreTankBarrier||false; ignoreRobotShield=ignoreRobotShield||false;
     for (const m of this.monsters) {
       if (!m.alive||m.reached) continue;
-      if (!m.isFlying && m._tankShielded > 0 && !(m instanceof MechTank)) continue;
+      if (!ignoreTankBarrier && !m.isFlying && m._tankShielded > 0 && !(m instanceof MechTank)) continue;
       // 幽灵飞鸟隐身期间免疫所有伤害
       if (m instanceof GhostBird && m.isGhost) continue;
       const isFlying = m instanceof MechPhoenix || m instanceof GhostBird;
       if (antiAir && !isFlying) continue;
       if (!antiAir && isFlying) continue;
       if (distAB(m.pos,{x:tx,y:ty})<=m.radius+5) {
-        if (m instanceof MechRobot) m.takeDamage(dmg,fromSide); else m.takeDamage(dmg);
+        if (m instanceof MechRobot) {
+          // ignoreRobotShield: 直接无视护盾造成全额伤害
+          if (ignoreRobotShield) m.takeDamage(dmg, true, true);
+          else m.takeDamage(dmg, fromSide);
+        } else m.takeDamage(dmg);
       }
     }
   }
 
-  damageInRadius(cx,cy,radius,dmg,antiAir) {
+  damageInRadius(cx,cy,radius,dmg,antiAir,ignoreTankBarrier,ignoreRobotShield) {
     antiAir=antiAir||false;
+    ignoreTankBarrier=ignoreTankBarrier||false; ignoreRobotShield=ignoreRobotShield||false;
     for (const m of this.monsters) {
       if (!m.alive||m.reached) continue;
-      if (!m.isFlying && m._tankShielded > 0 && !(m instanceof MechTank)) continue;
+      if (!ignoreTankBarrier && !m.isFlying && m._tankShielded > 0 && !(m instanceof MechTank)) continue;
       if (m instanceof GhostBird && m.isGhost) continue;
       const isFlying = m instanceof MechPhoenix || m instanceof GhostBird;
       if (antiAir && !isFlying) continue;
       if (!antiAir && isFlying) continue;
       if (distAB(m.pos,{x:cx,y:cy})<=radius) {
-        if (m instanceof MechRobot) m.takeDamage(dmg,false); else m.takeDamage(dmg);
+        if (m instanceof MechRobot) {
+          if (ignoreRobotShield) m.takeDamage(dmg, true, true);
+          else m.takeDamage(dmg, false);
+        } else m.takeDamage(dmg);
       }
     }
   }

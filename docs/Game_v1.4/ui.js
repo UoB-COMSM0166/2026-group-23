@@ -130,19 +130,20 @@ function drawWaveUI() {
 function drawBuildMenu() {
   textFont('monospace'); noStroke();
   const btnW = 86, spacing = 5;
-  const menuWidth = 7 * (btnW + spacing) + 4;
+  const menuWidth = 8 * (btnW + spacing) + 4;
 
   fill(5, 10, 22, 220); stroke(0, 130, 200, 120); strokeWeight(1.5);
   rect(0, BUILD_BTN_Y, menuWidth, 48, 0, 0, 6, 0);
 
-  const types = ['rapid', 'laser', 'nova', 'chain', 'magnet', 'ghost', 'scatter'];
+  const types = ['rapid', 'laser', 'nova', 'chain', 'magnet', 'ghost', 'scatter', 'cannon'];
   const displayNames = {
     rapid:'RAPID', laser:'LASER', nova:'NOVA', chain:'CHAIN',
-    magnet:'MAGNET', ghost:'GHOST', scatter:'AA-FAN',
+    magnet:'MAGNET', ghost:'GHOST', scatter:'AA-FAN', cannon:'CANNON',
   };
 
   for (let i = 0; i < types.length; i++) {
     const type = types[i], def = TOWER_DEFS[type];
+    if (!def) continue;
     const [r, g, b] = def.color;
     const bx = 6 + i * (btnW + spacing), by = BUILD_BTN_Y + 6;
     const selected  = selectedTowerType === type;
@@ -213,6 +214,13 @@ function drawTowerPanel() {
     const [label, col] = specials[t.type];
     fill(...col); noStroke(); textSize(9); text(label, px+10, specialY); specialY += 14;
   }
+  if (t.type === 'cannon') {
+    const br = TOWER_DEFS.cannon.cannonBlastRadius[t.level-1];
+    fill(255,80,80,210); noStroke(); textSize(9);
+    text('◆ 全图轨道炮  空陆两用', px+10, specialY); specialY += 14;
+    fill(255,140,60,200); noStroke(); textSize(9);
+    text('◆ 爆炸半径 '+br+'  优先打空中', px+10, specialY); specialY += 14;
+  }
 
   if (!isMaxed) {
     const canUpg = coins >= t.upgradeCost;
@@ -276,7 +284,7 @@ function drawPlacementPreview() {
 // ============================================================
 function handlePlacementClick(mx, my) {
   const btnW=86, spacing=5;
-  const types=['rapid','laser','nova','chain','magnet','ghost','scatter'];
+  const types=['rapid','laser','nova','chain','magnet','ghost','scatter','cannon'];
 
   if (my >= BUILD_BTN_Y && my < BUILD_BTN_Y+48) {
     for (let i=0; i<types.length; i++) {
