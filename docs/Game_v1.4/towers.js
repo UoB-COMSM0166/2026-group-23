@@ -90,12 +90,11 @@ const TOWER_DEFS = {
   cannon: {
     name: '轨道巨炮', label: 'CANNON', cost: 350,
     // 全图攻击范围，超大范围爆炸，同时打击地面与空中
-    // 蓄力时间最长，优先攻击空中目标
-    // Lv1 蓄力5s  Lv2 蓄力4s  Lv3 蓄力3s
+    // 蓄力时间最长，随机选择目标
     levels: [
-      { dmg: 280, range: 9999, fireRate: 300, upgradeCost: 320 },
-      { dmg: 420, range: 9999, fireRate: 240, upgradeCost: 500 },
-      { dmg: 600, range: 9999, fireRate: 180, upgradeCost: 0   }
+      { dmg: 200, range: 9999, fireRate: 300, upgradeCost: 320 },
+      { dmg: 300, range: 9999, fireRate: 240, upgradeCost: 500 },
+      { dmg: 420, range: 9999, fireRate: 180, upgradeCost: 0   }
     ],
     projSpd: 18, color: [255, 60, 60], antiAir: false,
     cannonBlastRadius: [90, 115, 145], // 各等级爆炸半径
@@ -322,25 +321,19 @@ class Tower {
     }
   }
 
-  // ── CANNON 轨道巨炮 —— 全图，空陆两用，优先打空中，蓄力最久 ──
+  // ── CANNON 轨道巨炮 —— 全图，空陆两用，随机攻击目标，蓄力最久 ──
   _updateCannon() {
     if (!manager) return;
-    // 优先寻找空中目标，无空中目标则找地面目标
-    let target = null;
-    const airTargets = manager.monsters.filter(m =>
-      m.alive && !m.reached && (m instanceof MechPhoenix || m instanceof GhostBird) && !m.isGhost
-    ).sort((a, b) => b.progress - a.progress);
-    if (airTargets.length > 0) {
-      target = airTargets[0];
-    } else {
-      const groundTargets = manager.monsters.filter(m =>
-        m.alive && !m.reached && !(m instanceof MechPhoenix) && !(m instanceof GhostBird)
-      ).sort((a, b) => b.progress - a.progress);
-      if (groundTargets.length > 0) target = groundTargets[0];
+    // 只在开炮时重新随机目标，蓄力期间锁定目标不变，避免枪头乱甩
+    if (!this._cannonTarget || !this._cannonTarget.alive || this._cannonTarget.reached) {
+      const allTargets = manager.monsters.filter(m =>
+        m.alive && !m.reached && !(m instanceof GhostBird && m.isGhost)
+      );
+      if (allTargets.length === 0) return;
+      this._cannonTarget = allTargets[Math.floor(Math.random() * allTargets.length)];
     }
-    if (!target) return;
+    const target = this._cannonTarget;
     this.angle = Math.atan2(target.pos.y - this.py, target.pos.x - this.px);
-    this._cannonTarget = target;
     if (this.timer < this.fireRate) return;
     this.timer = 0; this.shootFlash = 20;
     const def = TOWER_DEFS.cannon;
@@ -352,6 +345,8 @@ class Tower {
     shell.blastRadius = blastR;
     shell.life = 1.0;
     projectiles.push(shell);
+    // 开炮后重新随机下一个目标
+    this._cannonTarget = null;
   }
 
   // ============================================================
@@ -632,74 +627,66 @@ class Tower {
     const pulse = sin(this.pulseTime * 3) * 0.5 + 0.5;
     const ready = charge >= 0.97;
 
-    // 警戒旋转光环（蓄力满时高速旋转）
+    // 旋转光环（比其他塔大20%）
     push(); rotate(this.pulseTime * (0.5 + charge * 3));
-    noFill(); strokeWeight(1.2 + lv * 0.4);
+    noFill(); strokeWeight(1.2 + lv * 0.42);
     stroke(r, g, b, 55 + charge * 120);
-    ellipse(0, 0, (22 + lv * 4) * 2, (22 + lv * 4) * 2);
-    // 外旋光点
-    for (let i = 0; i < 4 + lv; i++) {
-      const a = (TWO_PI / (4 + lv)) * i;
-      const rr = 22 + lv * 4;
-      fill(r, g, b, 160 + charge * 80); noStroke();
-      ellipse(cos(a) * rr, sin(a) * rr, 3 + charge * 3, 3 + charge * 3);
+    ellipse(0, 0, (17.28 + lv * 2.88) * 2, (17.28 + lv * 2.88) * 2);
+    for (let i = 0; i < 4; i++) {
+      const a = (TWO_PI / 4) * i;
+      const rr = 17.28 + lv * 2.88;
+      fill(r, g, b, 140 + charge * 80); noStroke();
+      ellipse(cos(a) * rr, sin(a) * rr, 2.88 + charge * 2.88, 2.88 + charge * 2.88);
     }
     pop();
 
-    // 瞄准线（蓄力满时显示目标轨迹）
+    // 蓄力满时瞄准线
     if (ready && this._cannonTarget && this._cannonTarget.alive) {
       const tx = this._cannonTarget.pos.x - this.px;
       const ty = this._cannonTarget.pos.y - this.py;
-      stroke(r, g, b, 80 + pulse * 60); strokeWeight(0.8); noFill();
-      // 虚线瞄准
+      stroke(r, g, b, 60 + pulse * 40); strokeWeight(0.7); noFill();
       const len = Math.hypot(tx, ty);
       const steps = floor(len / 18);
       for (let s = 0; s < steps; s += 2) {
         line(lerp(0,tx,s/steps), lerp(0,ty,s/steps),
              lerp(0,tx,(s+1)/steps), lerp(0,ty,(s+1)/steps));
       }
-      // 目标标记圈
-      noFill(); stroke(r, g, b, 180 + pulse * 60); strokeWeight(1.5);
-      ellipse(tx, ty, 28 + pulse * 8, 28 + pulse * 8);
-      stroke(r, g, b, 120); strokeWeight(0.8);
-      line(tx - 14, ty, tx + 14, ty); line(tx, ty - 14, tx, ty + 14);
+      noFill(); stroke(r, g, b, 160 + pulse * 50); strokeWeight(1.2);
+      ellipse(tx, ty, 25.92 + pulse * 8.64, 25.92 + pulse * 8.64);
+      stroke(r, g, b, 100); strokeWeight(0.7);
+      line(tx - 12.96, ty, tx + 12.96, ty); line(tx, ty - 12.96, tx, ty + 12.96);
     }
 
     push(); rotate(this.angle);
-    // 巨炮主炮管（粗重）
-    fill(15, 8, 8); stroke(r, g, b, 200); strokeWeight(1.8);
+    fill(15, 8, 8); stroke(r, g, b, 200); strokeWeight(1.68);
     rectMode(CENTER);
-    // 炮管底座
-    rect(4, 0, 22, 14 + lv * 2, 2);
-    // 主炮管
-    rect(16 + lv * 3, 0, 22 + lv * 4, 9 + lv, 1);
-    // 炮口
-    fill(r, g, b, 60 + charge * 140); noStroke();
-    rect(26 + lv * 4, 0, 6, 6 + lv, 1);
+    rect(2.88, 0, 17.28, 12.96 + lv * 1.44, 2);
+    rect(14.4 + lv * 2.88, 0, 20.16 + lv * 2.88, 8.64, 1);
+    fill(r, g, b, 50 + charge * 130); noStroke();
+    rect(24.48 + lv * 2.88, 0, 5.76, 5.76, 1);
     if (this.shootFlash > 0) {
-      noStroke(); fill(255, 180, 80, 240);
-      ellipse(30 + lv * 4, 0, 22, 22);
+      noStroke(); fill(255, 180, 80, 230);
+      ellipse(27.36 + lv * 2.88, 0, 20.16, 20.16);
       fill(255, 255, 200, 200);
-      ellipse(30 + lv * 4, 0, 10, 10);
+      ellipse(27.36 + lv * 2.88, 0, 8.64, 8.64);
     }
-    // 散热翼
     for (let i = -1; i <= 1; i += 2) {
-      fill(20, 10, 10); stroke(r, g, b, 140); strokeWeight(0.9);
-      rect(8 + lv, i * (9 + lv), 10 + lv, 4, 1);
+      fill(20, 10, 10); stroke(r, g, b, 130); strokeWeight(0.9);
+      rect(7.2, i * (7.2 + lv * 0.72), 10.08, 4.32, 1);
     }
     pop();
 
-    // 核心（蓄力中发红）
-    const cr = 8 + lv * 2 + charge * 4;
+    // 核心
+    const cr = 7.2 + lv * 1.44 + charge * 3.6;
     fill(r, floor(g * (1 - charge * 0.8)), floor(b * (1 - charge * 0.8)), 80 + charge * 130);
     noStroke(); ellipse(0, 0, cr * 2, cr * 2);
     fill(ready ? color(255, 100, 60, 240) : color(r, g, b, 180 + pulse * 60));
     ellipse(0, 0, cr * 0.5, cr * 0.5);
-    fill(255, 255, 255, 200); ellipse(0, 0, 2.5, 2.5);
+    fill(255, 255, 255, 200); ellipse(0, 0, 2.88, 2.88);
 
     // 蓄力条
-    const bW = 24 + lv * 4, bH = 3, bx = -bW / 2, by = 18 + lv * 2;
-    fill(12, 6, 6); stroke(r, g, b, 80); strokeWeight(0.6);
+    const bW = 25.92 + lv * 4.32, bH = 3.6, bx = -bW / 2, by = 20.16 + lv * 1.44;
+    fill(12, 6, 6); stroke(r, g, b, 80); strokeWeight(0.5);
     rectMode(CORNER); rect(bx, by, bW, bH, 1);
     noStroke();
     fill(ready ? color(255, 80, 40) : lerpColor(color(180, 30, 30), color(255, 120, 40), charge));
