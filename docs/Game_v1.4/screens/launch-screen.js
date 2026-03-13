@@ -6,7 +6,18 @@
 
 function drawLaunchScreen() {
   launchAnim++;
-  background(2, 4, 14);
+  // ── 背景图片（如果存在）──
+  if (!window.launchBg) {
+    // 首次运行时尝试加载背景
+    window.launchBg = loadImage('assert/mrrockyd0710_sci-fi_tower_defense_world_map_top-down_futuristic_7a9633b1-791f-480d-ab58-37f08c2bfe1a.png');
+  }
+
+  if (window.launchBg && window.launchBg.width) {
+    image(window.launchBg, 0, 0, width, height);
+  } else {
+    // 若图片尚未加载完成则使用原背景色
+    background(2, 4, 14);
+  }
 
   // ── 流动粒子星空 ──
   noStroke();
@@ -58,7 +69,7 @@ function drawLaunchScreen() {
   if (fadein > 0.55) {
     const t = constrain((fadein - 0.55) / 0.4, 0, 1);
     noStroke(); fill(160, 200, 240, t * 175); textSize(12);
-    text('数字塔防 — 守护量子基地', width/2, height/2 + 50);
+    text('Quantum Drop: Defense Protocol', width/2, height/2 + 50);
   }
 
   // ── 装饰六边形 ──

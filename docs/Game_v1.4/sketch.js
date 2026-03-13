@@ -155,7 +155,7 @@ function initGame() {
 
   const lcfg = LEVEL_INFO[currentLevel];
   coins     = Math.floor(gameDifficulty === 'easy' ? lcfg.startCoins * 1.3 : lcfg.startCoins);
-  baseHpMax = gameDifficulty === 'easy' ? 60 : 50;
+  baseHpMax = gameDifficulty === 'easy' ? 30 : 20;
   baseHp    = baseHpMax;
   TOTAL_WAVES = WAVE_CONFIGS[currentLevel].length;
 
