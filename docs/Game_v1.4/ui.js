@@ -143,7 +143,7 @@ function drawBuildMenu() {
 
   for (let i = 0; i < types.length; i++) {
     const type = types[i], def = TOWER_DEFS[type];
-    if (!def) continue;
+    if (!def) continue; // 防止 towers.js 未定义该塔时崩溃
     const [r, g, b] = def.color;
     const bx = 6 + i * (btnW + spacing), by = BUILD_BTN_Y + 6;
     const selected  = selectedTowerType === type;
@@ -214,6 +214,7 @@ function drawTowerPanel() {
     const [label, col] = specials[t.type];
     fill(...col); noStroke(); textSize(9); text(label, px+10, specialY); specialY += 14;
   }
+  // 大炮需要两行说明，单独处理
   if (t.type === 'cannon') {
     const br = TOWER_DEFS.cannon.cannonBlastRadius[t.level-1];
     fill(255,80,80,210); noStroke(); textSize(9);
@@ -282,11 +283,17 @@ function drawPlacementPreview() {
 // ============================================================
 //  点击事件处理（返回 true = 已消费）
 // ============================================================
+// 加农炮瞄准模式
+let _mortarAiming = false; // 是否在瞄准状态
+let _mortarTower  = null;  // 当前瞄准的防空塔
+
 function handlePlacementClick(mx, my) {
   const btnW=86, spacing=5;
   const types=['rapid','laser','nova','chain','magnet','ghost','scatter','cannon'];
 
   if (my >= BUILD_BTN_Y && my < BUILD_BTN_Y+48) {
+    // 点击菜单时取消瞄准
+    _mortarAiming = false; _mortarTower = null;
     for (let i=0; i<types.length; i++) {
       const bx=6+i*(btnW+spacing);
       if (mx>=bx && mx<bx+btnW) {
@@ -297,6 +304,16 @@ function handlePlacementClick(mx, my) {
     }
     const cancelX=6+types.length*(btnW+spacing);
     if (selectedTowerType && mx>=cancelX && mx<cancelX+44) { selectedTowerType=null; return true; }
+    return true;
+  }
+
+  // 瞄准模式：点击地图发射炮弹
+  if (_mortarAiming && _mortarTower) {
+    if (my > HUD_HEIGHT) {
+      _mortarTower.fireMortar(mx, my);
+      _mortarAiming = false;
+      _mortarTower  = null;
+    }
     return true;
   }
 
@@ -311,8 +328,23 @@ function handlePlacementClick(mx, my) {
     }
   }
 
+  // 点击防空塔且炮弹就绪，进入瞄准模式
   const clicked=towers.find(t=>dist(mx,my,t.px,t.py)<CELL_SIZE*0.45);
   if (clicked) {
+    if (clicked.type === 'scatter' && clicked.mortarReady) {
+      _mortarAiming = true;
+      _mortarTower  = clicked;
+      selectedTower = clicked;
+      selectedTowerType = null;
+      return true;
+    }
+    // 点击充能就绪的快速塔，激活超级机枪模式
+    if (clicked.type === 'rapid' && clicked.rapidReady) {
+      clicked.activateOverdrive();
+      selectedTower = clicked;
+      selectedTowerType = null;
+      return true;
+    }
     selectedTower = selectedTower===clicked ? null : clicked;
     if (selectedTower) selectedTowerType=null;
     return true;
@@ -338,6 +370,31 @@ function handlePlacementClick(mx, my) {
 function drawUI() {
   drawBuildMenu();
   drawPlacementPreview();
+  // 加农炮瞄准准星（显示缩小，不影响实际攻击范围）
+  if (_mortarAiming && _mortarTower) {
+    const radii = [90, 115, 145];
+    const actualRadius = radii[_mortarTower.level-1]; // 实际攻击范围不变
+    const displayRadius = 28; // 准星显示尺寸缩小
+    const pulse = sin(frameCount*0.18)*0.4+0.6;
+    // 小准星圆圈
+    noFill(); stroke(255,180,30,150*pulse); strokeWeight(1.5);
+    ellipse(mouseX, mouseY, displayRadius*2, displayRadius*2);
+    // 十字准星
+    stroke(255,200,50,180*pulse); strokeWeight(1.2);
+    const arm = displayRadius + 8;
+    line(mouseX-arm, mouseY, mouseX-displayRadius-2, mouseY);
+    line(mouseX+displayRadius+2, mouseY, mouseX+arm, mouseY);
+    line(mouseX, mouseY-arm, mouseX, mouseY-displayRadius-2);
+    line(mouseX, mouseY+displayRadius+2, mouseX, mouseY+arm);
+    // 中心点
+    noStroke(); fill(255,220,50,200*pulse);
+    ellipse(mouseX, mouseY, 4, 4);
+    // 提示文字
+    fill(255,220,60,220); noStroke(); textFont('monospace'); textSize(10);
+    textAlign(CENTER, CENTER);
+    text('点击发射炮弹', mouseX, mouseY - arm - 10);
+    textAlign(LEFT, BASELINE);
+  }
   drawTowerPanel();
   drawClickEffects();
   drawScanlines();
@@ -350,4 +407,6 @@ function initUI() {
   selectedTower     = null;
   clickEffects      = [];
   BUILD_BTN_Y       = HUD_HEIGHT + 2;
+  _mortarAiming     = false;
+  _mortarTower      = null;
 }

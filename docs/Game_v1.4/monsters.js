@@ -77,12 +77,17 @@ class Monster {
     let spdMult = 1.0;
     if (this._magnetFactor !== undefined && this._magnetFactor < 1.0) {
       const curFrame = typeof frameCount !== 'undefined' ? frameCount : 0;
-      // 只在刚刚被设置的帧（同帧）生效
-      if (this._magnetFrame === curFrame) {
+      if (this._magnetFrame >= curFrame - 1) {
         spdMult = this._magnetFactor;
       } else {
-        this._magnetFactor = 1.0; // 超过一帧未刷新，失效
+        this._magnetFactor = 1.0;
       }
+    }
+    // 母舰地面光环：移速加快30%
+    if (this._carrierAura && this._carrierAura >= (typeof frameCount !== 'undefined' ? frameCount : 0)) {
+      spdMult *= 1.3;
+    } else {
+      this._carrierSpd = false;
     }
     const effectiveSpd = this.spd * spdMult;
     const r = moveAlongPath(this.pos, this.seg, this.path, effectiveSpd);
@@ -104,6 +109,32 @@ class Monster {
   draw() {}
   update() {
     if (!this.alive || this.reached) return;
+    // 空投坠落动画：从空中下落到路径节点，期间不移动不受伤
+    if (this._dropping) {
+      this._dropTimer++;
+      const t = this._dropTimer / this._dropFrames;
+      const drawY = lerp(this._dropFromY, this._dropToY, t);
+      // 画下落中的投放舱
+      push(); translate(this.pos.x, drawY);
+      const alpha = 200;
+      fill(60, 60, 80, alpha); stroke(180, 200, 255, alpha); strokeWeight(1.5);
+      rectMode(CENTER); rect(0, 0, 14, 20, 3);
+      // 降落伞
+      noFill(); stroke(200, 220, 255, alpha * 0.7); strokeWeight(1);
+      arc(0, -10, 24, 18, PI, TWO_PI);
+      line(-12, -10, -5, -10); line(12, -10, 5, -10);
+      // 速度线
+      stroke(180, 200, 255, alpha * 0.4); strokeWeight(0.8);
+      for (let k = -1; k <= 1; k++) {
+        line(k*4, 10, k*4, 10 + (1-t)*20);
+      }
+      pop();
+      if (this._dropTimer >= this._dropFrames) {
+        this._dropping = false;
+        spawnParticles(this.pos.x, this.pos.y, color(200, 180, 100), 10);
+      }
+      return;
+    }
     this.move(); this.draw(); this.drawHealthBar();
   }
 }
@@ -111,30 +142,39 @@ class Monster {
 // ── 机械蛇 ──
 class MechSnake extends Monster {
   constructor(path) {
-    super(path, 320, 0.95, 18);
+    super(path, 500, 0.95, 18);
     this.radius = 9; this.deathColor = color(160, 30, 5);
     this.waveTime = 0; this.breathe = 0;
     this.history = Array(120).fill(null).map(() => ({ x: path[0].x, y: path[0].y }));
-    this.healTimer = 0; this.healEffect = 0;
+    this.healTimer = 240; this.healEffect = 0; // 出生4秒后触发第一次（原10秒）
     this.HEAL_RADIUS = 260;
   }
   move() {
     this.waveTime += 0.13; this.breathe += 0.08; this.healTimer++;
-    if (this.healTimer >= 600) {
+    if (this.healTimer >= 360) { // 冷却6秒（原10秒）
       this.healTimer = 0; this.healEffect = 60;
       if (typeof manager !== 'undefined') {
         for (const m of manager.monsters) {
-          if (!m.alive) continue;
+          if (!m.alive || m === this) continue;
           const d = distAB(this.pos, m.pos);
           if (d > this.HEAL_RADIUS) continue;
-          if (m instanceof BossAntMech) continue;
-          const isBoss = (m instanceof BossFission)||(m instanceof BossPhantom);
-          m.hp = min(m.maxHp, m.hp + floor(m.maxHp * (isBoss ? 0.08 : 0.15)));
+          // 只给小怪回血，Boss不回血
+          const isBoss = (m instanceof BossFission)||(m instanceof BossPhantom)||
+                         (m instanceof BossAntMech)||(m instanceof FissionCore)||
+                         (m instanceof BossCarrier);
+          if (isBoss) continue;
+          m.hp = min(m.maxHp, m.hp + floor(m.maxHp * 0.15));
         }
       }
     }
     if (this.healEffect > 0) this.healEffect--;
-    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd);
+    // 应用磁场减速
+    let _spdMult = 1.0;
+    if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
+      _spdMult = this._magnetFactor;
+    } else { this._magnetFactor = 1.0; }
+    if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
+    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd * _spdMult);
     this.pos = r.pos; this.seg = r.seg;
     this.progress = calcProgress(this.pos, this.seg, this.path);
     if (this.seg >= this.path.length - 1) this.reached = true;
@@ -187,16 +227,53 @@ class MechSnake extends Monster {
 }
 
 // ── 机械天蛛 ──
+// 出生时超级冲刺无敌，之后保持高速+定期冲刺
 class MechSpider extends Monster {
   constructor(path) {
-    super(path, 280, 1.35, 26);
+    super(path, 420, 1.8, 26);
     this.radius = 16; this.deathColor = color(110, 55, 8);
     this.legTime = 0; this.stopTimer = 0; this.stopped = false; this.pulse = 0;
+    // 出生超级冲刺
+    this.spawnDash = true;
+    this.spawnDashFrames = 40; // 出生冲刺持续40帧
+    this.spawnDashInvincible = true;
+    // 常规冲刺
     this.dashTimer = 0; this.dashing = false; this.dashFrames = 0;
-    this.dashEffect = 0; this.baseSpd = 1.35;
+    this.dashEffect = 0; this.baseSpd = 1.8;
+  }
+  takeDamage(dmg) {
+    if (this.spawnDash || this.dashing) return; // 冲刺期间无敌
+    this.hitFlash = 5;
+    this.hp -= dmg;
+    if (this.hp <= 0) {
+      this.alive = false;
+      spawnParticles(this.pos.x, this.pos.y, this.deathColor, 20);
+    }
   }
   move() {
     this.legTime += 0.16; this.stopTimer++; this.pulse += 0.07; this.dashTimer++;
+
+    // 出生超级冲刺阶段
+    if (this.spawnDash) {
+      this.spawnDashFrames--;
+      if (this.spawnDashFrames <= 0) {
+        this.spawnDash = false;
+        this.spawnDashInvincible = false;
+        this.spd = this.baseSpd;
+      }
+      let _spdMult = 1.0;
+      if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
+        _spdMult = this._magnetFactor;
+      } else { this._magnetFactor = 1.0; }
+      // 出生冲刺速度是基础速度的4倍
+      const r = moveAlongPath(this.pos, this.seg, this.path, this.baseSpd * 4.0 * _spdMult);
+      this.pos = r.pos; this.seg = r.seg;
+      this.progress = calcProgress(this.pos, this.seg, this.path);
+      if (this.seg >= this.path.length - 1) this.reached = true;
+      return;
+    }
+
+    // 常规冲刺
     if (this.dashTimer >= 380 && !this.dashing) {
       this.dashing = true; this.dashFrames = 20; this.dashEffect = 25; this.dashTimer = 0;
     }
@@ -207,13 +284,30 @@ class MechSpider extends Monster {
     if (this.dashEffect > 0) this.dashEffect--;
     if (this.stopTimer % 200 < 22 && !this.dashing) { this.stopped = true; return; }
     this.stopped = false;
-    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd);
+    let _spdMult = 1.0;
+    if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
+      _spdMult = this._magnetFactor;
+    } else { this._magnetFactor = 1.0; }
+    if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
+    // 对空导弹减速
+    if (this._airSlowed && this._airSlowed >= frameCount) _spdMult *= this._airSlowFactor || 0.5;
+    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd * _spdMult);
     this.pos = r.pos; this.seg = r.seg;
     this.progress = calcProgress(this.pos, this.seg, this.path);
     if (this.seg >= this.path.length - 1) this.reached = true;
   }
   draw() {
     push(); translate(this.pos.x, this.pos.y);
+    // 出生冲刺特效：拖尾残影
+    if (this.spawnDash) {
+      const t = this.spawnDashFrames / 40;
+      noFill(); stroke(255, 140, 20, t * 220); strokeWeight(3);
+      ellipse(0, 0, 42, 42);
+      stroke(255, 200, 60, t * 160); strokeWeight(1.5);
+      ellipse(0, 0, 55, 55);
+      fill(255, 180, 40, t * 180); noStroke(); textSize(10); textAlign(CENTER);
+      text('▶▶', 0, -28);
+    }
     for (let i = 0; i < 4; i++) {
       const ba = map(i, 0, 3, -PI*0.78, PI*0.06);
       const sw = sin(this.legTime + i*1.1) * 0.44;
@@ -251,7 +345,7 @@ class MechSpider extends Monster {
 // ── 机器人 ──
 class MechRobot extends Monster {
   constructor(path) {
-    super(path, 825, 0.95, 30);
+    super(path, 1200, 0.95, 30);
     this.radius = 18; this.deathColor = color(60,160,255);
     this.walkTime = 0; this.corePulse = 0;
     this.shielded = false; this.shieldHp = 0; this.shieldPulse = 0; this.shieldTriggered = false;
@@ -304,7 +398,15 @@ class MechRobot extends Monster {
     }
     this.bullets = this.bullets.filter(b => b.life > 0);
     for (const b of this.bullets) { b.x += b.vx; b.y += b.vy; b.life -= 0.035; }
-    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd);
+    // 应用磁场减速
+    let _spdMult = 1.0;
+    if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
+      _spdMult = this._magnetFactor;
+    } else { this._magnetFactor = 1.0; }
+    if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
+    // 对空导弹减速
+    if (this._airSlowed && this._airSlowed >= frameCount) _spdMult *= this._airSlowFactor || 0.5;
+    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd * _spdMult);
     this.pos = r.pos; this.seg = r.seg;
     this.progress = calcProgress(this.pos, this.seg, this.path);
     if (this.seg >= this.path.length - 1) this.reached = true;
@@ -356,6 +458,11 @@ class MechPhoenix extends Monster {
     this.wingTime += 0.22; this.diveTimer++;
     this.floatY = cos(this.wingTime * 0.38) * 8; this.boneAngle += 0.03;
     this.diving = this.diveTimer % 180 < 42;
+    // 对空导弹减速到期后恢复baseSpd
+    if (this._airSlowApplied && this._airSlowExpire && frameCount >= this._airSlowExpire) {
+      this.baseSpd = this._origBaseSpd || 2.0;
+      this._airSlowApplied = false; this._airSlowExpire = 0;
+    }
     this.spd = this.diving ? this.baseSpd * (3.2/1.85) : this.baseSpd;
     this.jamTimer++;
     if (this.jamTimer >= 360) {
@@ -365,7 +472,15 @@ class MechPhoenix extends Monster {
     }
     if (this.jamEffect > 0) this.jamEffect--;
     this.trail.push({ x:this.pos.x, y:this.pos.y+this.floatY, vx:(random()-0.5)*1.2, vy:(random()-0.5)*1.2+0.5, life:1.0, size:random(5,14) });
-    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd);
+    // 应用磁场减速
+    let _spdMult = 1.0;
+    if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
+      _spdMult = this._magnetFactor;
+    } else { this._magnetFactor = 1.0; }
+    if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
+    // 对空导弹减速
+    if (this._airSlowed && this._airSlowed >= frameCount) _spdMult *= this._airSlowFactor || 0.5;
+    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd * _spdMult);
     this.pos = r.pos; this.seg = r.seg;
     this.progress = calcProgress(this.pos, this.seg, this.path);
     if (this.seg >= this.path.length - 1) this.reached = true;
@@ -409,124 +524,323 @@ class MechPhoenix extends Monster {
 }
 
 // ── Boss 裂变核心 ──
+// 技能一：核心护盾——每累积15次命中，激活护盾吸收下一波伤害，护盾期间向周围塔释放干扰脉冲使1~2座塔临时下线
+// 技能二：辐射爆发——血量<75%后每240帧向四周扩散一圈辐射波，波及范围内所有塔被干扰120帧
+// 技能三：临界分裂——血量降至40%时，分裂出2个小裂变体继续行进，自身移速提升
+// 技能四：过热冲刺——血量<20%进入过热状态，移速大幅提升并持续对周围塔造成干扰光环
 class BossFission extends Monster {
   constructor(path) {
-    super(path, 5400, 0.4, 160);
+    super(path, 5400, 0.38, 160);
     this.radius = 28; this.deathColor = color(255,120,20);
-    this.armAngle = 0; this.crackLevel = 0; this.overloading = false;
-    this.overloadTimer = 0; this.splitDone = false; this.pulseFire = 0;
-    this.shootTimer = 0; this.lavaBalls = []; this.lavaGrounds = [];
+    this.armAngle = 0; this.pulseFire = 0;
+    // 护盾系统
+    this.hitCount = 0; this.shieldActive = false; this.shieldHp = 0; this.shieldPulse = 0;
+    // 辐射波系统
+    this.radWaveTimer = 0; this.radWaves = []; // [{r, life}]
+    this.radWarning = 0;
+    // 分裂系统
+    this.splitDone = false;
+    // 过热系统
+    this.overheating = false;
+    this.overheatPulse = 0;
+    // 干扰计时
+    this.jamTimer = 0;
   }
   takeDamage(dmg) {
     this.hitFlash = 5;
-    const effective = this.overloading ? dmg*1.5 : dmg;
-    this.hp -= effective; this.crackLevel = min(20, this.crackLevel+1);
-    if (this.crackLevel >= 20 && !this.overloading) {
-      this.overloading = true; this.overloadTimer = 300; this.crackLevel = 0;
-      spawnParticles(this.pos.x, this.pos.y, color(255,140,20), 20);
+    if (this.shieldActive) {
+      this.shieldHp -= dmg; this.shieldPulse = 18;
+      if (this.shieldHp <= 0) {
+        this.shieldActive = false;
+        spawnParticles(this.pos.x, this.pos.y, color(255,180,40), 16);
+        // 护盾破碎时释放干扰脉冲，让周围塔下线150帧
+        jammedUntilFrame = frameCount + 150;
+        jamPos = { x: this.pos.x, y: this.pos.y };
+        if (typeof jamRadius !== 'undefined') jamRadius = 150;
+      }
+      return;
     }
-    if (!this.splitDone && this.hp <= this.maxHp*0.5 && this.hp > 0) {
+    this.hp -= dmg;
+    this.hitCount++;
+    // 每15次命中激活核心护盾
+    if (this.hitCount >= 15 && !this.shieldActive) {
+      this.hitCount = 0; this.shieldActive = true;
+      this.shieldHp = floor(this.maxHp * 0.12);
+      this.shieldPulse = 30;
+      spawnParticles(this.pos.x, this.pos.y, color(255,160,20), 12);
+    }
+    // 临界分裂：40%血触发
+    if (!this.splitDone && this.hp > 0 && this.hp / this.maxHp <= 0.4) {
       this.splitDone = true;
+      this.spd = 0.62; // 分裂后加速
       if (typeof manager !== 'undefined') {
-        for (let i = 0; i < 4; i++) {
-          const s = new MechSnake(this.path.slice(this.seg));
-          s.hp = 180; s.maxHp = 180; s.spd = 1.4;
-          manager.monsters.push(s);
+        for (let i = 0; i < 2; i++) {
+          const sub = new FissionCore(this.path.slice(this.seg));
+          sub.hp = floor(this.maxHp * 0.18);
+          sub.maxHp = sub.hp;
+          sub.pos = { x: this.pos.x + (i*2-1)*18, y: this.pos.y };
+          manager.monsters.push(sub);
         }
       }
+      spawnParticles(this.pos.x, this.pos.y, color(255,100,0), 30);
     }
     if (this.hp <= 0) { this.alive = false; spawnParticles(this.pos.x,this.pos.y,this.deathColor,40); }
   }
   move() {
-    this.armAngle += 0.02; this.pulseFire += 0.05;
-    if (this.overloading) {
-      this.overloadTimer--; this.spd = 0.8;
-      if (this.overloadTimer <= 0) { this.overloading = false; this.spd = 0.4; }
-    }
-    this.shootTimer++;
-    if (this.shootTimer >= 160) {
-      this.shootTimer = 0;
-      let dx = 0, dy = 0;
-      if (this.seg < this.path.length - 1) {
-        dx = this.path[this.seg+1].x - this.pos.x;
-        dy = this.path[this.seg+1].y - this.pos.y;
-        const l = Math.hypot(dx,dy)||1; dx/=l; dy/=l;
-      }
-      for (let i = -3; i <= 3; i++) {
-        const a = Math.atan2(dy,dx) + i*0.22;
-        this.lavaBalls.push({ x:this.pos.x, y:this.pos.y, vx:cos(a)*4, vy:sin(a)*4, life:1.0, r:7 });
+    this.armAngle += 0.022; this.pulseFire += 0.05;
+    if (this.shieldPulse > 0) this.shieldPulse--;
+    this.overheatPulse += 0.08;
+
+    // 过热状态：血量<20%
+    this.overheating = this.hp / this.maxHp < 0.20;
+    if (this.overheating) {
+      this.spd = 0.88;
+      // 过热持续干扰（每180帧一次）
+      this.jamTimer++;
+      if (this.jamTimer >= 180) {
+        this.jamTimer = 0;
+        jammedUntilFrame = frameCount + 100;
+        jamPos = { x: this.pos.x, y: this.pos.y };
+        if (typeof jamRadius !== 'undefined') jamRadius = 120;
       }
     }
-    this.lavaBalls = this.lavaBalls.filter(b => b.life > 0);
-    for (const b of this.lavaBalls) {
-      b.x += b.vx; b.y += b.vy; b.life -= 0.022;
-      if (b.life < 0.5) { this.lavaGrounds.push({ x:b.x, y:b.y, life:1.0, r:18 }); b.life = 0; }
+
+    // 辐射爆发：血量<75%后启用
+    if (this.hp / this.maxHp < 0.75) {
+      this.radWaveTimer++;
+      if (this.radWaveTimer >= 240) {
+        this.radWaveTimer = 0;
+        this.radWarning = 40; // 预警帧数
+      }
+      if (this.radWarning > 0) {
+        this.radWarning--;
+        if (this.radWarning === 0) {
+          this.radWaves.push({ r: 10, life: 1.0 });
+          // 辐射波干扰塔120帧
+          jammedUntilFrame = frameCount + 120;
+          jamPos = { x: this.pos.x, y: this.pos.y };
+          if (typeof jamRadius !== 'undefined') jamRadius = 200;
+          spawnParticles(this.pos.x, this.pos.y, color(255,140,0), 20);
+        }
+      }
     }
-    this.lavaGrounds = this.lavaGrounds.filter(g => g.life > 0);
-    for (const g of this.lavaGrounds) g.life -= 0.006;
-    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd);
+    // 更新辐射波
+    this.radWaves = this.radWaves.filter(w => w.life > 0);
+    for (const w of this.radWaves) { w.r += 6; w.life -= 0.035; }
+
+    // 应用磁场减速
+    let _spdMult = 1.0;
+    if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
+      _spdMult = this._magnetFactor;
+    } else { this._magnetFactor = 1.0; }
+    if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
+    // 对空导弹减速
+    if (this._airSlowed && this._airSlowed >= frameCount) _spdMult *= this._airSlowFactor || 0.5;
+    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd * _spdMult);
     this.pos = r.pos; this.seg = r.seg;
     this.progress = calcProgress(this.pos, this.seg, this.path);
     if (this.seg >= this.path.length - 1) this.reached = true;
   }
   draw() {
-    for (const g of this.lavaGrounds) {
-      noStroke(); fill(255,80,0,g.life*120); ellipse(g.x,g.y,g.r*2,g.r*2);
+    // 辐射波视觉
+    for (const w of this.radWaves) {
+      noFill(); stroke(255, 140, 0, w.life * 180); strokeWeight(3 + (1-w.life)*4);
+      ellipse(this.pos.x, this.pos.y, w.r*2, w.r*2);
+      stroke(255, 80, 0, w.life * 80); strokeWeight(8);
+      ellipse(this.pos.x, this.pos.y, w.r*2, w.r*2);
     }
-    for (const b of this.lavaBalls) {
-      push(); translate(b.x,b.y); noStroke(); fill(255,100,10,b.life*220); ellipse(0,0,b.r*2,b.r*2); pop();
+    // 辐射预警闪烁
+    if (this.radWarning > 0) {
+      const t = this.radWarning / 40;
+      noFill(); stroke(255, 200, 0, t*200); strokeWeight(2);
+      ellipse(this.pos.x, this.pos.y, 60+sin(frameCount*0.5)*8, 60+sin(frameCount*0.5)*8);
     }
+
     push(); translate(this.pos.x, this.pos.y);
-    if (this.overloading) {
-      const p = sin(frameCount*0.3)*0.5+0.5;
-      noFill(); stroke(255,200,50,150*p); strokeWeight(6); ellipse(0,0,80+p*12,80+p*12);
+
+    // 过热光环
+    if (this.overheating) {
+      const op = sin(this.overheatPulse*4)*0.5+0.5;
+      noFill(); stroke(255,60,0,100+op*120); strokeWeight(5+op*4);
+      ellipse(0,0,80+op*14,80+op*14);
+      stroke(255,200,0,60+op*80); strokeWeight(2);
+      ellipse(0,0,100+op*18,100+op*18);
     }
-    for (let i = 0; i < 8; i++) {
-      const a = this.armAngle + i*PI/4;
-      const len = 36 + sin(this.pulseFire+i)*4;
-      stroke(100,50,15,180); strokeWeight(4); line(0,0,cos(a)*len,sin(a)*len);
+
+    // 旋转臂
+    const berserk = this.hp/this.maxHp < 0.4;
+    const armCount = berserk ? 12 : 8;
+    for (let i = 0; i < armCount; i++) {
+      const a = this.armAngle*(berserk?1.8:1) + i*(TWO_PI/armCount);
+      const len = 30 + sin(this.pulseFire+i)*5;
+      const col = berserk ? [255,60,0] : [180,80,20];
+      stroke(...col, 200); strokeWeight(3.5); line(0,0,cos(a)*len,sin(a)*len);
+      // 臂端小球
+      noStroke(); fill(...col, 180); ellipse(cos(a)*len, sin(a)*len, 6, 6);
     }
-    fill(40,18,5); stroke(180,80,20); strokeWeight(2); ellipse(0,0,54,54);
-    const crack = this.crackLevel/20;
-    fill(255,lerp(80,220,crack),20,200+crack*55); noStroke(); ellipse(0,0,22,22);
-    if (this.overloading) { fill(255,220,50,220); noStroke(); textSize(10); textAlign(CENTER); text('OVERLOAD!',0,-38); }
+
+    // 主体
+    fill(40,18,5); stroke(200,90,20); strokeWeight(2.2); ellipse(0,0,56,56);
+    // 内核颜色随血量变化
+    const ratio = this.hp/this.maxHp;
+    const coreR = floor(255);
+    const coreG = floor(lerp(40, 200, ratio));
+    fill(coreR, coreG, 20, 210); noStroke(); ellipse(0,0,24,24);
+    fill(255,255,200,150); ellipse(0,0,10,10);
+
+    // 核心护盾
+    if (this.shieldActive) {
+      const sp = this.shieldPulse > 0 ? map(this.shieldPulse,30,0,1,0.4) : sin(frameCount*0.06)*0.3+0.7;
+      noFill(); stroke(255,180,40,180*sp); strokeWeight(4+sp*3);
+      ellipse(0,0,70+sp*6,70+sp*6);
+      stroke(255,220,100,100*sp); strokeWeight(1.5);
+      for (let i=0;i<6;i++) {
+        const a=i*PI/3+frameCount*0.02;
+        line(cos(a)*28,sin(a)*28,cos(a)*34,sin(a)*34);
+      }
+    }
+
+    // 状态标签
+    if (this.overheating) {
+      fill(255,80,0,230); noStroke(); textSize(9); textAlign(CENTER);
+      text('🔥 OVERHEAT', 0, -40);
+    } else if (this.shieldActive) {
+      fill(255,200,50,230); noStroke(); textSize(9); textAlign(CENTER);
+      text('⬡ SHIELD', 0, -40);
+    } else if (this.splitDone) {
+      fill(255,120,0,200); noStroke(); textSize(9); textAlign(CENTER);
+      text('⚡ CRITICAL', 0, -40);
+    }
     pop();
     this.drawHealthBar();
   }
   drawHealthBar() {
     if (this.hitFlash > 0) this.hitFlash--;
-    const bw=60,bh=5,bx=this.pos.x-bw/2,by=this.pos.y-this.radius-20;
+    const bw=60,bh=5,bx=this.pos.x-bw/2,by=this.pos.y-this.radius-22;
     stroke(200,80,10,150); strokeWeight(1); fill(8,4,2,210); rect(bx-1,by-1,bw+2,bh+2);
-    noStroke(); const ratio=this.hp/this.maxHp;
+    noStroke(); const ratio=max(0,this.hp/this.maxHp);
     fill(this.hitFlash>0?color(255,255,255):lerpColor(color(200,20,5),color(255,160,20),ratio));
     rect(bx,by,bw*ratio,bh);
+    // 护盾血量条（橙色叠加）
+    if (this.shieldActive) {
+      const sr = this.shieldHp / (this.maxHp*0.12);
+      fill(255,200,40,180); rect(bx,by,bw*sr,bh);
+    }
+    // 关键血量刻度线
+    for (const t of [0.4,0.75]) {
+      stroke(255,200,80,150); strokeWeight(1);
+      line(bx+bw*t,by,bx+bw*t,by+bh);
+    }
     fill(255,120,20,200); noStroke(); textSize(8); textAlign(CENTER);
     text('BOSS  FISSION CORE', this.pos.x, by-4); textAlign(LEFT,BASELINE);
   }
 }
 
+// ── 小裂变体（BossFission分裂后产生）──
+class FissionCore extends Monster {
+  constructor(path) {
+    super(path, 800, 0.7, 30);
+    this.radius = 14; this.deathColor = color(255,100,0);
+    this.armAngle = 0; this.pulseFire = 0;
+    this.shieldActive = false; this.shieldHp = 0; this.shieldPulse = 0;
+  }
+  takeDamage(dmg) {
+    this.hitFlash = 5;
+    if (this.shieldActive) {
+      this.shieldHp -= dmg; this.shieldPulse = 10;
+      if (this.shieldHp <= 0) { this.shieldActive = false; spawnParticles(this.pos.x,this.pos.y,color(255,140,20),8); }
+      return;
+    }
+    this.hp -= dmg;
+    // 50%血触发一次小护盾
+    if (!this.shieldActive && this.hp > 0 && this.hp/this.maxHp <= 0.5) {
+      this.shieldActive = true; this.shieldHp = floor(this.maxHp*0.1); this.shieldPulse = 20;
+    }
+    if (this.hp <= 0) { this.alive = false; spawnParticles(this.pos.x,this.pos.y,this.deathColor,18); }
+  }
+  move() {
+    this.armAngle += 0.035; this.pulseFire += 0.07;
+    if (this.shieldPulse > 0) this.shieldPulse--;
+    // 应用磁场减速
+    let _spdMult = 1.0;
+    if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
+      _spdMult = this._magnetFactor;
+    } else { this._magnetFactor = 1.0; }
+    if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
+    // 对空导弹减速
+    if (this._airSlowed && this._airSlowed >= frameCount) _spdMult *= this._airSlowFactor || 0.5;
+    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd * _spdMult);
+    this.pos = r.pos; this.seg = r.seg;
+    this.progress = calcProgress(this.pos, this.seg, this.path);
+    if (this.seg >= this.path.length - 1) this.reached = true;
+  }
+  draw() {
+    push(); translate(this.pos.x, this.pos.y);
+    for (let i = 0; i < 5; i++) {
+      const a = this.armAngle + i*(TWO_PI/5);
+      const len = 18+sin(this.pulseFire+i)*3;
+      stroke(200,80,10,180); strokeWeight(2.5); line(0,0,cos(a)*len,sin(a)*len);
+      noStroke(); fill(255,100,0,160); ellipse(cos(a)*len,sin(a)*len,5,5);
+    }
+    fill(35,14,4); stroke(180,70,15); strokeWeight(1.5); ellipse(0,0,28,28);
+    fill(255,lerp(40,180,this.hp/this.maxHp),10,200); noStroke(); ellipse(0,0,12,12);
+    if (this.shieldActive) {
+      const sp = sin(frameCount*0.08)*0.3+0.7;
+      noFill(); stroke(255,160,30,160*sp); strokeWeight(2.5); ellipse(0,0,40+sp*4,40+sp*4);
+    }
+    pop();
+    // 血条
+    if (this.hitFlash>0) this.hitFlash--;
+    const bw=36,bh=3,bx=this.pos.x-bw/2,by=this.pos.y-this.radius-14;
+    fill(8,4,2,200); stroke(180,70,10,130); strokeWeight(1); rect(bx-1,by-1,bw+2,bh+2);
+    noStroke(); const ratio=max(0,this.hp/this.maxHp);
+    fill(this.hitFlash>0?color(255,255,255):lerpColor(color(180,15,5),color(255,130,15),ratio));
+    rect(bx,by,bw*ratio,bh);
+    fill(255,100,10,180); noStroke(); textSize(7); textAlign(CENTER);
+    text('FISSION', this.pos.x, by-3); textAlign(LEFT,BASELINE);
+  }
+}
 // ── Boss 幽灵协议 ──
 class BossPhantom extends Monster {
   constructor(path) {
     super(path, 5000, 0.88, 260);
     this.radius = 18; this.deathColor = color(180,220,255);
     this.walkTime = 0; this.corePulse = 0;
-    this.hitCount = 0; this.invincible = 0; this.ghost = 0;
+    this.invincible = 0; this.ghost = 0;
     this.ghostPos = { x:this.pos.x, y:this.pos.y };
-    this.empTimer = 0; this.empEffect = 0;
+    this.empEffect = 0;
     this.clonesDone = false; this.isClone = false; this.clonePulse = 0;
     this.trail = []; this.bullets = []; this.shootTimer = 0;
+    // 新机制：每受到10%最大血量伤害位移一次，每位移3次触发干扰
+    this.dmgAccum    = 0;  // 累计伤害量
+    this.dashCount   = 0;  // 本轮已位移次数
   }
   takeDamage(dmg) {
     if (this.invincible > 0) return;
-    this.hitFlash = 5; this.hitCount++;
-    if (this.hitCount >= 3) {
-      this.hitCount = 0; this.ghostPos = { x:this.pos.x, y:this.pos.y };
+    this.hitFlash = 5;
+    this.hp -= dmg;
+    this.dmgAccum += dmg;
+
+    // 每累计10%最大HP伤害触发一次位移
+    if (this.dmgAccum >= this.maxHp * 0.1) {
+      this.dmgAccum = 0;
+      this.ghostPos = { x:this.pos.x, y:this.pos.y };
       this.ghost = 40; this.invincible = 30;
       const r = moveAlongPath(this.pos, this.seg, this.path, 60);
       this.pos = r.pos; this.seg = r.seg;
       this.progress = calcProgress(this.pos, this.seg, this.path);
-    } else { this.hp -= dmg; }
+      this.dashCount++;
+      // 每位移3次，在当前位置触发干扰
+      if (this.dashCount >= 3 && !this.isClone) {
+        this.dashCount = 0;
+        this.empEffect = 60;
+        jammedUntilFrame = frameCount + 120;
+        jamPos = { x: this.pos.x, y: this.pos.y };
+        if (typeof jamRadius !== 'undefined') jamRadius = 160;
+        spawnParticles(this.pos.x, this.pos.y, color(80,180,255), 20);
+      }
+    }
+
     if (!this.clonesDone && !this.isClone && this.hp > 0 && this.hp/this.maxHp <= 0.3) {
       this.clonesDone = true;
       if (typeof manager !== 'undefined') {
@@ -544,11 +858,6 @@ class BossPhantom extends Monster {
     this.walkTime += 0.2; this.corePulse += 0.06; this.clonePulse += 0.08;
     if (this.invincible > 0) this.invincible--;
     if (this.ghost > 0) this.ghost--;
-    this.empTimer++;
-    if (!this.isClone && this.empTimer >= 1800) {
-      this.empTimer = 0; this.empEffect = 60;
-      jammedUntilFrame = frameCount + 480;
-    }
     if (this.empEffect > 0) this.empEffect--;
     this.trail.push({ x:this.pos.x, y:this.pos.y, life:1.0 });
     if (this.trail.length > 12) this.trail.shift();
@@ -565,7 +874,13 @@ class BossPhantom extends Monster {
     }
     this.bullets = this.bullets.filter(b => b.life > 0);
     for (const b of this.bullets) { b.x+=b.vx; b.y+=b.vy; b.life-=0.03; }
-    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd);
+    // 应用磁场减速
+    let _spdMult = 1.0;
+    if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
+      _spdMult = this._magnetFactor;
+    } else { this._magnetFactor = 1.0; }
+    if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
+    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd * _spdMult);
     this.pos = r.pos; this.seg = r.seg;
     this.progress = calcProgress(this.pos, this.seg, this.path);
     if (this.seg >= this.path.length-1) this.reached = true;
@@ -613,7 +928,7 @@ class BossAntMech extends Monster {
     this.radius = 18; this.deathColor = color(80,255,120);
     this.walkTime = 0; this.corePulse = 0;
     this.phaseState = 'normal'; this.phaseTimer = 0;
-    this.normalDur=480; this.giantDur=360; this.tinyDur=300;
+    this.normalDur=480; this.giantDur=360; this.tinyDur=240;
     this.phaseOrder=['normal','giant','normal','tiny']; this.phaseIdx=0;
     this.scale=1.0; this.targetScale=1.0; this.baseSpd=0.75; this.baseRadius=18;
     this.shockwave=0; this.shockwaveR=0;
@@ -624,7 +939,8 @@ class BossAntMech extends Monster {
   }
   takeDamage(dmg) {
     if (this.phaseState==='giant') dmg=floor(dmg*0.15);
-    if (this.phaseState==='tiny')  dmg=floor(dmg*2.2);
+    if (this.phaseState==='normal') dmg=floor(dmg*1.5); // 正常形态受到1.5倍伤害
+    if (this.phaseState==='tiny' && Math.random() < 0.6) return; // 缩小形态60%概率闪避
     this.hitFlash=5;
     if (this.shielded) {
       this.shieldHp-=dmg; this.shieldPulse=14;
@@ -660,7 +976,7 @@ class BossAntMech extends Monster {
       const prev=this.phaseState;
       this.phaseIdx=(this.phaseIdx+1)%this.phaseOrder.length;
       this.phaseState=this.phaseOrder[this.phaseIdx]; this.phaseTimer=0;
-      if (prev==='tiny'&&this.phaseState==='normal') { this.shockwave=60; this.shockwaveR=0; jammedUntilFrame=frameCount+90; }
+      if (prev==='tiny'&&this.phaseState==='normal') { this.shockwave=60; this.shockwaveR=0; jammedUntilFrame=frameCount+180; if (typeof jamRadius !== 'undefined') jamRadius=180; jamPos={x:this.pos.x,y:this.pos.y}; } // 退出缩小时干扰延长至3秒
     }
     const targets={normal:1.0,giant:this.berserk?5.0:4.5,tiny:this.berserk?0.15:0.18};
     this.targetScale=targets[this.phaseState];
@@ -686,7 +1002,13 @@ class BossAntMech extends Monster {
     }
     this.bullets=this.bullets.filter(b=>b.life>0);
     for (const b of this.bullets) { b.x+=b.vx; b.y+=b.vy; b.life-=0.028; }
-    const r=moveAlongPath(this.pos,this.seg,this.path,this.spd);
+    // 应用磁场减速
+    let _spdMult = 1.0;
+    if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
+      _spdMult = this._magnetFactor;
+    } else { this._magnetFactor = 1.0; }
+    if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
+    const r=moveAlongPath(this.pos,this.seg,this.path,this.spd * _spdMult);
     this.pos=r.pos; this.seg=r.seg;
     this.progress=calcProgress(this.pos,this.seg,this.path);
     if (this.seg>=this.path.length-1) this.reached=true;
@@ -882,15 +1204,15 @@ class BossAntMech extends Monster {
 // ── 机械坦克（新基础怪：高血量，为附近地面怪提供免疫护盾）──
 class MechTank extends Monster {
   constructor(path) {
-    super(path, 1200, 0.55, 45);
+    super(path, 1600, 0.55, 45);
     this.radius = 22; this.deathColor = color(180, 140, 40);
     this.walkTime = 0; this.corePulse = 0;
-    this.shieldTimer = 0;      // 距离下次激活护盾的计时
-    this.shieldActive = false; // 护盾是否正在生效
-    this.shieldDur = 180;      // 护盾持续帧数 (3秒×60)
-    this.shieldCooldown = 900; // 冷却帧数 (15秒×60)
-    this.shieldFrames = 0;     // 护盾剩余帧数
-    this.shieldRadius = 130;   // 覆盖半径
+    this.shieldTimer = 180;    // 出生3秒后激活第一次护盾（而非从0开始等待）
+    this.shieldActive = false;
+    this.shieldDur = 240;      // 护盾持续4秒（原3秒）
+    this.shieldCooldown = 540; // 冷却9秒（原15秒）
+    this.shieldFrames = 0;
+    this.shieldRadius = 130;
     this.shieldPulse = 0;
     this.turretAngle = 0;
   }
@@ -933,7 +1255,15 @@ class MechTank extends Monster {
       }
     }
 
-    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd);
+    // 应用磁场减速
+    let _spdMult = 1.0;
+    if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
+      _spdMult = this._magnetFactor;
+    } else { this._magnetFactor = 1.0; }
+    if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
+    // 对空导弹减速
+    if (this._airSlowed && this._airSlowed >= frameCount) _spdMult *= this._airSlowFactor || 0.5;
+    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd * _spdMult);
     this.pos = r.pos; this.seg = r.seg;
     this.progress = calcProgress(this.pos, this.seg, this.path);
     if (this.seg >= this.path.length - 1) this.reached = true;
@@ -1008,6 +1338,355 @@ class MechTank extends Monster {
 }
 
 // ── 幽灵飞鸟（新空中怪：会短暂隐身，隐身期间无法被攻击）──
+// ── Boss 钢铁母舰 ──
+// 空中形态：定期空投地面小怪，血量节点触发强化空投
+// 坠落触发（血量<60%）：落至主路径变为地面超重坦克形态
+// 地面形态：护盾覆盖范围内小怪免伤75%+移速加快
+// 自保技能：定期激活护盾抵挡一波伤害
+class BossCarrier extends Monster {
+  constructor(path) {
+    super(path, 7200, 0.5, 280);
+    this.isFlying = true;
+    this.radius = 30; this.deathColor = color(180, 200, 255);
+
+    // 飞行形态
+    this.floatY = 0; this.floatTime = 0; this.propAngle = 0;
+    this.dropTimer = 0;       // 空投计时
+    this.dropInterval = 280;  // 每280帧空投一次
+    this.dropThresholds = [0.8, 0.6]; // 血量节点触发强化空投
+    this.dropsDone = [];      // 已触发的节点
+
+    // 护盾（自保）
+    this.shieldActive = false; this.shieldHp = 0; this.shieldPulse = 0;
+    this.shieldCooldown = 600; this.shieldTimer = 0;
+
+    // 坠落/地面形态
+    this.grounded = false;       // 是否已坠落
+    this.groundedAnim = 0;       // 坠落动画计时
+    this.crashParticleDone = false;
+    this.groundPath = null;      // 坠落后使用主路径
+
+    // 地面形态护盾光环
+    this.auraRadius = 130;
+    this.auraPulse = 0;
+
+    // 地面移动
+    this.groundSeg = 0;
+  }
+
+  takeDamage(dmg) {
+    this.hitFlash = 5;
+    if (this.shieldActive) {
+      this.shieldHp -= dmg; this.shieldPulse = 18;
+      if (this.shieldHp <= 0) {
+        this.shieldActive = false;
+        spawnParticles(this.pos.x, this.pos.y, color(180, 200, 255), 14);
+      }
+      return;
+    }
+    this.hp -= dmg;
+
+    // 血量节点强化空投
+    for (const t of this.dropThresholds) {
+      if (!this.dropsDone.includes(t) && this.hp / this.maxHp <= t) {
+        this.dropsDone.push(t);
+        this._doAirdrop(true); // 强化空投
+      }
+    }
+
+    // 坠落触发
+    if (!this.grounded && this.hp > 0 && this.hp / this.maxHp <= 0.5) {
+      this._crash();
+    }
+
+    if (this.hp <= 0) {
+      this.alive = false;
+      spawnParticles(this.pos.x, this.pos.y, this.deathColor, 50);
+    }
+  }
+
+  _crash() {
+    this.grounded = true;
+    this.isFlying = false;
+    this.groundedAnim = 40;
+    this.spd = 0.42;
+    // 落到主路径最近节点
+    if (typeof MAIN_PATH_PX !== 'undefined' && MAIN_PATH_PX) {
+      this.groundPath = MAIN_PATH_PX;
+      // 找最近节点
+      let bestSeg = 0, bestDist = Infinity;
+      for (let i = 0; i < MAIN_PATH_PX.length; i++) {
+        const d = Math.hypot(MAIN_PATH_PX[i].x - this.pos.x, MAIN_PATH_PX[i].y - this.pos.y);
+        if (d < bestDist) { bestDist = d; bestSeg = i; }
+      }
+      this.groundSeg = bestSeg;
+      this.pos = { x: MAIN_PATH_PX[bestSeg].x, y: MAIN_PATH_PX[bestSeg].y };
+      this.seg = bestSeg;
+      this.path = MAIN_PATH_PX;
+    }
+    spawnParticles(this.pos.x, this.pos.y, color(200, 160, 100), 40);
+    // 坠落时也触发一次空投
+    this._doAirdrop(true);
+  }
+
+  _doAirdrop(enhanced) {
+    if (typeof manager === 'undefined' || !MAIN_PATH_PX || !EDGE_PATH_PX) return;
+    const pool = enhanced
+      ? ['robot','robot','robot','tank','robot','spider']
+      : ['robot','robot','spider','robot','spider'];
+    const count = enhanced ? 4 : 3;
+
+    for (let i = 0; i < count; i++) {
+      const t = pool[Math.floor(Math.random() * pool.length)];
+      const chosenPath = Math.random() < 0.5 ? MAIN_PATH_PX : EDGE_PATH_PX;
+      let m;
+      if (t === 'spider') m = new MechSpider(chosenPath);
+      if (t === 'robot')  m = new MechRobot(chosenPath);
+      if (t === 'tank')   m = new MechTank(chosenPath);
+      if (!m) continue;
+
+      // 找母舰当前位置在路径上最近的节点，从那里开始行进
+      let bestSeg = 0, bestDist = Infinity;
+      for (let s = 0; s < chosenPath.length - 1; s++) {
+        const d = Math.hypot(chosenPath[s].x - this.pos.x, chosenPath[s].y - this.pos.y);
+        if (d < bestDist) { bestDist = d; bestSeg = s; }
+      }
+      m.seg = bestSeg;
+      m.pos = { x: chosenPath[bestSeg].x, y: chosenPath[bestSeg].y };
+      m.progress = calcProgress(m.pos, bestSeg, chosenPath);
+      // 坠落无敌：从母舰位置下落到路径节点，期间无法被攻击
+      m._dropping = true;
+      m._dropFromY = this.pos.y;        // 坠落起始Y（母舰位置）
+      m._dropToY   = m.pos.y;           // 落点Y（路径节点）
+      m._dropFrames = 30;               // 坠落动画帧数
+      m._dropTimer  = 0;
+      manager.monsters.push(m);
+      // 空投冲击特效（在母舰正下方）
+      spawnParticles(this.pos.x, this.pos.y + 20, color(255, 200, 80), 16);
+      spawnParticles(m.pos.x, m.pos.y, color(255, 160, 40), 10);
+    }
+  }
+
+  move() {
+    if (this.grounded) {
+      this._moveGround();
+      return;
+    }
+    this._moveAir();
+  }
+
+  _moveAir() {
+    this.floatTime += 0.04; this.propAngle += 0.18;
+    this.floatY = sin(this.floatTime) * 7;
+    // 对空导弹减速到期后恢复
+    if (this._airSlowApplied && this._airSlowExpire && frameCount >= this._airSlowExpire) {
+      this.spd = this._origBaseSpd || 0.5;
+      this._airSlowApplied = false; this._airSlowExpire = 0;
+    }
+
+    // 护盾冷却
+    this.shieldTimer++;
+    if (!this.shieldActive && this.shieldTimer >= this.shieldCooldown) {
+      this.shieldTimer = 0; this.shieldActive = true;
+      this.shieldHp = floor(this.maxHp * 0.1);
+      this.shieldPulse = 30;
+    }
+    if (this.shieldPulse > 0) this.shieldPulse--;
+
+    // 定期空投
+    this.dropTimer++;
+    if (this.dropTimer >= this.dropInterval) {
+      this.dropTimer = 0;
+      this._doAirdrop(false);
+    }
+
+    // 应用磁场减速
+    let _spdMult = 1.0;
+    if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
+      _spdMult = this._magnetFactor;
+    } else { this._magnetFactor = 1.0; }
+    if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
+    // 对空导弹减速
+    if (this._airSlowed && this._airSlowed >= frameCount) _spdMult *= this._airSlowFactor || 0.5;
+    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd * _spdMult);
+    this.pos = r.pos; this.seg = r.seg;
+    this.progress = calcProgress(this.pos, this.seg, this.path);
+    if (this.seg >= this.path.length - 1) this.reached = true;
+  }
+
+  _moveGround() {
+    this.auraPulse += 0.07;
+    if (this.groundedAnim > 0) this.groundedAnim--;
+
+    // 护盾冷却（地面形态冷却更短）
+    this.shieldTimer++;
+    if (!this.shieldActive && this.shieldTimer >= 420) {
+      this.shieldTimer = 0; this.shieldActive = true;
+      this.shieldHp = floor(this.maxHp * 0.08);
+      this.shieldPulse = 25;
+    }
+    if (this.shieldPulse > 0) this.shieldPulse--;
+
+    // 地面形态光环：让附近小怪免伤75%+移速加快
+    if (typeof manager !== 'undefined') {
+      for (const m of manager.monsters) {
+        if (!m.alive || m.reached || m === this || m.isFlying) continue;
+        const d = Math.hypot(m.pos.x - this.pos.x, m.pos.y - this.pos.y);
+        if (d <= this.auraRadius) {
+          m._carrierAura = frameCount + 2; // 每帧刷新标记
+          m._carrierSpd  = true;
+        }
+      }
+    }
+
+    // 应用磁场减速
+    let _spdMult = 1.0;
+    if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
+      _spdMult = this._magnetFactor;
+    } else { this._magnetFactor = 1.0; }
+    if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
+    // 对空导弹减速
+    if (this._airSlowed && this._airSlowed >= frameCount) _spdMult *= this._airSlowFactor || 0.5;
+    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd * _spdMult);
+    this.pos = r.pos; this.seg = r.seg;
+    this.progress = calcProgress(this.pos, this.seg, this.path);
+    if (this.seg >= this.path.length - 1) this.reached = true;
+  }
+
+  draw() {
+    if (this.grounded) {
+      this._drawGround();
+      return;
+    }
+    this._drawAir();
+  }
+
+  _drawAir() {
+    const fy = this.floatY;
+    push(); translate(this.pos.x, this.pos.y + fy);
+
+    // 护盾
+    if (this.shieldActive) {
+      const sp = this.shieldPulse > 0 ? map(this.shieldPulse,30,0,1,0.4) : sin(frameCount*0.06)*0.3+0.7;
+      noFill(); stroke(180,210,255,160*sp); strokeWeight(4+sp*2);
+      ellipse(0, 0, 90+sp*8, 60+sp*4);
+    }
+
+    // 机身主体
+    fill(40,50,70); stroke(120,160,220,200); strokeWeight(1.8);
+    beginShape();
+      vertex(-38,  0); vertex(-28, -12); vertex(-10, -16);
+      vertex( 10, -16); vertex( 28, -12); vertex( 38,  0);
+      vertex( 28,  12); vertex(-28,  12);
+    endShape(CLOSE);
+
+    // 座舱玻璃
+    fill(80,140,220,180); stroke(140,180,255,200); strokeWeight(1);
+    ellipse(0, -8, 26, 18);
+    fill(140,200,255,100); noStroke(); ellipse(-4,-10,10,7);
+
+    // 引擎挂架
+    for (const sx of [-24, 24]) {
+      fill(30,40,60); stroke(100,140,200,180); strokeWeight(1.2);
+      rectMode(CENTER); rect(sx, 6, 14, 8, 2); rectMode(CORNER);
+      // 螺旋桨
+      push(); translate(sx, 6); rotate(this.propAngle * (sx>0?1:-1));
+      stroke(160,200,255,200); strokeWeight(2);
+      line(-10,0,10,0); line(0,-10,0,10);
+      noStroke(); fill(180,210,255,160);
+      ellipse(10,0,5,5); ellipse(-10,0,5,5);
+      ellipse(0,10,5,5); ellipse(0,-10,5,5);
+      pop();
+    }
+
+    // 尾翼
+    fill(35,45,65); stroke(100,140,200,160); strokeWeight(1);
+    triangle(-38,0, -48,-14, -42,-2);
+    triangle(-38,0, -48,14,  -42, 2);
+
+    // 空投舱门（有空投时闪烁）
+    const dropping = this.dropTimer > this.dropInterval - 30;
+    fill(dropping ? color(255,200,80,200) : color(20,30,50,200));
+    stroke(dropping ? color(255,220,100) : color(80,120,180,150)); strokeWeight(1);
+    rectMode(CENTER); rect(0, 10, 20, 6, 1); rectMode(CORNER);
+
+    pop();
+    this.drawHealthBar();
+  }
+
+  _drawGround() {
+    push(); translate(this.pos.x, this.pos.y);
+
+    // 坠落震动效果
+    const shake = this.groundedAnim > 0 ? (Math.random()-0.5)*4*(this.groundedAnim/40) : 0;
+    translate(shake, shake*0.5);
+
+    // 地面护盾光环
+    const ap = sin(this.auraPulse)*0.4+0.6;
+    noFill(); stroke(180,210,255,50*ap); strokeWeight(12);
+    ellipse(0,0,this.auraRadius*2,this.auraRadius*2);
+    stroke(180,210,255,100*ap); strokeWeight(3);
+    ellipse(0,0,this.auraRadius*2,this.auraRadius*2);
+    // 旋转光点
+    push(); rotate(this.auraPulse*0.5);
+    for (let i=0;i<6;i++) {
+      const a=i*PI/3, rr=this.auraRadius;
+      noStroke(); fill(180,210,255,80*ap);
+      ellipse(cos(a)*rr, sin(a)*rr, 8, 8);
+    }
+    pop();
+
+    // 残骸机身（压扁变形）
+    fill(50,55,75); stroke(100,140,200,180); strokeWeight(1.5);
+    beginShape();
+      vertex(-42,  4); vertex(-30, -8); vertex(-10, -12);
+      vertex( 10, -12); vertex( 30, -8); vertex( 42,  4);
+      vertex( 30,  16); vertex(-30, 16);
+    endShape(CLOSE);
+
+    // 受损痕迹
+    stroke(255,100,30,180); strokeWeight(2);
+    line(-20,-8, -10, 2); line(5,-10, 15,-2); line(-30,4,-18,8);
+
+    // 压碎的座舱（破损玻璃）
+    fill(60,100,160,140); stroke(100,160,220,160); strokeWeight(1);
+    ellipse(0,-4,22,14);
+    stroke(255,80,30,160); strokeWeight(1.5);
+    line(-8,-8,2,-2); line(4,-10,10,-4);
+
+    // 护盾
+    if (this.shieldActive) {
+      const sp = this.shieldPulse>0 ? map(this.shieldPulse,25,0,1,0.4) : sin(frameCount*0.07)*0.3+0.7;
+      noFill(); stroke(180,210,255,150*sp); strokeWeight(3+sp*2);
+      ellipse(0,0,100+sp*6,60+sp*4);
+    }
+
+    // 标签
+    if (this.hp/this.maxHp < 0.2) {
+      fill(255,80,30,220); noStroke(); textSize(9); textAlign(CENTER);
+      text('💥 CRITICAL', 0, -28);
+    }
+    pop();
+    this.drawHealthBar();
+  }
+
+  drawHealthBar() {
+    if (this.hitFlash>0) this.hitFlash--;
+    const fy = this.grounded ? 0 : this.floatY;
+    const bw=70,bh=5,bx=this.pos.x-bw/2,by=this.pos.y+fy-this.radius-22;
+    stroke(100,140,220,150); strokeWeight(1); fill(5,8,18,210); rect(bx-1,by-1,bw+2,bh+2);
+    noStroke(); const ratio=max(0,this.hp/this.maxHp);
+    fill(this.hitFlash>0?color(255,255,255):lerpColor(color(180,20,20),color(100,160,255),ratio));
+    rect(bx,by,bw*ratio,bh);
+    // 60%坠落线改为50%
+    stroke(255,200,60,160); strokeWeight(1);
+    line(bx+bw*0.5, by, bx+bw*0.5, by+bh);
+    fill(140,180,255,200); noStroke(); textSize(8); textAlign(CENTER);
+    text(this.grounded?'BOSS  CARRIER [GROUNDED]':'BOSS  IRON CARRIER', this.pos.x, by-4);
+    textAlign(LEFT,BASELINE);
+  }
+}
+
 class GhostBird extends Monster {
   constructor(path) {
     super(path, 120, 2.2, 38);
@@ -1049,6 +1728,11 @@ class GhostBird extends Monster {
       }
     }
 
+    // 对空导弹减速到期后恢复baseSpd
+    if (this._airSlowApplied && this._airSlowExpire && frameCount >= this._airSlowExpire) {
+      this.baseSpd = this._origBaseSpd || this.baseSpd;
+      this._airSlowApplied = false; this._airSlowExpire = 0;
+    }
     // 隐身时略微加速
     this.spd = this.isGhost ? this.baseSpd * 1.4 : this.baseSpd;
 
@@ -1056,7 +1740,15 @@ class GhostBird extends Monster {
     if (this.trail.length > 10) this.trail.shift();
     for (const t of this.trail) t.life -= 0.14;
 
-    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd);
+    // 应用磁场减速
+    let _spdMult = 1.0;
+    if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
+      _spdMult = this._magnetFactor;
+    } else { this._magnetFactor = 1.0; }
+    if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
+    // 对空导弹减速
+    if (this._airSlowed && this._airSlowed >= frameCount) _spdMult *= this._airSlowFactor || 0.5;
+    const r = moveAlongPath(this.pos, this.seg, this.path, this.spd * _spdMult);
     this.pos = r.pos; this.seg = r.seg;
     this.progress = calcProgress(this.pos, this.seg, this.path);
     if (this.seg >= this.path.length - 1) this.reached = true;
@@ -1156,6 +1848,8 @@ class MonsterManager {
     else if (type==='boss1')   m = new BossFission(MAIN_PATH_PX);
     else if (type==='boss2')   m = new BossPhantom(MAIN_PATH_PX);
     else if (type==='boss3')   m = new BossAntMech(MAIN_PATH_PX);
+    else if (type==='fission') m = new BossFission(MAIN_PATH_PX);
+    else if (type==='carrier') m = new BossCarrier(AIR_PATH_PX);
     if (!m) return null;
 
     // ── 波次成长系数 ──
@@ -1164,7 +1858,7 @@ class MonsterManager {
     // 奖励同步上涨，后期打怪更值钱
     const wave = (typeof waveNum !== 'undefined') ? max(1, waveNum) : 1;
     const n    = wave - 1;
-    const isBoss = (m instanceof BossFission)||(m instanceof BossPhantom)||(m instanceof BossAntMech);
+    const isBoss = (m instanceof BossFission)||(m instanceof BossPhantom)||(m instanceof BossAntMech)||(m instanceof FissionCore)||(m instanceof BossCarrier);
 
     const hpMult  = isBoss ? pow(1.09, n) : pow(1.13, n);
     const spdMult = isBoss ? 1            : min(pow(1.04, n), 1.45); // Boss不加速，普通怪限制上限
@@ -1196,18 +1890,20 @@ class MonsterManager {
     ignoreTankBarrier=ignoreTankBarrier||false; ignoreRobotShield=ignoreRobotShield||false;
     for (const m of this.monsters) {
       if (!m.alive||m.reached) continue;
+      if (m._dropping) continue; // 空投坠落中无敌
       if (!ignoreTankBarrier && !m.isFlying && m._tankShielded > 0 && !(m instanceof MechTank)) continue;
       // 幽灵飞鸟隐身期间免疫所有伤害
       if (m instanceof GhostBird && m.isGhost) continue;
-      const isFlying = m instanceof MechPhoenix || m instanceof GhostBird;
+      const isFlying = m instanceof MechPhoenix || m instanceof GhostBird || (m instanceof BossCarrier && !m.grounded);
       if (antiAir && !isFlying) continue;
       if (!antiAir && isFlying) continue;
       if (distAB(m.pos,{x:tx,y:ty})<=m.radius+5) {
+        // 母舰地面光环：覆盖范围内小怪免伤75%
+        const actualDmg = (m._carrierAura && m._carrierAura >= frameCount) ? floor(dmg*0.25) : dmg;
         if (m instanceof MechRobot) {
-          // ignoreRobotShield: 直接无视护盾造成全额伤害
-          if (ignoreRobotShield) m.takeDamage(dmg, true, true);
-          else m.takeDamage(dmg, fromSide);
-        } else m.takeDamage(dmg);
+          if (ignoreRobotShield) m.takeDamage(actualDmg, true, true);
+          else m.takeDamage(actualDmg, fromSide);
+        } else m.takeDamage(actualDmg);
       }
     }
   }
@@ -1217,16 +1913,18 @@ class MonsterManager {
     ignoreTankBarrier=ignoreTankBarrier||false; ignoreRobotShield=ignoreRobotShield||false;
     for (const m of this.monsters) {
       if (!m.alive||m.reached) continue;
+      if (m._dropping) continue; // 空投坠落中无敌
       if (!ignoreTankBarrier && !m.isFlying && m._tankShielded > 0 && !(m instanceof MechTank)) continue;
       if (m instanceof GhostBird && m.isGhost) continue;
-      const isFlying = m instanceof MechPhoenix || m instanceof GhostBird;
+      const isFlying = m instanceof MechPhoenix || m instanceof GhostBird || (m instanceof BossCarrier && !m.grounded);
       if (antiAir && !isFlying) continue;
       if (!antiAir && isFlying) continue;
       if (distAB(m.pos,{x:cx,y:cy})<=radius) {
+        const actualDmg = (m._carrierAura && m._carrierAura >= frameCount) ? floor(dmg*0.25) : dmg;
         if (m instanceof MechRobot) {
-          if (ignoreRobotShield) m.takeDamage(dmg, true, true);
-          else m.takeDamage(dmg, false);
-        } else m.takeDamage(dmg);
+          if (ignoreRobotShield) m.takeDamage(actualDmg, true, true);
+          else m.takeDamage(actualDmg, false);
+        } else m.takeDamage(actualDmg);
       }
     }
   }
@@ -1235,7 +1933,7 @@ class MonsterManager {
     antiAir=antiAir||false;
     return this.monsters.filter(m=>{
       if (!m.alive||m.reached) return false;
-      const isFlying = m instanceof MechPhoenix || m instanceof GhostBird;
+      const isFlying = m instanceof MechPhoenix || m instanceof GhostBird || m instanceof BossCarrier;
       if (antiAir && !isFlying) return false;
       if (!antiAir && isFlying) return false;
       // 隐身的幽灵飞鸟对所有塔不可见（除非是对空且已解锁特殊逻辑）
