@@ -118,28 +118,52 @@ function handleWaveEndClick(mx, my) {
 function drawWaveUI() {
   textFont('monospace');
   if (waveEndPanelVisible && waveState === 'countdown' && minigameState === 'idle') {
+    // 与 end-panel.js 结算面板同一套视觉（遮罩 / 框体 / 顶条 / 分割线 / 按钮）
     noStroke();
-    fill(0, 0, 0, 150);
+    fill(0, 0, 0, 165);
     rect(0, 0, width, height);
-    const bw = 260, bh = 88, bx = (width - bw) / 2, by = (height - bh) / 2;
-    fill(6, 14, 28, 235);
-    stroke(0, 160, 220, 140);
-    strokeWeight(1.2);
-    rect(bx, by, bw, bh, 8);
+
+    const r = 0, g = 200, b = 255;
+    const pw = 336, ph = 178;
+    const px = (width - pw) / 2, py = (height - ph) / 2;
+    const pulse = sin(frameCount * 0.08) * 0.2 + 0.8;
+
+    fill(4, 8, 22, 230);
+    stroke(r, g, b, 180);
+    strokeWeight(2);
+    rect(px, py, pw, ph, 10);
     noStroke();
-    fill(0, 200, 255);
+    fill(r, g, b, 160);
+    rect(px, py, pw, 6, 10, 10, 0, 0);
+
     textAlign(CENTER, CENTER);
-    textSize(15);
-    text('波次间隔', bx + bw / 2, by + 28);
+    fill(r, g, b, 240 * pulse);
+    textSize(22);
+    text('WAVE BREAK', px + pw / 2, py + 48);
+    fill(178, 210, 240, 200);
     textSize(11);
-    fill(180, 200, 220);
-    text('确定后继续', bx + bw / 2, by + 52);
-    waveEndBtnRect = { x: bx + bw / 2 - 40, y: by + bh - 36, w: 80, h: 26 };
-    fill(0, 130, 85);
-    rect(waveEndBtnRect.x, waveEndBtnRect.y, waveEndBtnRect.w, waveEndBtnRect.h, 4);
-    fill(240, 255, 248);
+    text('Prepare for the next wave.', px + pw / 2, py + 78);
+
+    stroke(r, g, b, 60);
+    strokeWeight(1);
+    line(px + 28, py + 100, px + pw - 28, py + 100);
+
+    const bY = py + ph - 48;
+    const bhov =
+      mouseX >= px + 28 &&
+      mouseX <= px + pw - 28 &&
+      mouseY >= bY &&
+      mouseY <= bY + 28;
+    fill(bhov ? color(20, 75, 115, 220) : color(10, 20, 40, 200));
+    stroke(0, 180, 255, bhov ? 200 : 115);
+    strokeWeight(1);
+    rect(px + 28, bY, pw - 56, 28, 5);
+    noStroke();
+    fill(0, 200, 255, 230);
     textSize(12);
-    text('确定', waveEndBtnRect.x + 40, waveEndBtnRect.y + 13);
+    text('CONTINUE', px + pw / 2, bY + 14);
+
+    waveEndBtnRect = { x: px + 28, y: bY, w: pw - 56, h: 28 };
     textAlign(LEFT, BASELINE);
     return;
   }
