@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quantum Drop — User Evaluation Form</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, sans-serif;
+    font-size: 11pt;
+    color: #111;
+    background: #fff;
+    padding: 0;
+  }
+
+  /* ── Print layout: each form = one A4 page ── */
+  .form-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 0 auto;
+    padding: 14mm 16mm 12mm 16mm;
+    page-break-after: always;
+    border: 1px solid #ccc; /* visible on screen only */
+  }
+  @media print {
+    .form-page { border: none; margin: 0; }
+    .no-print { display: none; }
+  }
+
+  /* ── Header ── */
+  .form-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-bottom: 2.5px solid #1a1a2e;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+  }
+  .form-header-left h1 {
+    font-size: 15pt;
+    font-weight: 700;
+    color: #1a1a2e;
+    letter-spacing: 0.5px;
+  }
+  .form-header-left p {
+    font-size: 8.5pt;
+    color: #555;
+    margin-top: 2px;
+  }
+  .form-header-right {
+    text-align: right;
+    font-size: 8.5pt;
+    color: #555;
+  }
+  .participant-id {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #1a1a2e;
+    border: 1.5px solid #1a1a2e;
+    padding: 2px 10px;
+    display: inline-block;
+    margin-top: 3px;
+  }
+
+  /* ── Section labels ── */
+  .section-title {
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #1a1a2e;
+    background: #eef0f8;
+    padding: 3px 8px;
+    margin: 10px 0 6px 0;
+    border-left: 3px solid #1a1a2e;
+  }
+
+  /* ── Meta row ── */
+  .meta-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .meta-field {
+    flex: 1;
+  }
+  .meta-field label {
+    font-size: 8.5pt;
+    color: #444;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .underline {
+    border-bottom: 1px solid #999;
+    min-height: 16px;
+    width: 100%;
+  }
+
+  /* ── Condition badge ── */
+  .condition-box {
+    display: inline-flex;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .cond-option {
+    border: 1.5px solid #1a1a2e;
+    padding: 3px 14px;
+    font-size: 9pt;
+    font-weight: 600;
+    cursor: default;
+    color: #1a1a2e;
+    border-radius: 2px;
+  }
+  .cond-option.checked { background: #1a1a2e; color: #fff; }
+
+  /* ── Likert scale ── */
+  .likert-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 4px;
+  }
+  .likert-table th {
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-align: center;
+    padding: 3px 2px;
+    color: #333;
+    border-bottom: 1px solid #ccc;
+    width: 44px;
+  }
+  .likert-table th.q-col { text-align: left; width: auto; }
+  .likert-table td {
+    font-size: 9pt;
+    padding: 5px 2px;
+    vertical-align: middle;
+    border-bottom: 1px solid #eee;
+  }
+  .likert-table td.q-col { padding-left: 0; padding-right: 8px; }
+  .circle {
+    width: 22px; height: 22px;
+    border: 1.5px solid #888;
+    border-radius: 50%;
+    margin: 0 auto;
+    display: block;
+  }
+  .likert-table tr:hover td { background: #fafafa; }
+
+  /* ── Scale anchor labels ── */
+  .scale-anchors {
+    display: flex;
+    justify-content: space-between;
+    font-size: 7.5pt;
+    color: #666;
+    padding: 0 0 4px 0;
+    margin-top: -2px;
+  }
+
+  /* ── SUS specific ── */
+  .sus-note {
+    font-size: 7.5pt;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 4px;
+  }
+
+  /* ── Open text ── */
+  .open-q {
+    margin-bottom: 8px;
+  }
+  .open-q label {
+    font-size: 9.5pt;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 3px;
+    color: #1a1a2e;
+  }
+  .open-q .sub {
+    font-size: 8.5pt;
+    font-weight: 400;
+    color: #555;
+  }
+  .write-lines {
+    margin-top: 4px;
+  }
+  .write-lines .line {
+    border-bottom: 1px solid #bbb;
+    height: 18px;
+    margin-bottom: 3px;
+    width: 100%;
+  }
+
+  /* ── Task timing ── */
+  .task-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    margin-bottom: 6px;
+  }
+  .task-table th {
+    background: #eef0f8;
+    font-size: 8pt;
+    font-weight: 700;
+    padding: 4px 6px;
+    text-align: left;
+    border: 1px solid #ccc;
+  }
+  .task-table td {
+    border: 1px solid #ddd;
+    padding: 5px 6px;
+    vertical-align: top;
+  }
+  .task-table td.task-name { font-weight: 600; width: 38%; }
+  .task-table td.task-time { width: 18%; text-align: center; }
+  .task-table td.task-errors { width: 12%; text-align: center; }
+  .task-table td.task-notes { width: 32%; }
+
+  /* ── NPS ── */
+  .nps-row {
+    display: flex;
+    gap: 4px;
+    margin: 4px 0 2px 0;
+  }
+  .nps-box {
+    flex: 1;
+    border: 1.5px solid #999;
+    text-align: center;
+    padding: 5px 0;
+    font-size: 9pt;
+    font-weight: 700;
+    border-radius: 2px;
+  }
+  .nps-anchors {
+    display: flex;
+    justify-content: space-between;
+    font-size: 7.5pt;
+    color: #666;
+    margin-top: 2px;
+  }
+
+  /* ── Footer ── */
+  .form-footer {
+    margin-top: 10px;
+    border-top: 1px solid #ccc;
+    padding-top: 5px;
+    font-size: 7.5pt;
+    color: #888;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ── Print button ── */
+  .print-bar {
+    text-align: center;
+    padding: 16px;
+    background: #1a1a2e;
+    color: #fff;
+    font-family: Arial, sans-serif;
+  }
+  .print-bar button {
+    background: #4fa3e0;
+    color: #fff;
+    border: none;
+    padding: 10px 32px;
+    font-size: 13pt;
+    font-weight: 700;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0 8px;
+  }
+  .print-bar span { font-size: 10pt; opacity: 0.8; margin-left: 16px; }
+</style>
+</head>
+<body>
+
+<div class="print-bar no-print">
+  <button onclick="window.print()">🖨 Print All Forms</button>
+  <span>This page contains 2 counterbalanced versions (A &amp; B). Print enough copies for all participants.</span>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CONDITION A  —  Easy first, then Difficult
+     ═══════════════════════════════════════════ -->
+<div class="form-page">
+
+  <div class="form-header">
+    <div class="form-header-left">
+      <h1>QUANTUM DROP — User Evaluation</h1>
+      <p>Condition A &nbsp;·&nbsp; Easy → Difficult &nbsp;·&nbsp; Please complete all sections honestly.</p>
+    </div>
+    <div class="form-header-right">
+      <div>Participant</div>
+      <div class="participant-id">ID: _____</div>
+      <div style="margin-top:4px">Date: ____________</div>
+    </div>
+  </div>
+
+  <!-- BACKGROUND -->
+  <div class="section-title">Section 1 — Background</div>
+  <div class="meta-row">
+    <div class="meta-field">
+      <label>Age</label><div class="underline"></div>
+    </div>
+    <div class="meta-field" style="flex:2">
+      <label>Gaming frequency</label>
+      <div style="display:flex;gap:10px;margin-top:3px">
+        <label style="font-size:9pt"><span class="circle" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px"></span>Daily</label>
+        <label style="font-size:9pt"><span class="circle" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px"></span>Weekly</label>
+        <label style="font-size:9pt"><span class="circle" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px"></span>Monthly</label>
+        <label style="font-size:9pt"><span class="circle" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px"></span>Rarely</label>
+      </div>
+    </div>
+    <div class="meta-field" style="flex:2">
+      <label>Tower defence experience</label>
+      <div style="display:flex;gap:10px;margin-top:3px">
+        <label style="font-size:9pt"><span class="circle" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px"></span>None</label>
+        <label style="font-size:9pt"><span class="circle" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px"></span>Some</label>
+        <label style="font-size:9pt"><span class="circle" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px"></span>Experienced</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- TASK OBSERVATION -->
+  <div class="section-title">Section 2 — Task Observation (researcher fills this)</div>
+  <table class="task-table">
+    <thead>
+      <tr>
+        <th class="task-name">Task</th>
+        <th class="task-time">Time (s)</th>
+        <th class="task-errors">Errors</th>
+        <th class="task-notes">Observer notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="task-name">T1 — Navigate to Level 1 (Easy) and start</td>
+        <td class="task-time"></td>
+        <td class="task-errors"></td>
+        <td class="task-notes"></td>
+      </tr>
+      <tr>
+        <td class="task-name">T2 — Place 3 towers before wave 1</td>
+        <td class="task-time"></td>
+        <td class="task-errors"></td>
+        <td class="task-notes"></td>
+      </tr>
+      <tr>
+        <td class="task-name">T3 — Upgrade one tower</td>
+        <td class="task-time"></td>
+        <td class="task-errors"></td>
+        <td class="task-notes"></td>
+      </tr>
+      <tr>
+        <td class="task-name">T4 — Complete Level 1</td>
+        <td class="task-time"></td>
+        <td class="task-errors"></td>
+        <td class="task-notes"></td>
+      </tr>
+      <tr>
+        <td class="task-name">T5 — Switch to Level 3 (Difficult) and start</td>
+        <td class="task-time"></td>
+        <td class="task-errors"></td>
+        <td class="task-notes"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- FUN & ENGAGEMENT (GEQ subset) -->
+  <div class="section-title">Section 3 — Fun &amp; Engagement</div>
+  <p class="sus-note">Rate each statement about your experience. Circle one number per row.</p>
+  <table class="likert-table">
+    <thead>
+      <tr>
+        <th class="q-col"></th>
+        <th>1<br><span style="font-weight:400">SD</span></th>
+        <th>2</th>
+        <th>3</th>
+        <th>4</th>
+        <th>5<br><span style="font-weight:400">SA</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="q-col">F1. I found the game enjoyable.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">F2. I felt engaged while playing.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">F3. The difficulty felt appropriately challenging.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">F4. I wanted to keep playing after the session.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">F5. The visual style made the game more immersive.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+    </tbody>
+  </table>
+  <div class="scale-anchors"><span>1 = Strongly Disagree</span><span>5 = Strongly Agree</span></div>
+
+  <!-- SUS -->
+  <div class="section-title">Section 4 — Usability (SUS)</div>
+  <p class="sus-note">Standard System Usability Scale. Circle one number per row.</p>
+  <table class="likert-table">
+    <thead>
+      <tr>
+        <th class="q-col"></th>
+        <th>1<br><span style="font-weight:400">SD</span></th>
+        <th>2</th>
+        <th>3</th>
+        <th>4</th>
+        <th>5<br><span style="font-weight:400">SA</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="q-col">U1. I think I would like to use this system frequently.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U2. I found the system unnecessarily complex. <em style="font-size:8pt">(R)</em></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U3. I thought the system was easy to use.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U4. I needed support to use this system. <em style="font-size:8pt">(R)</em></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U5. The various functions were well integrated.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U6. There was too much inconsistency. <em style="font-size:8pt">(R)</em></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U7. Most people would learn this quickly.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U8. I found it very cumbersome to use. <em style="font-size:8pt">(R)</em></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U9. I felt confident using the system.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U10. I needed to learn a lot before getting started. <em style="font-size:8pt">(R)</em></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+    </tbody>
+  </table>
+  <div class="scale-anchors"><span>1 = Strongly Disagree</span><span style="font-size:7.5pt;color:#555">(R) = reverse-scored item</span><span>5 = Strongly Agree</span></div>
+
+  <!-- NPS -->
+  <div class="section-title">Section 5 — Recommendation</div>
+  <p style="font-size:9pt;margin-bottom:4px">How likely are you to recommend Quantum Drop to a friend? (0 = Not at all, 10 = Extremely likely)</p>
+  <div class="nps-row">
+    <div class="nps-box">0</div><div class="nps-box">1</div><div class="nps-box">2</div>
+    <div class="nps-box">3</div><div class="nps-box">4</div><div class="nps-box">5</div>
+    <div class="nps-box">6</div><div class="nps-box">7</div><div class="nps-box">8</div>
+    <div class="nps-box">9</div><div class="nps-box">10</div>
+  </div>
+  <div class="nps-anchors"><span>Not at all likely</span><span>Extremely likely</span></div>
+
+  <!-- OPEN QUESTIONS -->
+  <div class="section-title">Section 6 — Open Feedback</div>
+  <div class="open-q">
+    <label>Q1. What did you find most <strong>confusing or frustrating</strong>? <span class="sub">(if anything)</span></label>
+    <div class="write-lines"><div class="line"></div><div class="line"></div></div>
+  </div>
+  <div class="open-q">
+    <label>Q2. What did you enjoy <strong>most</strong>?</label>
+    <div class="write-lines"><div class="line"></div><div class="line"></div></div>
+  </div>
+  <div class="open-q">
+    <label>Q3. Any other comments or suggestions?</label>
+    <div class="write-lines"><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <div class="form-footer">
+    <span>Quantum Drop — User Evaluation · Condition A (Easy→Difficult)</span>
+    <span>Thank you for your time!</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     CONDITION B  —  Difficult first, then Easy
+     ═══════════════════════════════════════════ -->
+<div class="form-page">
+
+  <div class="form-header">
+    <div class="form-header-left">
+      <h1>QUANTUM DROP — User Evaluation</h1>
+      <p>Condition B &nbsp;·&nbsp; Difficult → Easy &nbsp;·&nbsp; Please complete all sections honestly.</p>
+    </div>
+    <div class="form-header-right">
+      <div>Participant</div>
+      <div class="participant-id">ID: _____</div>
+      <div style="margin-top:4px">Date: ____________</div>
+    </div>
+  </div>
+
+  <div class="section-title">Section 1 — Background</div>
+  <div class="meta-row">
+    <div class="meta-field">
+      <label>Age</label><div class="underline"></div>
+    </div>
+    <div class="meta-field" style="flex:2">
+      <label>Gaming frequency</label>
+      <div style="display:flex;gap:10px;margin-top:3px">
+        <label style="font-size:9pt"><span class="circle" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px"></span>Daily</label>
+        <label style="font-size:9pt"><span class="circle" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px"></span>Weekly</label>
+        <label style="font-size:9pt"><span class="circle" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px"></span>Monthly</label>
+        <label style="font-size:9pt"><span class="circle" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px"></span>Rarely</label>
+      </div>
+    </div>
+    <div class="meta-field" style="flex:2">
+      <label>Tower defence experience</label>
+      <div style="display:flex;gap:10px;margin-top:3px">
+        <label style="font-size:9pt"><span class="circle" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px"></span>None</label>
+        <label style="font-size:9pt"><span class="circle" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px"></span>Some</label>
+        <label style="font-size:9pt"><span class="circle" style="display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px"></span>Experienced</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Section 2 — Task Observation (researcher fills this)</div>
+  <table class="task-table">
+    <thead>
+      <tr>
+        <th class="task-name">Task</th>
+        <th class="task-time">Time (s)</th>
+        <th class="task-errors">Errors</th>
+        <th class="task-notes">Observer notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="task-name">T1 — Navigate to Level 3 (Difficult) and start</td>
+        <td class="task-time"></td>
+        <td class="task-errors"></td>
+        <td class="task-notes"></td>
+      </tr>
+      <tr>
+        <td class="task-name">T2 — Place 3 towers before wave 1</td>
+        <td class="task-time"></td>
+        <td class="task-errors"></td>
+        <td class="task-notes"></td>
+      </tr>
+      <tr>
+        <td class="task-name">T3 — Upgrade one tower</td>
+        <td class="task-time"></td>
+        <td class="task-errors"></td>
+        <td class="task-notes"></td>
+      </tr>
+      <tr>
+        <td class="task-name">T4 — Attempt Level 3 (pass or fail)</td>
+        <td class="task-time"></td>
+        <td class="task-errors"></td>
+        <td class="task-notes"></td>
+      </tr>
+      <tr>
+        <td class="task-name">T5 — Switch to Level 1 (Easy) and start</td>
+        <td class="task-time"></td>
+        <td class="task-errors"></td>
+        <td class="task-notes"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-title">Section 3 — Fun &amp; Engagement</div>
+  <p class="sus-note">Rate each statement about your experience. Circle one number per row.</p>
+  <table class="likert-table">
+    <thead>
+      <tr>
+        <th class="q-col"></th>
+        <th>1<br><span style="font-weight:400">SD</span></th>
+        <th>2</th>
+        <th>3</th>
+        <th>4</th>
+        <th>5<br><span style="font-weight:400">SA</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="q-col">F1. I found the game enjoyable.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">F2. I felt engaged while playing.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">F3. The difficulty felt appropriately challenging.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">F4. I wanted to keep playing after the session.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">F5. The visual style made the game more immersive.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+    </tbody>
+  </table>
+  <div class="scale-anchors"><span>1 = Strongly Disagree</span><span>5 = Strongly Agree</span></div>
+
+  <div class="section-title">Section 4 — Usability (SUS)</div>
+  <p class="sus-note">Standard System Usability Scale. Circle one number per row.</p>
+  <table class="likert-table">
+    <thead>
+      <tr>
+        <th class="q-col"></th>
+        <th>1<br><span style="font-weight:400">SD</span></th>
+        <th>2</th>
+        <th>3</th>
+        <th>4</th>
+        <th>5<br><span style="font-weight:400">SA</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="q-col">U1. I think I would like to use this system frequently.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U2. I found the system unnecessarily complex. <em style="font-size:8pt">(R)</em></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U3. I thought the system was easy to use.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U4. I needed support to use this system. <em style="font-size:8pt">(R)</em></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U5. The various functions were well integrated.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U6. There was too much inconsistency. <em style="font-size:8pt">(R)</em></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U7. Most people would learn this quickly.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U8. I found it very cumbersome to use. <em style="font-size:8pt">(R)</em></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U9. I felt confident using the system.</td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+      <tr><td class="q-col">U10. I needed to learn a lot before getting started. <em style="font-size:8pt">(R)</em></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td><td><div class="circle"></div></td></tr>
+    </tbody>
+  </table>
+  <div class="scale-anchors"><span>1 = Strongly Disagree</span><span style="font-size:7.5pt;color:#555">(R) = reverse-scored item</span><span>5 = Strongly Agree</span></div>
+
+  <div class="section-title">Section 5 — Recommendation</div>
+  <p style="font-size:9pt;margin-bottom:4px">How likely are you to recommend Quantum Drop to a friend? (0 = Not at all, 10 = Extremely likely)</p>
+  <div class="nps-row">
+    <div class="nps-box">0</div><div class="nps-box">1</div><div class="nps-box">2</div>
+    <div class="nps-box">3</div><div class="nps-box">4</div><div class="nps-box">5</div>
+    <div class="nps-box">6</div><div class="nps-box">7</div><div class="nps-box">8</div>
+    <div class="nps-box">9</div><div class="nps-box">10</div>
+  </div>
+  <div class="nps-anchors"><span>Not at all likely</span><span>Extremely likely</span></div>
+
+  <div class="section-title">Section 6 — Open Feedback</div>
+  <div class="open-q">
+    <label>Q1. What did you find most <strong>confusing or frustrating</strong>? <span class="sub">(if anything)</span></label>
+    <div class="write-lines"><div class="line"></div><div class="line"></div></div>
+  </div>
+  <div class="open-q">
+    <label>Q2. What did you enjoy <strong>most</strong>?</label>
+    <div class="write-lines"><div class="line"></div><div class="line"></div></div>
+  </div>
+  <div class="open-q">
+    <label>Q3. Any other comments or suggestions?</label>
+    <div class="write-lines"><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <div class="form-footer">
+    <span>Quantum Drop — User Evaluation · Condition B (Difficult→Easy)</span>
+    <span>Thank you for your time!</span>
+  </div>
+</div>
+
+</body>
+</html>
