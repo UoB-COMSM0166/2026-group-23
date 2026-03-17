@@ -136,6 +136,7 @@ function mousePressed() {
     case 'endpanel':   handleEndPanelClick(mouseX, mouseY);   return;
 
     case 'playing':
+      if (typeof handleWaveEndClick === 'function' && handleWaveEndClick(mouseX, mouseY)) return;
       if (minigameState !== 'idle') { handleMinigameClick(mouseX, mouseY); return; }
       const consumed = handlePlacementClick(mouseX, mouseY);
       if (!consumed) clickEffects.push({ x: mouseX, y: mouseY, life: 1.0 });

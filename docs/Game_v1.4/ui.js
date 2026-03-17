@@ -82,11 +82,68 @@ function drawHUD() {
   text(nf(mouseX,4)+','+nf(mouseY,4), width-80, height-8);
 }
 
+// 波次结束后 → 点确定再进小游戏（并清空选中）
+let waveEndPanelVisible = false;
+let waveEndBtnRect = null;
+
+function showWaveEndPanel() {
+  waveEndPanelVisible = true;
+  waveEndBtnRect = null;
+  selectedTowerType = null;
+  selectedTower = null;
+  _mortarAiming = false;
+  _mortarTower = null;
+}
+
+function handleWaveEndClick(mx, my) {
+  if (!waveEndPanelVisible) return false;
+  if (
+    waveEndBtnRect &&
+    mx >= waveEndBtnRect.x &&
+    mx <= waveEndBtnRect.x + waveEndBtnRect.w &&
+    my >= waveEndBtnRect.y &&
+    my <= waveEndBtnRect.y + waveEndBtnRect.h
+  ) {
+    waveEndPanelVisible = false;
+    waveEndBtnRect = null;
+    if (typeof startMinigame === 'function' && minigameState === 'idle') startMinigame();
+    return true;
+  }
+  return true;
+}
+
 // ============================================================
 //  波次倒计时 & 通关提示
 // ============================================================
 function drawWaveUI() {
   textFont('monospace');
+  if (waveEndPanelVisible && waveState === 'countdown' && minigameState === 'idle') {
+    noStroke();
+    fill(0, 0, 0, 150);
+    rect(0, 0, width, height);
+    const bw = 260, bh = 88, bx = (width - bw) / 2, by = (height - bh) / 2;
+    fill(6, 14, 28, 235);
+    stroke(0, 160, 220, 140);
+    strokeWeight(1.2);
+    rect(bx, by, bw, bh, 8);
+    noStroke();
+    fill(0, 200, 255);
+    textAlign(CENTER, CENTER);
+    textSize(15);
+    text('波次间隔', bx + bw / 2, by + 28);
+    textSize(11);
+    fill(180, 200, 220);
+    text('确定后继续', bx + bw / 2, by + 52);
+    waveEndBtnRect = { x: bx + bw / 2 - 40, y: by + bh - 36, w: 80, h: 26 };
+    fill(0, 130, 85);
+    rect(waveEndBtnRect.x, waveEndBtnRect.y, waveEndBtnRect.w, waveEndBtnRect.h, 4);
+    fill(240, 255, 248);
+    textSize(12);
+    text('确定', waveEndBtnRect.x + 40, waveEndBtnRect.y + 13);
+    textAlign(LEFT, BASELINE);
+    return;
+  }
+
   if (waveState === 'countdown') {
     const nextW = waveNum + 1;
     const pulse = sin(frameCount*0.15)*0.3+0.7;
@@ -403,10 +460,12 @@ function drawUI() {
 }
 
 function initUI() {
-  selectedTowerType = null;
-  selectedTower     = null;
-  clickEffects      = [];
-  BUILD_BTN_Y       = HUD_HEIGHT + 2;
-  _mortarAiming     = false;
-  _mortarTower      = null;
+  selectedTowerType   = null;
+  selectedTower       = null;
+  clickEffects        = [];
+  BUILD_BTN_Y         = HUD_HEIGHT + 2;
+  _mortarAiming       = false;
+  _mortarTower        = null;
+  waveEndPanelVisible = false;
+  waveEndBtnRect      = null;
 }
