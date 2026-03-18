@@ -13,8 +13,15 @@
   <!-- 第三方库 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 
+  <!-- ── 地图系统（map/ 目录，按顺序加载）── -->
+  <script src="map/map-core.js"></script>  <!-- 路径定义、格子判定、缓存、drawPaths、共享辅助 -->
+  <script src="map/map-lv1.js"></script>   <!-- 关卡1  青草地 -->
+  <script src="map/map-lv2.js"></script>   <!-- 关卡2  星云冰蓝地 -->
+  <script src="map/map-lv3.js"></script>   <!-- 关卡3  熔岩炽核地 -->
+  <script src="map/map-lv4.js"></script>   <!-- 关卡4  虚空迷宫 -->
+  <script src="map/map-lv5.js"></script>   <!-- 关卡5  焦土废墟 -->
+
   <!-- ── 游戏核心 ── -->
-  <script src="map.js"></script>           <!-- 路径、背景、格子判定 -->
   <script src="monsters.js"></script>      <!-- 怪物类、MonsterManager -->
   <script src="towers.js"></script>        <!-- Tower、Projectile -->
   <script src="waves.js"></script>         <!-- 波次推进逻辑 -->
