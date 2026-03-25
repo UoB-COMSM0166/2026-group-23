@@ -11,6 +11,7 @@
 
 let selectedTowerType = null;
 let selectedTower     = null;
+let hoverTowerType = null;
 let BUILD_BTN_Y;
 let clickEffects;
 
@@ -51,8 +52,8 @@ function drawHUD() {
 
   fill(0, 160, 255); textSize(13); text('◈ WAVE', 285, 15);
   const waveLabel = waveState === 'complete'
-    ? 'DONE'
-    : ('W-' + nf(min(waveNum, TOTAL_WAVES), 2) + '/' + nf(TOTAL_WAVES, 2));
+      ? 'DONE'
+      : ('W-' + nf(min(waveNum, TOTAL_WAVES), 2) + '/' + nf(TOTAL_WAVES, 2));
   fill(waveState === 'complete' ? color(0,255,120) : color(140,80,255));
   textSize(18); text(waveLabel, 285, 34);
 
@@ -98,11 +99,11 @@ function showWaveEndPanel() {
 function handleWaveEndClick(mx, my) {
   if (!waveEndPanelVisible) return false;
   if (
-    waveEndBtnRect &&
-    mx >= waveEndBtnRect.x &&
-    mx <= waveEndBtnRect.x + waveEndBtnRect.w &&
-    my >= waveEndBtnRect.y &&
-    my <= waveEndBtnRect.y + waveEndBtnRect.h
+      waveEndBtnRect &&
+      mx >= waveEndBtnRect.x &&
+      mx <= waveEndBtnRect.x + waveEndBtnRect.w &&
+      my >= waveEndBtnRect.y &&
+      my <= waveEndBtnRect.y + waveEndBtnRect.h
   ) {
     waveEndPanelVisible = false;
     waveEndBtnRect = null;
@@ -150,10 +151,10 @@ function drawWaveUI() {
 
     const bY = py + ph - 48;
     const bhov =
-      mouseX >= px + 28 &&
-      mouseX <= px + pw - 28 &&
-      mouseY >= bY &&
-      mouseY <= bY + 28;
+        mouseX >= px + 28 &&
+        mouseX <= px + pw - 28 &&
+        mouseY >= bY &&
+        mouseY <= bY + 28;
     fill(bhov ? color(20, 75, 115, 220) : color(10, 20, 40, 200));
     stroke(0, 180, 255, bhov ? 200 : 115);
     strokeWeight(1);
@@ -252,6 +253,78 @@ function drawBuildMenu() {
     text('✕', cancelX + 22, by + 18);
     textAlign(LEFT, BASELINE);
   }
+
+  // ==== 悬停检 ====
+  hoverTowerType = null;
+  for (let i = 0; i < types.length; i++) {
+    const type = types[i];
+    const bx = 6 + i * (btnW + spacing);
+    const by = BUILD_BTN_Y + 6;
+
+    if (mouseX >= bx && mouseX <= bx + btnW &&
+        mouseY >= by && mouseY <= by + 36) {
+      hoverTowerType = type;
+    }
+  }
+}
+
+// ============================================================
+//  鼠标悬停商店页面塔简介
+// ============================================================
+function drawTowerHoverTooltip() {
+  if (!hoverTowerType) return;
+
+  const TOWER_TIPS = {
+    rapid:   ["RAPID",   "High fire rate, great for swarms"],
+    laser:   ["LASER",   "Multi-target lock-on, piercing beam"],
+    nova:    ["NOVA",    "Line pierce + impact explosion"],
+    chain:   ["CHAIN",   "Chain lightning, jumps between foes"],
+    magnet:  ["MAGNET",  "AOE slow support tower"],
+    ghost:   ["GHOST",   "Homing missiles with explosion"],
+    scatter: ["AA-FAN",  "Anti-air fan burst, fast intercept"],
+    cannon:  ["CANNON",  "Map-wide strike, huge blast radius"],
+  };
+
+  const tip = TOWER_TIPS[hoverTowerType];
+  if (!tip) return;
+
+  const [name, desc] = tip;
+
+  // --- Text Settings ---
+  textFont("monospace");
+  const padding = 12;
+  textSize(14);
+  const titleWidth = textWidth(name);
+
+  textSize(12);
+  const descWidth = textWidth(desc);
+
+  // 总宽度 = 最大文字宽度 + padding * 2
+  const w = Math.max(titleWidth, descWidth) + padding * 2;
+  const h = 44; // 一行高，标题 + 描述 + 间距
+
+  // --- Position (avoid going outside screen) ---
+  let x = mouseX + 20;
+  let y = mouseY + 20;
+  if (x + w > width)  x = width - w - 8;
+  if (y + h > height) y = height - h - 8;
+
+  // --- Draw Background ---
+  fill(8, 12, 24, 230);
+  stroke(0, 180, 255, 150);
+  strokeWeight(1);
+  rect(x, y, w, h, 6);
+
+  // --- Draw Title ---
+  noStroke();
+  fill(0, 200, 255);
+  textSize(14);
+  text(name, x + padding, y + 14);
+
+  // --- Draw Description (single line) ---
+  fill(180, 220, 255);
+  textSize(12);
+  text(desc, x + padding, y + 32);
 }
 
 // ============================================================
@@ -450,6 +523,7 @@ function handlePlacementClick(mx, my) {
 // ============================================================
 function drawUI() {
   drawBuildMenu();
+  drawTowerHoverTooltip();
   drawPlacementPreview();
   // 加农炮瞄准准星（显示缩小，不影响实际攻击范围）
   if (_mortarAiming && _mortarTower) {
