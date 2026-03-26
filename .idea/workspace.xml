@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="0e403b3e-7806-4779-a448-d04dd68c7f78" name="更改" comment="增加了商店页面塔的简介">
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/Game_v1.4/sketch.js" beforeDir="false" afterPath="$PROJECT_DIR$/docs/Game_v1.4/sketch.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/Game_v1.4/ui.js" beforeDir="false" afterPath="$PROJECT_DIR$/docs/Game_v1.4/ui.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -78,6 +80,8 @@
       <updated>1774448863813</updated>
       <workItem from="1774448865000" duration="93000" />
       <workItem from="1774452041541" duration="677000" />
+      <workItem from="1774452764440" duration="101000" />
+      <workItem from="1774537378880" duration="4709000" />
     </task>
     <task id="LOCAL-00001" summary="增加商店界面塔的简介">
       <option name="closed" value="true" />
@@ -119,7 +123,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774452713241</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="增加了商店页面塔的简介">
+      <option name="closed" value="true" />
+      <created>1774452795710</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1774452795710</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

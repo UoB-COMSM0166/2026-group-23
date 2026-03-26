@@ -102,14 +102,22 @@ function draw() {
 
     case 'playing':
       drawBackground(); drawPaths();
-      updateWaveSystem();
-      manager.update();
-      updateAndDrawTowers();
-      for (const ht of homeTowers) { ht.update(); ht.draw(); }
-      updateParticles();
-      updateMinigame(); drawMinigame();
-      drawUI();
-      if (waveState === 'complete' && manager.monsters.length === 0 && !_gameEndFired) {
+      // 暂停时跳过所有更新，只绘制静止画面
+      if (!gamePaused) {
+        updateWaveSystem();
+        manager.update();
+        updateAndDrawTowers();
+        for (const ht of homeTowers) { ht.update(); ht.draw(); }
+        updateParticles();
+        updateMinigame(); drawMinigame();
+      } else {
+        // 暂停期间仍然绘制怪物和塔（静止），让画面不黑屏
+        for (const m of manager.monsters) m.draw();
+        for (const ht of homeTowers) ht.draw();
+        drawTowersOnly(); // 只绘制不更新
+      }
+      drawUI(); // drawUI 内部会调用 drawPauseMenu()
+      if (!gamePaused && waveState === 'complete' && manager.monsters.length === 0 && !_gameEndFired) {
         _gameEndFired = true;
         setTimeout(() => handleGameEnd(true), 1800);
       }
@@ -136,6 +144,10 @@ function mousePressed() {
     case 'endpanel':   handleEndPanelClick(mouseX, mouseY);   return;
 
     case 'playing':
+      // 暂停按钮与暂停菜单优先处理
+      if (handlePauseClick(mouseX, mouseY)) return;
+      // 暂停期间消费所有其他点击
+      if (gamePaused) return;
       if (typeof handleWaveEndClick === 'function' && handleWaveEndClick(mouseX, mouseY)) return;
       if (minigameState !== 'idle') { handleMinigameClick(mouseX, mouseY); return; }
       const consumed = handlePlacementClick(mouseX, mouseY);
@@ -146,6 +158,16 @@ function mousePressed() {
 
 function mouseMoved() {
   if (minigameState !== 'idle') handleMinigameMove(mouseX, mouseY);
+}
+
+// ESC 键暂停
+function keyPressed() {
+  if (keyCode === ESCAPE) handlePauseKey();
+}
+
+// 暂停期间只绘制塔，不触发攻击逻辑
+function drawTowersOnly() {
+  for (const t of towers) t.draw();
 }
 
 // ============================================================
