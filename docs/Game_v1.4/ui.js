@@ -76,6 +76,41 @@ const BUILD_BTN_W       = 86;
 const BUILD_BTN_SPACING = 5;
 const BUILD_BTN_STRIDE  = BUILD_BTN_W + BUILD_BTN_SPACING;
 
+/** 为 true 时在 HUD 左下角绘制鼠标坐标（每帧 text，生产环境建议关闭） */
+const UI_SHOW_MOUSE_DEBUG = false;
+
+// ── HUD 字符串 / 颜色缓存（数值不变时不重复 nf / lerpColor）──
+const _hudStr = { credits: '', hp: '', wave: '', hostiles: '', progPct: '' };
+const _hudSig = {
+  coins: NaN, baseHp: NaN, baseHpMax: NaN, waveNum: NaN,
+  waveState: null, totalWaves: NaN, monsters: NaN,
+};
+let _hudHpFill = null;
+let _hudBarFill = null;
+let _hudBarInnerW = 0;
+
+// ── 波次倒计时下方说明行（同一波准备期间文案固定，避免每帧拼接）──
+let _wcDescKey = '';
+let _wcDescText = '';
+let _wcDescBoss = false;
+
+// ── 工具提示尺寸（仅依赖字体与文案，按塔类型缓存）──
+const _tooltipBoxCache = Object.create(null);
+
+// ── 点击热区对象复用（减少每帧 {} 分配）──
+const _pauseBtnRectPool = { x: 0, y: 0, w: 0, h: 0 };
+const _waveEndBtnRectPool = { x: 0, y: 0, w: 0, h: 0 };
+
+function _resetHudTextCache() {
+  _hudSig.coins = _hudSig.baseHp = _hudSig.baseHpMax = _hudSig.waveNum = NaN;
+  _hudSig.waveState = null;
+  _hudSig.totalWaves = _hudSig.monsters = NaN;
+  _hudHpFill = _hudBarFill = null;
+  _hudBarInnerW = 0;
+  _wcDescKey = '';
+  _wcDescText = '';
+}
+
 // ============================================================
 //  工具函数
 // ============================================================
@@ -131,6 +166,35 @@ function drawClickEffects() {
 //  HUD 顶栏
 // ============================================================
 function drawHUD() {
+  const nMon = manager.monsters.length;
+
+  if (_hudSig.coins !== coins) {
+    _hudSig.coins = coins;
+    _hudStr.credits = nf(coins, 5);
+  }
+  if (_hudSig.baseHp !== baseHp || _hudSig.baseHpMax !== baseHpMax) {
+    _hudSig.baseHp = baseHp;
+    _hudSig.baseHpMax = baseHpMax;
+    _hudStr.hp = nf(baseHp, 2) + '/' + baseHpMax;
+    _hudHpFill = lerpColor(color(220, 30, 30), color(0, 220, 140), baseHp / baseHpMax);
+  }
+  if (_hudSig.waveState !== waveState || _hudSig.waveNum !== waveNum || _hudSig.totalWaves !== TOTAL_WAVES) {
+    _hudSig.waveState = waveState;
+    _hudSig.waveNum = waveNum;
+    _hudSig.totalWaves = TOTAL_WAVES;
+    const prog = waveNum / TOTAL_WAVES;
+    _hudStr.wave = waveState === 'complete'
+        ? 'DONE'
+        : ('W-' + nf(min(waveNum, TOTAL_WAVES), 2) + '/' + nf(TOTAL_WAVES, 2));
+    _hudStr.progPct = 'PROGRESS  ' + floor(prog * 100) + '%';
+    _hudBarFill = lerpColor(color(0, 160, 255), color(0, 255, 180), prog);
+    _hudBarInnerW = max(0, 198 * prog);
+  }
+  if (_hudSig.monsters !== nMon) {
+    _hudSig.monsters = nMon;
+    _hudStr.hostiles = nf(nMon, 3);
+  }
+
   // 背景与边框
   noStroke(); fill(5, 8, 18, 225);
   rect(0, 0, width, HUD_HEIGHT);
@@ -139,38 +203,28 @@ function drawHUD() {
 
   textFont('monospace'); noStroke();
 
-  // CREDITS
   fill(0, 160, 255); textSize(13); text('◈ CREDITS', 12, 15);
-  fill(255, 210, 40); textSize(18); text(nf(coins, 5), 12, 34);
+  fill(255, 210, 40); textSize(18); text(_hudStr.credits, 12, 34);
 
-  // BASE HP
   fill(0, 160, 255); textSize(13); text('◈ BASE HP', 145, 15);
-  fill(lerpColor(color(220, 30, 30), color(0, 220, 140), baseHp / baseHpMax));
-  textSize(18); text(nf(baseHp, 2) + '/' + baseHpMax, 145, 34);
+  fill(_hudHpFill);
+  textSize(18); text(_hudStr.hp, 145, 34);
 
-  // WAVE
   fill(0, 160, 255); textSize(13); text('◈ WAVE', 285, 15);
-  const waveLabel = waveState === 'complete'
-      ? 'DONE'
-      : ('W-' + nf(min(waveNum, TOTAL_WAVES), 2) + '/' + nf(TOTAL_WAVES, 2));
   fill(waveState === 'complete' ? color(0, 255, 120) : color(140, 80, 255));
-  textSize(18); text(waveLabel, 285, 34);
+  textSize(18); text(_hudStr.wave, 285, 34);
 
-  // HOSTILES
   fill(0, 160, 255); textSize(13); text('◈ HOSTILES', 395, 15);
-  fill(220, 50, 50); textSize(18); text(nf(manager.monsters.length, 3), 395, 34);
+  fill(220, 50, 50); textSize(18); text(_hudStr.hostiles, 395, 34);
 
-  // 波次进度条
   const barX = 520, barY = 10, barW = 200, barH = 26;
   fill(10, 20, 40, 180); stroke(0, 140, 220, 120); strokeWeight(1);
   rect(barX, barY, barW, barH, 3);
-  const prog = waveNum / TOTAL_WAVES;
-  fill(lerpColor(color(0, 160, 255), color(0, 255, 180), prog)); noStroke();
-  rect(barX + 1, barY + 1, max(0, (barW - 2) * prog), barH - 2, 2);
+  fill(_hudBarFill); noStroke();
+  rect(barX + 1, barY + 1, _hudBarInnerW, barH - 2, 2);
   fill(0, 200, 255, 180); textSize(13); textAlign(CENTER, CENTER);
-  text('PROGRESS  ' + floor(prog * 100) + '%', barX + barW / 2, barY + barH / 2);
+  text(_hudStr.progPct, barX + barW / 2, barY + barH / 2);
 
-  // 干扰警告
   if (frameCount < jammedUntilFrame) {
     const t = sin(frameCount * 0.3) * 0.5 + 0.5;
     noStroke(); fill(255, 80, 0, 140 + t * 80);
@@ -179,12 +233,12 @@ function drawHUD() {
     text('⚠  DEFENSE JAMMED — TOWERS OFFLINE  ⚠', width / 2, HUD_HEIGHT + 10);
   }
 
-  // 调试坐标
-  noStroke(); fill(0, 140, 220, 65); textSize(10);
-  textAlign(LEFT, BASELINE);
-  text(nf(mouseX, 4) + ',' + nf(mouseY, 4), width - 80, height - 8);
+  if (UI_SHOW_MOUSE_DEBUG) {
+    noStroke(); fill(0, 140, 220, 65); textSize(10);
+    textAlign(LEFT, BASELINE);
+    text(nf(mouseX, 4) + ',' + nf(mouseY, 4), width - 80, height - 8);
+  }
 
-  // 暂停按钮（右上角）
   const pbx = width - 46, pby = 8, pbw = 36, pbh = 30;
   const pbHov = isHover(pbx, pby, pbw, pbh);
   fill(pbHov ? color(0, 60, 100, 230) : color(8, 16, 36, 200));
@@ -193,7 +247,11 @@ function drawHUD() {
   noStroke(); fill(0, 200, 255, pbHov ? 255 : 180);
   rect(pbx + 9,  pby + 8, 5, 14, 1);
   rect(pbx + 22, pby + 8, 5, 14, 1);
-  _pauseBtnRect = { x: pbx, y: pby, w: pbw, h: pbh };
+  _pauseBtnRectPool.x = pbx;
+  _pauseBtnRectPool.y = pby;
+  _pauseBtnRectPool.w = pbw;
+  _pauseBtnRectPool.h = pbh;
+  _pauseBtnRect = _pauseBtnRectPool;
 }
 
 // ============================================================
@@ -453,7 +511,11 @@ function _drawWaveEndPanel() {
   noStroke(); fill(0, 200, 255, 230); textSize(12);
   text('CONTINUE', px + pw / 2, bY + 14);
 
-  waveEndBtnRect = { x: px + 28, y: bY, w: pw - 56, h: 28 };
+  _waveEndBtnRectPool.x = px + 28;
+  _waveEndBtnRectPool.y = bY;
+  _waveEndBtnRectPool.w = pw - 56;
+  _waveEndBtnRectPool.h = 28;
+  waveEndBtnRect = _waveEndBtnRectPool;
   resetTextAlign();
 }
 
@@ -476,7 +538,9 @@ function _drawWaveCountdown() {
 
   const wc  = WAVE_CONFIGS[currentLevel] || [];
   const cfg = wc[nextW - 1];
-  if (cfg) {
+  const descKey = currentLevel + '\0' + nextW;
+  if (cfg && descKey !== _wcDescKey) {
+    _wcDescKey = descKey;
     let hasBoss = false;
     const parts = [];
     for (let i = 0; i < cfg.length; i++) {
@@ -487,8 +551,15 @@ function _drawWaveCountdown() {
       else if (t === 'boss3') parts.push('☠ FINAL BOSS: ANT-MECH');
       else parts.push(c + 'x ' + t.toUpperCase());
     }
-    fill(hasBoss ? color(255, 120, 20, 220) : color(0, 180, 220, 160));
-    textSize(9); text(parts.join('  |  '), width / 2, height / 2 + 30);
+    _wcDescText = parts.join('  |  ');
+    _wcDescBoss = hasBoss;
+  } else if (!cfg) {
+    _wcDescKey = '';
+    _wcDescText = '';
+  }
+  if (_wcDescText) {
+    fill(_wcDescBoss ? color(255, 120, 20, 220) : color(0, 180, 220, 160));
+    textSize(9); text(_wcDescText, width / 2, height / 2 + 30);
   }
 
   resetTextAlign();
@@ -535,13 +606,15 @@ function drawBuildMenu() {
     rect(bx, by, BUILD_BTN_W, 36, 4);
 
     noStroke();
-    fill(canAfford ? color(r, g, b) : color(120));
-    textSize(10); textAlign(LEFT, TOP);
-    text(TOWER_DISPLAY_NAMES[type], bx + 8, by + 6);
+    if (canAfford) fill(r, g, b);
+    else fill(120);
+    textSize(12); textAlign(LEFT, TOP);
+    text(TOWER_DISPLAY_NAMES[type], bx + 6, by + 4);
 
-    fill(canAfford ? color(255, 215, 0) : color(150, 80, 80));
-    textSize(9); textAlign(LEFT, BOTTOM);
-    text('¥' + def.cost, bx + 8, by + 30);
+    if (canAfford) fill(255, 215, 0);
+    else fill(150, 80, 80);
+    textSize(11); textAlign(LEFT, BOTTOM);
+    text('¥' + def.cost, bx + 6, by + 33);
 
     fill(r, g, b, canAfford ? 200 : 80);
     rect(bx + BUILD_BTN_W - 12, by + 8, 4, 20, 1);
@@ -558,7 +631,7 @@ function drawBuildMenu() {
     const by = BUILD_BTN_Y + 6;
     fill(80, 20, 20, 200); stroke(255, 60, 60, 180); strokeWeight(1.2);
     rect(cancelX, by, 44, 36, 4);
-    fill(255, 100, 100); noStroke(); textAlign(CENTER, CENTER); textSize(12);
+    fill(255, 100, 100); noStroke(); textAlign(CENTER, CENTER); textSize(14);
     text('✕', cancelX + 22, by + 18);
   }
 
@@ -571,20 +644,23 @@ function drawBuildMenu() {
 function drawTowerHoverTooltip() {
   if (!hoverTowerType) return;
 
-  const tip = TOWER_TIPS[hoverTowerType];
-  if (!tip) return;
+  let box = _tooltipBoxCache[hoverTowerType];
+  if (!box) {
+    const tip = TOWER_TIPS[hoverTowerType];
+    if (!tip) return;
+    const [name, desc] = tip;
+    const padding = 12;
+    textFont('monospace');
+    textSize(14);
+    const titleW = textWidth(name);
+    textSize(12);
+    const descW = textWidth(desc);
+    box = { name, desc, w: Math.max(titleW, descW) + padding * 2, h: 44, pad: padding };
+    _tooltipBoxCache[hoverTowerType] = box;
+  }
 
-  const [name, desc] = tip;
-  const padding = 12;
-
+  const { name, desc, w, h, pad: padding } = box;
   textFont('monospace');
-  textSize(14);
-  const titleW = textWidth(name);
-  textSize(12);
-  const descW  = textWidth(desc);
-
-  const w = Math.max(titleW, descW) + padding * 2;
-  const h = 44;
 
   // 防止超出屏幕边界
   let x = mouseX + 20;
@@ -868,4 +944,5 @@ function initUI() {
   waveEndBtnRect      = null;
   gamePaused          = false;
   pauseConfirmMode    = false;
+  _resetHudTextCache();
 }

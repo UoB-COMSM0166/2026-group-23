@@ -2068,13 +2068,16 @@ class HomeTower {
       pop();
     }
 
-    // 标签
+    // 标签（字号与行距加大，便于辨认）
     noStroke(); fill(0,215,255,195*p);
-    textFont('monospace'); textSize(7); textAlign(CENTER,CENTER);
-    text('[ HOME BASE ]', 0, -42);
+    textFont('monospace'); textAlign(CENTER,CENTER);
     const hpRatio = baseHp/baseHpMax;
     fill(lerpColor(color(255,30,30),color(0,215,140),hpRatio), 200);
-    textSize(6.5); text('HP  '+baseHp+'/'+baseHpMax, 0, -52);
+    textSize(11);
+    text('HP  '+baseHp+'/'+baseHpMax, 0, -58);
+    fill(0,215,255,195*p);
+    textSize(10);
+    text('[ HOME BASE ]', 0, -44);
     pop();
   }
 }

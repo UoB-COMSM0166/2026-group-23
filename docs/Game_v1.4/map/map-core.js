@@ -563,8 +563,13 @@ function _drawLevelLabel(lv, r,g,b, a) {
 
 function drawScanlines() {
   noStroke();
-  for (let y=0;y<height;y+=4) { fill(0,0,0,14); rect(0,y,width,2); }
-  const lv=(typeof currentLevel!=='undefined')?currentLevel:1;
-  const [r,g,b]=LEVEL_PATHS[lv]?.theme?.grid||[100,100,100];
-  fill(r,g,b,7); rect(0,(frameCount*1.1)%height,width,3);
+  // 加大步长、略增厚条纹：视觉接近原效果，rect 次数约降为原来的 ~1/2（降 draw call）
+  for (let y = 0; y < height; y += 8) {
+    fill(0, 0, 0, 14);
+    rect(0, y, width, 3);
+  }
+  const lv = (typeof currentLevel !== 'undefined') ? currentLevel : 1;
+  const [r, g, b] = LEVEL_PATHS[lv]?.theme?.grid || [100, 100, 100];
+  fill(r, g, b, 7);
+  rect(0, (frameCount * 1.1) % height, width, 3);
 }
