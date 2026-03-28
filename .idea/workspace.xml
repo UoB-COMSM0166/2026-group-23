@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="0e403b3e-7806-4779-a448-d04dd68c7f78" name="更改" comment="增加了商店页面塔的简介">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/Game_v1.4/sketch.js" beforeDir="false" afterPath="$PROJECT_DIR$/docs/Game_v1.4/sketch.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/Game_v1.4/ui.js" beforeDir="false" afterPath="$PROJECT_DIR$/docs/Game_v1.4/ui.js" afterDir="false" />
-    </list>
+    <list default="true" id="0e403b3e-7806-4779-a448-d04dd68c7f78" name="更改" comment="增加了暂停功能，优化了UI" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -81,7 +77,7 @@
       <workItem from="1774448865000" duration="93000" />
       <workItem from="1774452041541" duration="677000" />
       <workItem from="1774452764440" duration="101000" />
-      <workItem from="1774537378880" duration="4709000" />
+      <workItem from="1774537378880" duration="5134000" />
     </task>
     <task id="LOCAL-00001" summary="增加商店界面塔的简介">
       <option name="closed" value="true" />
@@ -131,7 +127,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774452795710</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="增加了暂停功能，优化了UI">
+      <option name="closed" value="true" />
+      <created>1774544118361</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1774544118362</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -153,6 +157,7 @@
     <MESSAGE value="test" />
     <MESSAGE value="V1.5" />
     <MESSAGE value="增加了商店页面塔的简介" />
-    <option name="LAST_COMMIT_MESSAGE" value="增加了商店页面塔的简介" />
+    <MESSAGE value="增加了暂停功能，优化了UI" />
+    <option name="LAST_COMMIT_MESSAGE" value="增加了暂停功能，优化了UI" />
   </component>
 </project>

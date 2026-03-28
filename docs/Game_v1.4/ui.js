@@ -72,8 +72,9 @@ const TOWER_SPECIALS = {
 };
 
 /** 建造菜单布局常量 */
-const BUILD_BTN_W    = 86;
+const BUILD_BTN_W       = 86;
 const BUILD_BTN_SPACING = 5;
+const BUILD_BTN_STRIDE  = BUILD_BTN_W + BUILD_BTN_SPACING;
 
 // ============================================================
 //  工具函数
@@ -102,9 +103,11 @@ function resetTextAlign() {
 //  点击特效
 // ============================================================
 function drawClickEffects() {
-  clickEffects = clickEffects.filter(e => e.life > 0);
+  const next = [];
   for (const e of clickEffects) {
+    if (e.life <= 0) continue;
     e.life -= 0.055;
+    next.push(e);
     const r = map(e.life, 1, 0, 8, 55);
     noFill();
     stroke(0, 200, 255, e.life * 170);
@@ -121,6 +124,7 @@ function drawClickEffects() {
     line(e.x - 10, e.y, e.x + 10, e.y);
     line(e.x, e.y - 10, e.x, e.y + 10);
   }
+  clickEffects = next;
 }
 
 // ============================================================
@@ -344,8 +348,8 @@ function _drawPauseConfirm(px, py, pw, ph, pulse) {
 //  处理暂停菜单点击
 // ============================================================
 function handlePauseClick(mx, my) {
-  // 点击 HUD 暂停按钮
-  if (_pauseBtnRect && isHover(_pauseBtnRect.x, _pauseBtnRect.y, _pauseBtnRect.w, _pauseBtnRect.h)) {
+  // 点击 HUD 暂停按钮（使用传入坐标，与全局 mouseX/Y 解耦）
+  if (_pauseBtnRect && inRect(mx, my, _pauseBtnRect.x, _pauseBtnRect.y, _pauseBtnRect.w, _pauseBtnRect.h)) {
     gamePaused = !gamePaused;
     pauseConfirmMode = false;
     return true;
@@ -355,30 +359,31 @@ function handlePauseClick(mx, my) {
 
   if (!pauseConfirmMode) {
     const [b0, b1, b2] = pauseMenuState.btns;
-    if (b0 && isHover(b0.x, b0.y, b0.w, b0.h)) {
+    if (b0 && inRect(mx, my, b0.x, b0.y, b0.w, b0.h)) {
       gamePaused = false;
       return true;
     }
-    if (b1 && isHover(b1.x, b1.y, b1.w, b1.h)) {
+    if (b1 && inRect(mx, my, b1.x, b1.y, b1.w, b1.h)) {
       gamePaused = false;
       pauseConfirmMode = false;
       _gameEndFired = false;
       initGame();
       return true;
     }
-    if (b2 && isHover(b2.x, b2.y, b2.w, b2.h)) {
+    if (b2 && inRect(mx, my, b2.x, b2.y, b2.w, b2.h)) {
       pauseConfirmMode = true;
       return true;
     }
   } else {
     const { px, pw, confirmY, cancelY } = pauseMenuState;
-    if (confirmY && isHover(px + 20, confirmY, pw - 40, 34)) {
+    // 与 _drawPauseConfirm 中 rect(px + 30, …, pw - 60, …) 一致
+    if (confirmY && inRect(mx, my, px + 30, confirmY, pw - 60, 44)) {
       gamePaused = false;
       pauseConfirmMode = false;
       gamePhase = 'levelmap';
       return true;
     }
-    if (cancelY && isHover(px + 20, cancelY, pw - 40, 30)) {
+    if (cancelY && inRect(mx, my, px + 30, cancelY, pw - 60, 40)) {
       pauseConfirmMode = false;
       return true;
     }
@@ -472,15 +477,18 @@ function _drawWaveCountdown() {
   const wc  = WAVE_CONFIGS[currentLevel] || [];
   const cfg = wc[nextW - 1];
   if (cfg) {
-    const hasBoss = cfg.some(([t]) => t.startsWith('boss'));
-    const desc = cfg.map(([t, c]) => {
-      if (t === 'boss1') return '⚠ BOSS: FISSION CORE';
-      if (t === 'boss2') return '⚠ BOSS: PHANTOM PROTOCOL';
-      if (t === 'boss3') return '☠ FINAL BOSS: ANT-MECH';
-      return c + 'x ' + t.toUpperCase();
-    }).join('  |  ');
+    let hasBoss = false;
+    const parts = [];
+    for (let i = 0; i < cfg.length; i++) {
+      const [t, c] = cfg[i];
+      if (t.startsWith('boss')) hasBoss = true;
+      if (t === 'boss1') parts.push('⚠ BOSS: FISSION CORE');
+      else if (t === 'boss2') parts.push('⚠ BOSS: PHANTOM PROTOCOL');
+      else if (t === 'boss3') parts.push('☠ FINAL BOSS: ANT-MECH');
+      else parts.push(c + 'x ' + t.toUpperCase());
+    }
     fill(hasBoss ? color(255, 120, 20, 220) : color(0, 180, 220, 160));
-    textSize(9); text(desc, width / 2, height / 2 + 30);
+    textSize(9); text(parts.join('  |  '), width / 2, height / 2 + 30);
   }
 
   resetTextAlign();
@@ -502,7 +510,7 @@ function _drawWaveComplete() {
 // ============================================================
 function drawBuildMenu() {
   textFont('monospace'); noStroke();
-  const menuWidth = TOWER_TYPES.length * (BUILD_BTN_W + BUILD_BTN_SPACING) + 4;
+  const menuWidth = TOWER_TYPES.length * BUILD_BTN_STRIDE + 4;
 
   fill(5, 10, 22, 220); stroke(0, 130, 200, 120); strokeWeight(1.5);
   rect(0, BUILD_BTN_Y, menuWidth, 48, 0, 0, 6, 0);
@@ -515,7 +523,7 @@ function drawBuildMenu() {
     if (!def) continue;
 
     const [r, g, b] = def.color;
-    const bx = 6 + i * (BUILD_BTN_W + BUILD_BTN_SPACING);
+    const bx = 6 + i * BUILD_BTN_STRIDE;
     const by = BUILD_BTN_Y + 6;
     const selected  = selectedTowerType === type;
     const canAfford = coins >= def.cost;
@@ -546,7 +554,7 @@ function drawBuildMenu() {
 
   // 取消按钮
   if (selectedTowerType) {
-    const cancelX = 6 + TOWER_TYPES.length * (BUILD_BTN_W + BUILD_BTN_SPACING);
+    const cancelX = 6 + TOWER_TYPES.length * BUILD_BTN_STRIDE;
     const by = BUILD_BTN_Y + 6;
     fill(80, 20, 20, 200); stroke(255, 60, 60, 180); strokeWeight(1.2);
     rect(cancelX, by, 44, 36, 4);
@@ -650,12 +658,10 @@ function drawTowerPanel() {
     fill(canUpg ? color(175, 255, 195, 230) : color(135, 135, 135, 180));
     noStroke(); textSize(9); textAlign(CENTER, CENTER);
     text('升级至 Lv.' + (t.level + 1) + '  ¥' + t.upgradeCost, px + panelW / 2, specialY + 12);
-    resetTextAlign();
     t._btnRect = { x: px + 8, y: specialY, w: panelW - 16, h: 24 };
   } else {
     fill(255, 200, 50, 155); noStroke(); textSize(9); textAlign(CENTER, CENTER);
     text('★ 已达满级 MAX', px + panelW / 2, specialY + 8);
-    resetTextAlign();
     t._btnRect = null;
   }
 
@@ -664,8 +670,7 @@ function drawTowerPanel() {
   fill(75, 18, 18, 200); stroke(195, 55, 55, 175); strokeWeight(1);
   rect(px + 8, delBtnY, panelW - 16, 22, 3);
   fill(255, 100, 100, 230); noStroke(); textSize(9); textAlign(CENTER, CENTER);
-  text('拆除  退还 ¥' + Math.floor(TOWER_DEFS[t.type].cost * 0.8), px + panelW / 2, delBtnY + 11);
-  resetTextAlign();
+  text('拆除  退还 ¥' + Math.floor(def.cost * 0.8), px + panelW / 2, delBtnY + 11);
   t._delRect = { x: px + 8, y: delBtnY, w: panelW - 16, h: 22 };
 
   fill(95, 135, 175, 125); noStroke(); textSize(8); textAlign(CENTER, CENTER);
@@ -679,14 +684,14 @@ function drawTowerPanel() {
 function drawPlacementPreview() {
   if (!selectedTowerType) return;
 
+  const def = TOWER_DEFS[selectedTowerType];
   const gx       = Math.floor(mouseX / CELL_SIZE);
   const gy       = Math.floor(mouseY / CELL_SIZE);
   const canBuild = isCellBuildable(gx, gy);
-  const canAfford = coins >= TOWER_DEFS[selectedTowerType].cost;
+  const canAfford = coins >= def.cost;
   const ok = canBuild && canAfford;
 
   const px  = gx * CELL_SIZE, py = gy * CELL_SIZE;
-  const def = TOWER_DEFS[selectedTowerType];
   const [r, g, b] = def.color;
 
   // 格子边框 + 填充
@@ -724,7 +729,7 @@ function handlePlacementClick(mx, my) {
     _mortarTower  = null;
 
     for (let i = 0; i < TOWER_TYPES.length; i++) {
-      const bx = 6 + i * (BUILD_BTN_W + BUILD_BTN_SPACING);
+      const bx = 6 + i * BUILD_BTN_STRIDE;
       if (inRect(mx, my, bx, BUILD_BTN_Y, BUILD_BTN_W, 48)) {
         const type = TOWER_TYPES[i];
         selectedTowerType = (selectedTowerType === type) ? null : type;
@@ -734,7 +739,7 @@ function handlePlacementClick(mx, my) {
     }
 
     // 取消按钮
-    const cancelX = 6 + TOWER_TYPES.length * (BUILD_BTN_W + BUILD_BTN_SPACING);
+    const cancelX = 6 + TOWER_TYPES.length * BUILD_BTN_STRIDE;
     if (selectedTowerType && inRect(mx, my, cancelX, BUILD_BTN_Y, 44, 48)) {
       selectedTowerType = null;
     }
@@ -797,8 +802,9 @@ function handlePlacementClick(mx, my) {
   if (selectedTowerType) {
     const gx = Math.floor(mx / CELL_SIZE);
     const gy = Math.floor(my / CELL_SIZE);
-    if (isCellBuildable(gx, gy) && coins >= TOWER_DEFS[selectedTowerType].cost) {
-      coins -= TOWER_DEFS[selectedTowerType].cost;
+    const placeDef = TOWER_DEFS[selectedTowerType];
+    if (isCellBuildable(gx, gy) && coins >= placeDef.cost) {
+      coins -= placeDef.cost;
       towers.push(new Tower(gx, gy, selectedTowerType));
       selectedTowerType = null;
     } else if (my > HUD_HEIGHT) {
