@@ -97,3 +97,4 @@ class HomeTower {
     text('[ HOME BASE ]', 0, -44);
     pop();
   }
+}
