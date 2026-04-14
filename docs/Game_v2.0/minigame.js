@@ -614,20 +614,20 @@ function drawMgHUD() {
   line(MG.x, MG.y + 46, MG.x + MG.w, MG.y + 46);
 
   textFont('monospace'); noStroke();
-  fill(0, 160, 255); textSize(10); text('◈ 在途', MG.x + 16, MG.y + 16);
+  fill(0, 160, 255); textSize(10); text(t('mg.inFlight'), MG.x + 16, MG.y + 16);
   fill(0, 220, 255); textSize(15);
   text(mgBalls.filter(b => b.alive).length + spawnQueue.length, MG.x + 16, MG.y + 35);
 
-  fill(0, 160, 255); textSize(10); text('◈ 已落底', MG.x + 110, MG.y + 16);
+  fill(0, 160, 255); textSize(10); text(t('mg.landed'), MG.x + 110, MG.y + 16);
   fill(0, 255, 170); textSize(15); text(landedBalls, MG.x + 110, MG.y + 35);
 
-  fill(0, 160, 255); textSize(10); text('◈ 预计金币', MG.x + 210, MG.y + 16);
+  fill(0, 160, 255); textSize(10); text(t('mg.estCoins'), MG.x + 210, MG.y + 16);
   fill(255, 225, 30); textSize(15); text('¥' + Math.floor(landedBalls * 1.5), MG.x + 210, MG.y + 35);
 
   if (minigameState === 'playing') {
     fill(0, 180, 255, 130); textSize(10);
     textAlign(RIGHT, BASELINE);
-    text(shootDone ? '发射完毕' : ('已发 ' + shootCount + '/' + shootTotal), MG.x + MG.w - 16, MG.y + 35);
+    text(shootDone ? t('mg.shootDone') : t('mg.shootProgress', shootCount, shootTotal), MG.x + MG.w - 16, MG.y + 35);
     textAlign(LEFT, BASELINE);
   }
 }

@@ -139,6 +139,46 @@ const I18N = {
     'placement.cantBuild':    'Cannot Build',
     'placement.noCoins':      'Not Enough Coins',
     'placement.clickToFire':  'Click to fire',
+
+    // ── difficulty select ──
+    'diff.title':            'Quantum Drop',
+    'diff.select':           'SELECT DIFFICULTY',
+    'diff.back':              '◀ BACK',
+    'diff.bottom':           'choose a difficulty level to start the game',
+    'diff.easy':             'EASY',
+    'diff.easySub':          'Easy Mode',
+    'diff.easy.l1':          '× gate multiplier boosted',
+    'diff.easy.l2':          'more high-multiplier chances',
+    'diff.easy.l3':          '- gate values normal',
+    'diff.easy.l4':          'recommended for beginners',
+    'diff.difficult':        'DIFFICULT',
+    'diff.difficultSub':     'Hard Mode',
+    'diff.difficult.l1':     '× gate multiplier normal',
+    'diff.difficult.l2':     '- gate damage ↑↑',
+    'diff.difficult.l3':     'survival pressure doubled',
+    'diff.difficult.l4':     'for experienced players',
+    'diff.start':            '▶  START',
+    'diff.selectBtn':        'SELECT',
+
+    // ── end panel ──
+    'end.complete':          'MISSION COMPLETE',
+    'end.failed':            'MISSION FAILED',
+    'end.completeSub':       'Quantum base successfully defended',
+    'end.failedSub':         'Base has fallen — redeploy',
+    'end.level':             'Level: {0}',
+    'end.coins':             'Credits left: ¥{0}',
+    'end.hp':                'Base HP: {0} / {1}',
+    'end.waves':             'Waves cleared: {0} / {1}',
+    'end.retry':             '↺ RETRY',
+    'end.stages':            '⊞ STAGES',
+    'end.next':              '▶▶ NEXT: {0}',
+
+    // ── minigame HUD ──
+    'mg.inFlight':           '◈ In flight',
+    'mg.landed':             '◈ Landed',
+    'mg.estCoins':           '◈ Est. credits',
+    'mg.shootDone':          'Salvo complete',
+    'mg.shootProgress':      'Fired {0}/{1}',
   },
 
   zh: {
@@ -267,6 +307,46 @@ const I18N = {
     'placement.cantBuild':    '无法建造',
     'placement.noCoins':      '金币不足',
     'placement.clickToFire':  '点击发射炮弹',
+
+    // ── 难度选择 ──
+    'diff.title':            'Quantum Drop',
+    'diff.select':           '选择难度',
+    'diff.back':              '◀ 返回',
+    'diff.bottom':           '选择一个难度开始游戏',
+    'diff.easy':             'EASY',
+    'diff.easySub':          '简单模式',
+    'diff.easy.l1':          '× 门倍率提升',
+    'diff.easy.l2':          '更多高倍率机会',
+    'diff.easy.l3':          '- 门数值正常',
+    'diff.easy.l4':          '推荐初学者',
+    'diff.difficult':        'DIFFICULT',
+    'diff.difficultSub':     '困难模式',
+    'diff.difficult.l1':     '× 门倍率正常',
+    'diff.difficult.l2':     '- 门扣除数值 ↑↑',
+    'diff.difficult.l3':     '生存压力倍增',
+    'diff.difficult.l4':     '挑战高手专属',
+    'diff.start':            '▶  开始',
+    'diff.selectBtn':        '选择',
+
+    // ── 结算面板 ──
+    'end.complete':          '任务完成',
+    'end.failed':            '任务失败',
+    'end.completeSub':       '量子基地成功守卫',
+    'end.failedSub':         '基地已被攻陷，重新部署',
+    'end.level':             '关卡: {0}',
+    'end.coins':             '剩余金币: ¥{0}',
+    'end.hp':                '基地 HP: {0} / {1}',
+    'end.waves':             '完成波次: {0} / {1}',
+    'end.retry':             '↺ 重试',
+    'end.stages':            '⊞ 关卡选择',
+    'end.next':              '▶▶ 下一关: {0}',
+
+    // ── 小游戏 HUD ──
+    'mg.inFlight':           '◈ 在途',
+    'mg.landed':             '◈ 已落底',
+    'mg.estCoins':           '◈ 预计金币',
+    'mg.shootDone':          '发射完毕',
+    'mg.shootProgress':      '已发 {0}/{1}',
   },
 };
 

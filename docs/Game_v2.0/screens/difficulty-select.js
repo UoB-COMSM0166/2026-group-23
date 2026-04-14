@@ -19,9 +19,9 @@ function drawDifficultySelect() {
   const pulse = sin(frameCount * 0.07) * 0.3 + 0.7;
   noStroke();
   fill(0, 200, 255, 220 * pulse); textSize(28);
-  text('Quantum Drop', width / 2, height / 2 - 155);
+  text(t('diff.title'), width / 2, height / 2 - 155);
   fill(0, 140, 200, 160 * pulse); textSize(11);
-  text('SELECT DIFFICULTY', width / 2, height / 2 - 118);
+  text(t('diff.select'), width / 2, height / 2 - 118);
 
   // ── 分割线 ──
   stroke(0, 180, 255, 60); strokeWeight(1);
@@ -29,20 +29,20 @@ function drawDifficultySelect() {
 
   // ── EASY 卡片 ──
   const eX = width / 2 - 210, eY = height / 2 - 90, eW = 190, eH = 240;
-  _drawDiffCard(eX, eY, eW, eH, [0, 220, 120], 'EASY', '简单模式', [
-    '× 门倍率提升',
-    '更多高倍率机会',
-    '-门数值正常',
-    '推荐初学者',
+  _drawDiffCard(eX, eY, eW, eH, [0, 220, 120], t('diff.easy'), t('diff.easySub'), [
+    t('diff.easy.l1'),
+    t('diff.easy.l2'),
+    t('diff.easy.l3'),
+    t('diff.easy.l4'),
   ]);
 
   // ── DIFFICULT 卡片 ──
   const dX = width / 2 + 20, dY = height / 2 - 90, dW = 190, dH = 240;
-  _drawDiffCard(dX, dY, dW, dH, [255, 100, 40], 'DIFFICULT', '困难模式', [
-    '× 门倍率正常',
-    '-门扣除数值↑↑',
-    '生存压力倍增',
-    '挑战高手专属',
+  _drawDiffCard(dX, dY, dW, dH, [255, 100, 40], t('diff.difficult'), t('diff.difficultSub'), [
+    t('diff.difficult.l1'),
+    t('diff.difficult.l2'),
+    t('diff.difficult.l3'),
+    t('diff.difficult.l4'),
   ]);
 
   // ── 返回按钮 ──
@@ -51,11 +51,11 @@ function drawDifficultySelect() {
   stroke(0, 160, 215, bkH ? 200 : 95); strokeWeight(1);
   rect(6, 6, 82, 26, 4);
   noStroke(); fill(0, 200, 255, bkH ? 240 : 175); textSize(10); textAlign(CENTER, CENTER);
-  text('◀ BACK', 47, 19);
+  text(t('diff.back'), 47, 19);
 
   // ── 底部提示 ──
   noStroke(); fill(0, 140, 200, 120 * pulse); textSize(10); textAlign(CENTER, CENTER);
-  text('choose a difficulty level to start the game', width / 2, height / 2 + 175);
+  text(t('diff.bottom'), width / 2, height / 2 + 175);
   textAlign(LEFT, BASELINE);
 }
 
@@ -93,7 +93,7 @@ function _drawDiffCard(x, y, w, h, col, title, subtitle, lines) {
   rect(x + 16, btnY, w - 32, 30, 8);
   fill(hovered ? color(255, 255, 255, 240) : color(r, g, b, 220));
   textSize(12); textAlign(CENTER, CENTER);
-  text(hovered ? '▶  START' : 'SELECT', x + w / 2, btnY + 15);
+  text(hovered ? t('diff.start') : t('diff.selectBtn'), x + w / 2, btnY + 15);
 
   textAlign(LEFT, BASELINE);
 }
