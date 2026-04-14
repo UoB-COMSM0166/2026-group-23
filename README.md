@@ -10,6 +10,30 @@
 Before each wave, players earn coins through the minigame, then spend them to build and upgrade towers to fend off enemies.  
 The game features **5 levels**, each with a unique map layout, path design, and visual theme, with increasing difficulty.
 
+### STRAPLINE
+Defense Protocol — Strong sci-fi identity; high-tech appeal.
+
+### IMAGE
+[![Game Screenshot](docs/Game_v1.3_screenshot.png)](https://uob-comsm0166.github.io/2026-group-23/Game_v1.3/)
+
+### LINK
+- [game_v0.3](https://uob-comsm0166.github.io/2026-group-23/Game_v0.3/)
+- [game_v1.4](https://uob-comsm0166.github.io/2026-group-23/Game_v1.4/)
+
+VIDEO. Include a demo video of your game here (you don't have to wait until the end, you can insert a work in progress video)
+
+## Your Group
+
+![GROUP PHOTO](workshop/week01/微信图片_20260129151517_145.jpg)
+
+| username | name | email | role |
+|---------|---------|----------|----|
+| bruce5800| Zhuolun Li| nu25406@bristol.ac.uk| role|
+| zhangxun88| Xun Zhang|  hg25695@bristol.ac.uk| role|
+| Che-L| Bowen Liu| jt25343@bristol.ac.uk| role|
+| ZhangZhenyu718| Zhenyu Zhang| pv25243@bristol.ac.uk| role|
+| zhuqihao7-tech| Qihao Zhu| iy25847@bristol.ac.uk| role|
+| ycy-code| Chengyin Yu| si25962@bristol.ac.uk| role|
 ---
 
 ## How to Run
