@@ -43,11 +43,22 @@
   <script src="monsters/bosses/carrier.js"></script>    <!-- BossCarrier -->
   <script src="monsters/manager.js"></script>           <!-- MonsterManager -->
 
-  <!-- ── 游戏核心：塔 ── -->
-  <script src="towers.js"></script>        <!-- Tower、Projectile -->
-  <script src="home-tower.js"></script>    <!-- HomeTower 终点基地（原在 monsters.js 内） -->
-  <script src="waves.js"></script>         <!-- 波次推进逻辑 -->
-  <script src="minigame.js"></script>      <!-- 投球小游戏 -->
+  <!-- ── 游戏核心：塔（base 最先，然后 8 种变种通过 prototype 注入行为）── -->
+  <script src="towers/base.js"></script>              <!-- Tower 基类（构造/升级/调度）-->
+  <script src="towers/variants/rapid.js"></script>    <!-- RAPID 快速塔 -->
+  <script src="towers/variants/laser.js"></script>    <!-- LASER 激光切割者 -->
+  <script src="towers/variants/nova.js"></script>     <!-- NOVA 穿透炮 -->
+  <script src="towers/variants/chain.js"></script>    <!-- CHAIN 链式电弧塔 -->
+  <script src="towers/variants/magnet.js"></script>   <!-- MAGNET 磁场干扰塔 -->
+  <script src="towers/variants/ghost.js"></script>    <!-- GHOST 幽灵导弹塔 -->
+  <script src="towers/variants/scatter.js"></script>  <!-- SCATTER 散射对空炮 -->
+  <script src="towers/variants/cannon.js"></script>   <!-- CANNON 轨道巨炮 -->
+  <script src="towers/projectile.js"></script>        <!-- Projectile 子弹类 -->
+  <script src="towers/effects.js"></script>           <!-- 跳链/爆炸/迫击炮视觉 -->
+  <script src="towers/manager.js"></script>           <!-- towers[]/projectiles[] + updateAndDrawTowers -->
+  <script src="home-tower.js"></script>               <!-- HomeTower 终点基地 -->
+  <script src="waves.js"></script>                    <!-- 波次推进逻辑 -->
+  <script src="minigame.js"></script>                 <!-- 投球小游戏 -->
 
   <!-- ── 战斗 UI（ui/，common 最先，index 最后）── -->
   <script src="ui/common.js"></script>       <!-- 常量 / HUD缓存 / 工具函数 / 点击特效 -->
