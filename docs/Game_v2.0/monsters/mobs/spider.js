@@ -117,4 +117,3 @@ class MechSpider extends Monster {
   }
 }
 
-// ── 机器人 ──

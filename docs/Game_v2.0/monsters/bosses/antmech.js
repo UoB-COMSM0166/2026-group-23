@@ -282,4 +282,3 @@ class BossAntMech extends Monster {
   }
 }
 
-// ── 机械坦克（新基础怪：高血量，为附近地面怪提供免疫护盾）──

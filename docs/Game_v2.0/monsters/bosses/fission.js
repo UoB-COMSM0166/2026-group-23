@@ -275,4 +275,4 @@ class FissionCore extends Monster {
     text('FISSION', this.pos.x, by-3); textAlign(LEFT,BASELINE);
   }
 }
-// ── Boss 幽灵协议 ──
+

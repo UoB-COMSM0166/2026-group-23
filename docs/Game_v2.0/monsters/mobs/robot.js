@@ -104,4 +104,3 @@ class MechRobot extends Monster {
   }
 }
 
-// ── 机械烈焰鸟 ──

@@ -123,4 +123,3 @@ class BossPhantom extends Monster {
   }
 }
 
-// ── Boss 相变战士 ──

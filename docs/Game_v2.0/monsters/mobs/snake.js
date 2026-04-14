@@ -89,5 +89,3 @@ class MechSnake extends Monster {
   }
 }
 
-// ── 机械天蛛 ──
-// 出生时超级冲刺无敌，之后保持高速+定期冲刺
