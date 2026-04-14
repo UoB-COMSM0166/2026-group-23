@@ -13,6 +13,11 @@
   <!-- 第三方库 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 
+  <!-- ── 纯数据配置（data/，必须先于依赖它们的模块加载）── -->
+  <script src="data/towers.js"></script>  <!-- TOWER_DEFS -->
+  <script src="data/waves.js"></script>   <!-- WAVE_CONFIGS / WAVE_CONFIG -->
+  <script src="data/levels.js"></script>  <!-- LEVEL_INFO / LEVEL_NODES -->
+
   <!-- ── 地图系统（map/ 目录，按顺序加载）── -->
   <script src="map/map-core.js"></script>  <!-- 路径定义、格子判定、缓存、drawPaths、共享辅助 -->
   <script src="map/map-lv1.js"></script>   <!-- 关卡1  青草地 -->
