@@ -59,8 +59,9 @@ function draw() {
 
     case 'playing':
       drawBackground(); drawPaths();
-      // 暂停时跳过所有更新，只绘制静止画面
-      if (!gamePaused) {
+      // 暂停 / 新手引导 时跳过所有更新，只绘制静止画面
+      const _frozen = gamePaused || tutorialActive;
+      if (!_frozen) {
         updateWaveSystem();
         manager.update();
         updateAndDrawTowers();
@@ -68,13 +69,14 @@ function draw() {
         updateParticles();
         updateMinigame(); drawMinigame();
       } else {
-        // 暂停期间仍然绘制怪物和塔（静止），让画面不黑屏
+        // 冻结期间仍然绘制怪物和塔（静止），让画面不黑屏
         for (const m of manager.monsters) m.draw();
         for (const ht of homeTowers) ht.draw();
         drawTowersOnly(); // 只绘制不更新
       }
       drawUI(); // drawUI 内部会调用 drawPauseMenu()
-      if (!gamePaused && waveState === 'complete' && manager.monsters.length === 0 && !_gameEndFired) {
+      drawTutorial(); // 若激活则绘制引导覆盖层（始终盖在 UI 之上）
+      if (!_frozen && waveState === 'complete' && manager.monsters.length === 0 && !_gameEndFired) {
         _gameEndFired = true;
         setTimeout(() => handleGameEnd(true), 1800);
       }
@@ -101,6 +103,8 @@ function mousePressed() {
     case 'endpanel':   handleEndPanelClick(mouseX, mouseY);   return;
 
     case 'playing':
+      // 新手引导最优先：拦截所有其它点击
+      if (tutorialActive) { handleTutorialClick(mouseX, mouseY); return; }
       // 暂停按钮与暂停菜单优先处理
       if (handlePauseClick(mouseX, mouseY)) return;
       // 暂停期间消费所有其他点击
@@ -117,9 +121,12 @@ function mouseMoved() {
   if (minigameState !== 'idle') handleMinigameMove(mouseX, mouseY);
 }
 
-// ESC 键暂停
+// ESC 键暂停（引导期间吞掉 ESC，避免叠加暂停菜单）
 function keyPressed() {
-  if (keyCode === ESCAPE) handlePauseKey();
+  if (keyCode === ESCAPE) {
+    if (tutorialActive) return;
+    handlePauseKey();
+  }
 }
 
 // 暂停期间只绘制塔，不触发攻击逻辑
@@ -165,6 +172,7 @@ function initGame() {
   initTowers();
   initUI();
   beginAutoWave();
+  startTutorialIfNeeded(); // 第 1 关首次进入时弹出新手引导
 }
 
 // ============================================================

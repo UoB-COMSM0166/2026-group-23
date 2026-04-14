@@ -77,6 +77,11 @@ let _endPanelWon = false;
 let _gameEndFired = false;
 
 
+// ── 新手引导（仅第 1 关首次进入时弹出）──
+let tutorialActive = false;
+let tutorialStep   = 0;
+
+
 // ============================================================
 //  UI 状态（原 ui.js 顶部）
 // ============================================================
