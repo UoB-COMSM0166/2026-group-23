@@ -74,9 +74,9 @@ function _drawWaveEndPanel() {
 
   textAlign(CENTER, CENTER);
   fill(R, G, B, 240 * pulse); textSize(22);
-  text('WAVE BREAK', px + pw / 2, py + 48);
+  text(t('wave.breakTitle'), px + pw / 2, py + 48);
   fill(178, 210, 240, 200); textSize(11);
-  text('Prepare for the next wave.', px + pw / 2, py + 78);
+  text(t('wave.breakDesc'), px + pw / 2, py + 78);
 
   stroke(R, G, B, 60); strokeWeight(1);
   line(px + 28, py + 100, px + pw - 28, py + 100);
@@ -87,7 +87,7 @@ function _drawWaveEndPanel() {
   stroke(0, 180, 255, bhov ? 200 : 115); strokeWeight(1);
   rect(px + 28, bY, pw - 56, 28, 5);
   noStroke(); fill(0, 200, 255, 230); textSize(12);
-  text('CONTINUE', px + pw / 2, bY + 14);
+  text(t('wave.continue'), px + pw / 2, bY + 14);
 
   _waveEndBtnRectPool.x = px + 28;
   _waveEndBtnRectPool.y = bY;
@@ -110,24 +110,25 @@ function _drawWaveCountdown() {
 
   textAlign(CENTER, CENTER);
   fill(0, 200, 255, 230 * pulse); textSize(13);
-  text('— INCOMING WAVE ' + nextW + ' OF ' + TOTAL_WAVES + ' —', width / 2, height / 2 - 18);
+  text(t('wave.incoming', nextW, TOTAL_WAVES), width / 2, height / 2 - 18);
   fill(255, 220, 60, 240); textSize(26);
-  text(remaining + 's', width / 2, height / 2 + 10);
+  text(remaining + t('wave.countdownUnit'), width / 2, height / 2 + 10);
 
   const wc  = WAVE_CONFIGS[currentLevel] || [];
   const cfg = wc[nextW - 1];
-  const descKey = currentLevel + '\0' + nextW;
+  // 缓存 key 加入语言维度，切换语言时强制重建文本
+  const descKey = currentLevel + '\0' + nextW + '\0' + currentLang;
   if (cfg && descKey !== _wcDescKey) {
     _wcDescKey = descKey;
     let hasBoss = false;
     const parts = [];
     for (let i = 0; i < cfg.length; i++) {
-      const [t, c] = cfg[i];
-      if (t.startsWith('boss')) hasBoss = true;
-      if (t === 'boss1') parts.push('⚠ BOSS: FISSION CORE');
-      else if (t === 'boss2') parts.push('⚠ BOSS: PHANTOM PROTOCOL');
-      else if (t === 'boss3') parts.push('☠ FINAL BOSS: ANT-MECH');
-      else parts.push(c + 'x ' + t.toUpperCase());
+      const [kind, c] = cfg[i];
+      if (kind.startsWith('boss')) hasBoss = true;
+      if (kind === 'boss1')      parts.push(t('wave.bossFission'));
+      else if (kind === 'boss2') parts.push(t('wave.bossPhantom'));
+      else if (kind === 'boss3') parts.push(t('wave.bossAntmech'));
+      else                       parts.push(c + 'x ' + kind.toUpperCase());
     }
     _wcDescText = parts.join('  |  ');
     _wcDescBoss = hasBoss;
@@ -148,8 +149,8 @@ function _drawWaveComplete() {
   rect(0, height / 2 - 50, width, 100);
   textAlign(CENTER, CENTER);
   fill(0, 255, 160, 230); textSize(22);
-  text('ALL WAVES CLEARED', width / 2, height / 2 - 18);
+  text(t('wave.allClear'), width / 2, height / 2 - 18);
   fill(255, 220, 60, 200); textSize(13);
-  text('TOTAL CREDITS: ' + coins, width / 2, height / 2 + 14);
+  text(t('wave.totalCredits', coins), width / 2, height / 2 + 14);
   resetTextAlign();
 }

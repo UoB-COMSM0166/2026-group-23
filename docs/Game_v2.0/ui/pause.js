@@ -51,18 +51,18 @@ function drawPauseMenu() {
 /** 普通暂停菜单内容 */
 function _drawPauseNormal(px, py, pw, ph, pulse) {
   fill(0, 200, 255, 230 * pulse); textSize(32);
-  text('PAUSED', px + pw / 2, py + 60);
+  text(t('pause.title'), px + pw / 2, py + 60);
 
   fill(0, 140, 200, 180); textSize(14);
-  text('Game has been paused', px + pw / 2, py + 100);
+  text(t('pause.subtitle'), px + pw / 2, py + 100);
 
   stroke(0, 160, 255, 80); strokeWeight(1.5);
   line(px + 30, py + 120, px + pw - 30, py + 120);
 
   const btns = [
-    { label: '▶ CONTINUE',    col: [0, 200, 255],   y: py + 140 },
-    { label: '↺ RESTART',     col: [255, 160, 30],  y: py + 200 },
-    { label: '⊞ LEVEL SELECT', col: [180, 80, 255],  y: py + 260 },
+    { label: t('pause.continue'),    col: [0, 200, 255],   y: py + 140 },
+    { label: t('pause.restart'),     col: [255, 160, 30],  y: py + 200 },
+    { label: t('pause.levelSelect'), col: [180, 80, 255],  y: py + 260 },
   ];
 
   btns.forEach(btn => {
@@ -76,7 +76,7 @@ function _drawPauseNormal(px, py, pw, ph, pulse) {
   });
 
   noStroke(); fill(0, 140, 180, 140); textSize(12);
-  text('Press ESC to Continue', px + pw / 2, py + ph - 20);
+  text(t('pause.hint'), px + pw / 2, py + ph - 20);
 
   // 存储按钮区域供点击检测
   pauseMenuState.btns = btns.map(b => ({ ...b, x: px + 30, w: pw - 60, h: 40 }));
@@ -85,10 +85,10 @@ function _drawPauseNormal(px, py, pw, ph, pulse) {
 /** 二次确认退出内容 */
 function _drawPauseConfirm(px, py, pw, ph, pulse) {
   fill(255, 100, 60, 230 * pulse); textSize(28);
-  text('Confirm Exit?', px + pw / 2, py + 70);
+  text(t('pause.confirmTitle'), px + pw / 2, py + 70);
 
   fill(180, 210, 240, 200); textSize(14);
-  text('Current progress will not be saved', px + pw / 2, py + 110);
+  text(t('pause.confirmSubtitle'), px + pw / 2, py + 110);
 
   stroke(255, 80, 40, 80); strokeWeight(1.5);
   line(px + 30, py + 130, px + pw - 30, py + 130);
@@ -100,7 +100,7 @@ function _drawPauseConfirm(px, py, pw, ph, pulse) {
   stroke(220, 50, 50, hov1 ? 230 : 130); strokeWeight(1.5);
   rect(px + 30, confirmY, pw - 60, 44, 8);
   noStroke(); fill(255, 100, 100, hov1 ? 255 : 220);
-  textSize(16); text('Confirm Exit to Level Select', px + pw / 2, confirmY + 22);
+  textSize(16); text(t('pause.confirmExit'), px + pw / 2, confirmY + 22);
 
   // 取消按钮
   const cancelY = py + 210;
@@ -109,7 +109,7 @@ function _drawPauseConfirm(px, py, pw, ph, pulse) {
   stroke(0, 160, 220, hov2 ? 210 : 100); strokeWeight(1.5);
   rect(px + 30, cancelY, pw - 60, 40, 8);
   noStroke(); fill(0, 200, 255, hov2 ? 255 : 200);
-  textSize(16); text('Cancel, Back to Pause Menu', px + pw / 2, cancelY + 20);
+  textSize(16); text(t('pause.confirmCancel'), px + pw / 2, cancelY + 20);
 
   pauseMenuState.confirmY = confirmY;
   pauseMenuState.cancelY  = cancelY;

@@ -107,6 +107,38 @@ const I18N = {
     'tower.panel.maxed':      '★ MAX LEVEL',
     'tower.panel.demolish':   'Demolish   refund ¥{0}',
     'tower.panel.closeHint':  '[ Click elsewhere to close ]',
+
+    // ── HUD ──
+    'hud.jammed':             '⚠  DEFENSE JAMMED — TOWERS OFFLINE  ⚠',
+
+    // ── pause menu ──
+    'pause.title':            'PAUSED',
+    'pause.subtitle':         'Game has been paused',
+    'pause.continue':         '▶ CONTINUE',
+    'pause.restart':          '↺ RESTART',
+    'pause.levelSelect':      '⊞ LEVEL SELECT',
+    'pause.hint':             'Press ESC to Continue',
+    'pause.confirmTitle':     'Confirm Exit?',
+    'pause.confirmSubtitle':  'Current progress will not be saved',
+    'pause.confirmExit':      'Confirm Exit to Level Select',
+    'pause.confirmCancel':    'Cancel, Back to Pause Menu',
+
+    // ── wave UI ──
+    'wave.breakTitle':        'WAVE BREAK',
+    'wave.breakDesc':         'Prepare for the next wave.',
+    'wave.continue':          'CONTINUE',
+    'wave.incoming':          '— INCOMING WAVE {0} OF {1} —',
+    'wave.countdownUnit':     's',
+    'wave.bossFission':       '⚠ BOSS: FISSION CORE',
+    'wave.bossPhantom':       '⚠ BOSS: PHANTOM PROTOCOL',
+    'wave.bossAntmech':       '☠ FINAL BOSS: ANT-MECH',
+    'wave.allClear':          'ALL WAVES CLEARED',
+    'wave.totalCredits':      'TOTAL CREDITS: {0}',
+
+    // ── placement ──
+    'placement.cantBuild':    'Cannot Build',
+    'placement.noCoins':      'Not Enough Coins',
+    'placement.clickToFire':  'Click to fire',
   },
 
   zh: {
@@ -203,6 +235,38 @@ const I18N = {
     'tower.panel.maxed':      '★ 已达满级 MAX',
     'tower.panel.demolish':   '拆除   退还 ¥{0}',
     'tower.panel.closeHint':  '[ 点击其他处关闭 ]',
+
+    // ── HUD ──
+    'hud.jammed':             '⚠  防御干扰中 — 所有塔已瘫痪  ⚠',
+
+    // ── 暂停菜单 ──
+    'pause.title':            '已暂停',
+    'pause.subtitle':         '游戏已暂停',
+    'pause.continue':         '▶ 继续',
+    'pause.restart':          '↺ 重新开始',
+    'pause.levelSelect':      '⊞ 关卡选择',
+    'pause.hint':             '按 ESC 继续',
+    'pause.confirmTitle':     '确认退出？',
+    'pause.confirmSubtitle':  '当前进度将不会保存',
+    'pause.confirmExit':      '确认退出到关卡选择',
+    'pause.confirmCancel':    '取消，返回暂停菜单',
+
+    // ── 波次 UI ──
+    'wave.breakTitle':        '波次间歇',
+    'wave.breakDesc':         '准备迎接下一波敌人。',
+    'wave.continue':          '继续',
+    'wave.incoming':          '— 即将来袭第 {0} / {1} 波 —',
+    'wave.countdownUnit':     '秒',
+    'wave.bossFission':       '⚠ BOSS: 分裂核心',
+    'wave.bossPhantom':       '⚠ BOSS: 幻影协议',
+    'wave.bossAntmech':       '☠ 最终 BOSS: 蚁型机甲',
+    'wave.allClear':          '全部波次已清除',
+    'wave.totalCredits':      '总金币: {0}',
+
+    // ── 放置 / 准星 ──
+    'placement.cantBuild':    '无法建造',
+    'placement.noCoins':      '金币不足',
+    'placement.clickToFire':  '点击发射炮弹',
   },
 };
 

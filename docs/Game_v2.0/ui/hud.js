@@ -68,11 +68,11 @@ function drawHUD() {
   text(_hudStr.progPct, barX + barW / 2, barY + barH / 2);
 
   if (frameCount < jammedUntilFrame) {
-    const t = sin(frameCount * 0.3) * 0.5 + 0.5;
-    noStroke(); fill(255, 80, 0, 140 + t * 80);
+    const jp = sin(frameCount * 0.3) * 0.5 + 0.5;  // 重命名避免遮蔽 i18n t()
+    noStroke(); fill(255, 80, 0, 140 + jp * 80);
     rect(0, HUD_HEIGHT, width, 20);
     fill(255, 220, 180, 230); textSize(13); textAlign(CENTER, CENTER);
-    text('⚠  DEFENSE JAMMED — TOWERS OFFLINE  ⚠', width / 2, HUD_HEIGHT + 10);
+    text(t('hud.jammed'), width / 2, HUD_HEIGHT + 10);
   }
 
   if (UI_SHOW_MOUSE_DEBUG) {

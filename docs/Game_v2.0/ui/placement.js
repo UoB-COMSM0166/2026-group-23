@@ -39,7 +39,7 @@ function drawPlacementPreview() {
   if (!ok) {
     fill(255, 80, 80, 220); noStroke();
     textFont('monospace'); textSize(9); textAlign(CENTER, CENTER);
-    text(canAfford ? '无法建造' : '金币不足', px + CELL_SIZE / 2, py + CELL_SIZE + 10);
+    text(canAfford ? t('placement.cantBuild') : t('placement.noCoins'), px + CELL_SIZE / 2, py + CELL_SIZE + 10);
     resetTextAlign();
   }
 }

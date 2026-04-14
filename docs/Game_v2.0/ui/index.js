@@ -31,7 +31,7 @@ function drawUI() {
 
     fill(255, 220, 60, 220); noStroke();
     textFont('monospace'); textSize(10); textAlign(CENTER, CENTER);
-    text('点击发射炮弹', mouseX, mouseY - arm - 10);
+    text(t('placement.clickToFire'), mouseX, mouseY - arm - 10);
     resetTextAlign();
   }
 
