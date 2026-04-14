@@ -19,6 +19,7 @@ Defense Protocol — Strong sci-fi identity; high-tech appeal.
 ### LINK
 - [game_v0.3](https://uob-comsm0166.github.io/2026-group-23/Game_v0.3/)
 - [game_v1.4](https://uob-comsm0166.github.io/2026-group-23/Game_v1.4/)
+- [game_v2.0](https://uob-comsm0166.github.io/2026-group-23/Game_v2.0/) — refactored codebase (see below) + onboarding tutorial
 
 VIDEO. Include a demo video of your game here (you don't have to wait until the end, you can insert a work in progress video)
 
@@ -71,10 +72,18 @@ Launch Screen
 
 ## File Structure
 
+> **v2.0 Refactor Note:** v2.0 restructures the v1.4 codebase by (1) extracting pure data into `data/`, (2) centralizing global mutable state into `state.js`, (3) splitting the god-classes `monsters.js` / `towers.js` / `ui.js` into per-concern directories, and (4) adding a first-run tutorial plus a repositioned level-description card on the level-select map. No gameplay behavior changed.
+
 ```
 project/
 ├── index.html                   # Entry point — controls script load order (do not reorder)
-├── sketch.js                    # Main loop: globals, setup(), draw(), initGame()
+├── sketch.js                    # p5 skeleton: setup(), draw() phase router, mousePressed router, initGame()
+├── state.js                     # Centralized global mutable state (gamePhase, coins, manager, UI flags, ...)
+│
+├── data/                        # Pure data tables (no logic)
+│   ├── towers.js                # TOWER_DEFS — per-tower stats and upgrade levels
+│   ├── waves.js                 # WAVE_CONFIGS / WAVE_CONFIG — all 5 levels' wave schedules
+│   └── levels.js                # LEVEL_INFO, LEVEL_NODES — level metadata + map node positions
 │
 ├── map/
 │   ├── map-core.js              # Path definitions (5 levels), cell validation, drawPaths, shared utils
@@ -84,17 +93,58 @@ project/
 │   ├── map-lv4.js               # Level 4 background: Void Maze
 │   └── map-lv5.js               # Level 5 background: Scorched Ruins
 │
-├── monsters.js                  # All monster classes, MonsterManager, particle system
-├── towers.js                    # Tower class, Projectile class, placement / upgrade / demolish
-├── waves.js                     # Wave configs for all 5 levels, wave state machine
+├── monsters/                    # (split from v1.4 monsters.js)
+│   ├── core.js                  # Path utils, particle system, Monster base class
+│   ├── mobs/
+│   │   ├── snake.js             # MechSnake
+│   │   ├── spider.js            # MechSpider
+│   │   ├── robot.js             # MechRobot
+│   │   ├── phoenix.js           # MechPhoenix
+│   │   ├── tank.js              # MechTank
+│   │   └── ghostbird.js         # GhostBird
+│   ├── bosses/
+│   │   ├── fission.js           # Boss① Fission Core (+ FissionCore split)
+│   │   ├── phantom.js           # Boss② Phantom Protocol
+│   │   ├── antmech.js           # Boss③ Ant-Mech
+│   │   └── carrier.js           # Steel Carrier
+│   └── manager.js               # MonsterManager
+│
+├── towers/                      # (split from v1.4 towers.js, using prototype extension)
+│   ├── base.js                  # Tower base class (construct / upgrade / schedule)
+│   ├── variants/                # Per-type behaviors injected on Tower.prototype
+│   │   ├── rapid.js             #   RAPID
+│   │   ├── laser.js             #   LASER
+│   │   ├── nova.js              #   NOVA
+│   │   ├── chain.js             #   CHAIN
+│   │   ├── magnet.js            #   MAGNET
+│   │   ├── ghost.js             #   GHOST
+│   │   ├── scatter.js           #   SCATTER
+│   │   └── cannon.js            #   CANNON (rail cannon, manual aim)
+│   ├── projectile.js            # Projectile class
+│   ├── effects.js               # Chain arcs / cannon blasts / mortar visuals
+│   └── manager.js               # towers[] / projectiles[] + updateAndDrawTowers
+│
+├── home-tower.js                # HomeTower (end-of-path base)
+├── waves.js                     # Wave state machine (configs now live in data/waves.js)
 ├── minigame.js                  # Ball-drop minigame (fully implemented)
-├── ui.js                        # Combat HUD, build menu, tower panel, placement preview
+│
+├── ui/                          # (split from v1.4 ui.js)
+│   ├── common.js                # UI constants, HUD cache, utils, click effects
+│   ├── hud.js                   # Top HUD bar
+│   ├── pause.js                 # Pause button + menu
+│   ├── wave-ui.js               # Wave countdown / wave-end panel / victory hint
+│   ├── build-menu.js            # Bottom build menu + tooltip
+│   ├── tower-panel.js           # Tower upgrade / demolish panel
+│   ├── placement.js             # Placement preview + battlefield click router
+│   └── index.js                 # drawUI / initUI dispatcher
 │
 ├── screens/
 │   ├── launch-screen.js         # Launch screen + DEV test entry
 │   ├── difficulty-select.js     # Difficulty selection screen
-│   ├── level-map.js             # Level selection map screen
+│   ├── level-map.js             # Level selection map (hover card anchored next to each node)
 │   └── end-panel.js             # End panel (victory / defeat)
+│
+├── tutorial.js                  # First-run tutorial overlay (Level 1 only, persists via localStorage)
 │
 └── assert/
     └── *.png                    # Static assets (launch screen background, etc.)
@@ -111,8 +161,9 @@ project/
 | Monster & Path System | `monsters.js` `waves.js` `map/map-core.js` (paths) | Zhang Xun | ✅ Done |
 | Map Layout & Tower Placement | `towers.js` `map/map-core.js` (cell logic) `ui.js` (menus/panels) | Liu Bowen | ✅ Done |
 | Ball-drop Minigame | `minigame.js` | Yu Chengyin + Zhu Qihao | ✅ Done |
-| Tower Combat Logic | `towers.js` | Zhang Zhenyu | ✅ Done |
-| UI & State Integration | `ui.js` `screens/` | Li Zhuolun | ✅ Done |
+| Tower Combat Logic | `towers/` | Zhang Zhenyu | ✅ Done |
+| UI & State Integration | `ui/` `screens/` `state.js` | Li Zhuolun | ✅ Done |
+| v2.0 Refactor + Tutorial | `data/` `state.js` `monsters/` `towers/` `ui/` `tutorial.js` | Li Zhuolun | ✅ Done |
 
 ---
 
@@ -142,6 +193,7 @@ project/
 | Magnet Tower | `MAGNET` | ¥130 | No damage; continuously slows nearby enemies (up to 80% slow at Lv3) | Lv3 |
 | Ghost Missile | `GHOST` | ¥190 | Homing missiles (Lv1: 1 → Lv3: 3); near-full-map range | Lv3 |
 | Scatter Cannon | `SCATTER` | ¥150 | Shotgun spread targeting aerial units only (Lv1: 3 pellets → Lv3: 7 pellets) | Lv3 |
+| Rail Cannon | `CANNON` | ¥220 | Manual-aim rail cannon; massive single-shot damage with long reload | Lv3 |
 
 > Each tower can be upgraded up to **3 times**. Upgrade costs are defined in `towers.js` under each tower's `levels` array.  
 > Demolishing a tower refunds **80%** of its original build cost.
@@ -214,7 +266,7 @@ jammedUntilFrame = frameCount + duration;  // Disable all towers for [duration] 
 
 ---
 
-## Global Variables Quick Reference (defined in `sketch.js`)
+## Global Variables Quick Reference (defined in `state.js`, v2.0)
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -230,3 +282,4 @@ jammedUntilFrame = frameCount + duration;  // Disable all towers for [duration] 
 | `gameDifficulty` | Selected difficulty | `'easy'` / `'difficult'` |
 | `gamePhase` | Current game phase | `'launch'` |
 | `jammedUntilFrame` | Frame at which jam effect ends | `0` |
+| `tutorialActive` / `tutorialStep` | First-run Level-1 tutorial overlay state | `false` / `0` |
