@@ -29,9 +29,23 @@
   <script src="map/map-lv4.js"></script>   <!-- 关卡4  虚空迷宫 -->
   <script src="map/map-lv5.js"></script>   <!-- 关卡5  焦土废墟 -->
 
-  <!-- ── 游戏核心 ── -->
-  <script src="monsters.js"></script>      <!-- 怪物类、MonsterManager -->
+  <!-- ── 游戏核心：怪物（基类→普通→Boss→管理器）── -->
+  <script src="monsters/core.js"></script>              <!-- 路径工具、粒子、Monster 基类 -->
+  <script src="monsters/mobs/snake.js"></script>        <!-- MechSnake -->
+  <script src="monsters/mobs/spider.js"></script>       <!-- MechSpider -->
+  <script src="monsters/mobs/robot.js"></script>        <!-- MechRobot -->
+  <script src="monsters/mobs/phoenix.js"></script>      <!-- MechPhoenix -->
+  <script src="monsters/mobs/tank.js"></script>         <!-- MechTank -->
+  <script src="monsters/mobs/ghostbird.js"></script>    <!-- GhostBird -->
+  <script src="monsters/bosses/fission.js"></script>    <!-- BossFission + FissionCore -->
+  <script src="monsters/bosses/phantom.js"></script>    <!-- BossPhantom -->
+  <script src="monsters/bosses/antmech.js"></script>    <!-- BossAntMech -->
+  <script src="monsters/bosses/carrier.js"></script>    <!-- BossCarrier -->
+  <script src="monsters/manager.js"></script>           <!-- MonsterManager -->
+
+  <!-- ── 游戏核心：塔 ── -->
   <script src="towers.js"></script>        <!-- Tower、Projectile -->
+  <script src="home-tower.js"></script>    <!-- HomeTower 终点基地（原在 monsters.js 内） -->
   <script src="waves.js"></script>         <!-- 波次推进逻辑 -->
   <script src="minigame.js"></script>      <!-- 投球小游戏 -->
 
