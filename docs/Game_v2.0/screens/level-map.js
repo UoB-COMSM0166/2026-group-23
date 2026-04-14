@@ -12,6 +12,29 @@ let levelHovered = 0;
 
 // LEVEL_INFO / LEVEL_NODES 已抽离到 data/levels.js
 
+// ============================================================
+//  悬浮信息卡位置计算
+//  根据节点坐标把卡片放在节点旁边：
+//    - 节点在左半屏 → 卡片在节点右侧
+//    - 节点在右半屏 → 卡片在节点左侧
+//    - 垂直居中于节点，并裁剪到画布内
+// ============================================================
+const LEVEL_CARD_W = 200;
+const LEVEL_CARD_H = 185;
+const LEVEL_CARD_GAP = 58;   // 节点中心到卡片的横向距离
+
+function _levelCardRect(lv) {
+  const nd = LEVEL_NODES[lv - 1];
+  const nx = nd.x * width, ny = nd.y * (height - 100) + 70;
+  const pw = LEVEL_CARD_W, ph = LEVEL_CARD_H;
+  // 节点在左半屏则卡片右侧，否则放左侧
+  let px = (nx < width / 2) ? nx + LEVEL_CARD_GAP : nx - LEVEL_CARD_GAP - pw;
+  // 夹到画布内
+  px = constrain(px, 8, width  - pw - 8);
+  let py = constrain(ny - ph / 2, 62, height - ph - 8);
+  return { px, py, pw, ph, nx, ny };
+}
+
 function drawLevelMap() {
   levelMapAnim++;
   background(3, 6, 18);
@@ -112,11 +135,20 @@ function drawLevelMap() {
     }
   }
 
-  // ── 悬浮信息卡 ──
+  // ── 悬浮信息卡（紧贴悬停节点旁）──
   if (levelHovered > 0) {
     const info    = LEVEL_INFO[levelHovered];
     const [r,g,b] = info.color;
-    const px = width - 215, py2 = height/2 - 95, pw = 200, ph = 185;
+    const { px, py: py2, pw, ph, nx, ny } = _levelCardRect(levelHovered);
+
+    // 从节点到卡片的连接线，视觉上提示"这段描述属于这个关卡"
+    stroke(r, g, b, 110); strokeWeight(1);
+    const cardCX = px + pw / 2, cardCY = py2 + ph / 2;
+    const toRight = px > nx;
+    const anchorX = toRight ? px : px + pw;
+    const anchorY = constrain(ny, py2 + 10, py2 + ph - 10);
+    line(nx + (toRight ? 34 : -34), ny, anchorX, anchorY);
+
     fill(4, 8, 22, 220); stroke(r, g, b, 145); strokeWeight(1.5);
     rect(px, py2, pw, ph, 6);
     noStroke(); fill(r, g, b, 190); textSize(13); textAlign(CENTER, CENTER);
@@ -168,7 +200,7 @@ function handleLevelMapClick(mx, my) {
 
   // 悬浮卡片「START MISSION」按钮
   if (levelHovered > 0) {
-    const pw = 200, ph = 185, px = width - 215, py2 = height/2 - 95;
+    const { px, py: py2, pw, ph } = _levelCardRect(levelHovered);
     const btnY = py2 + ph - 42;
     if (mx >= px+12 && mx <= px+pw-12 && my >= btnY && my <= btnY + 28) {
       currentLevel  = levelHovered;
