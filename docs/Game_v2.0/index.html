@@ -49,8 +49,15 @@
   <script src="waves.js"></script>         <!-- 波次推进逻辑 -->
   <script src="minigame.js"></script>      <!-- 投球小游戏 -->
 
-  <!-- ── 战斗 UI ── -->
-  <script src="ui.js"></script>            <!-- HUD、建造菜单、塔面板 -->
+  <!-- ── 战斗 UI（ui/，common 最先，index 最后）── -->
+  <script src="ui/common.js"></script>       <!-- 常量 / HUD缓存 / 工具函数 / 点击特效 -->
+  <script src="ui/hud.js"></script>          <!-- 顶部 HUD -->
+  <script src="ui/pause.js"></script>        <!-- 暂停菜单 -->
+  <script src="ui/wave-ui.js"></script>      <!-- 波次倒计时 / 结束面板 / 通关提示 -->
+  <script src="ui/build-menu.js"></script>   <!-- 底部建造菜单 + 悬浮提示 -->
+  <script src="ui/tower-panel.js"></script>  <!-- 塔升级/拆除面板 -->
+  <script src="ui/placement.js"></script>    <!-- 放置预览 + 战场点击路由 -->
+  <script src="ui/index.js"></script>        <!-- drawUI / initUI 调度 -->
 
   <!-- ── 全屏界面（screens/）── -->
   <script src="screens/launch-screen.js"></script>      <!-- 启动页 + 测试入口 -->
