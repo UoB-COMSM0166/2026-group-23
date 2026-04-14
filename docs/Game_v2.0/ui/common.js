@@ -16,31 +16,22 @@ const TOWER_DISPLAY_NAMES = {
   magnet:'MAGNET', ghost:'GHOST', scatter:'AA-FAN', cannon:'CANNON',
 };
 
-/** 悬浮提示文本 */
-const TOWER_TIPS = {
-  rapid:   ['RAPID',   'High fire rate, great for swarms'],
-  laser:   ['LASER',   'Multi-target lock-on, piercing beam'],
-  nova:    ['NOVA',    'Line pierce + impact explosion'],
-  chain:   ['CHAIN',   'Chain lightning, jumps between foes'],
-  magnet:  ['MAGNET',  'AOE slow support tower'],
-  ghost:   ['GHOST',   'Homing missiles with explosion'],
-  scatter: ['AA-FAN',  'Anti-air fan burst, fast intercept'],
-  cannon:  ['CANNON',  'Map-wide strike, huge blast radius'],
-};
+// 悬浮提示文本已迁移到 i18n.js（key: tower.<type>.tipName / tipDesc）
+// 这里只保留类型列表供 build-menu.js 枚举。
 
-/** 特殊能力描述（drawTowerPanel 使用） */
+/** 特殊能力描述（drawTowerPanel 使用）。参数命名 tw 以避开全局 i18n 的 t()。 */
 const TOWER_SPECIALS = {
-  laser:   (t) => [['◆ 多目标锁定 ×'+t.level,          [0,255,150,210]]],
-  chain:   (t) => [['◆ 跳链 ×'+t.level+'次  衰减×0.72', [100,200,255,210]]],
-  magnet:  ()  => [['◆ 无伤害  范围减速辅助',            [140,100,255,210]]],
-  ghost:   (t) => [['◆ 追踪导弹 ×'+t.level+'枚  爆炸',  [200,100,255,210]]],
-  scatter: (t) => [['◆ 对空扇射 ×'+[3,5,7][t.level-1]+'弹', [255,80,120,210]]],
-  nova:    ()  => [['◆ 穿透直线+落点爆炸',              [255,160,50,210]]],
-  cannon:  (t) => {
-    const br = TOWER_DEFS.cannon.cannonBlastRadius[t.level-1];
+  laser:   (tw) => [[t('tower.laser.special',   tw.level),            [0,255,150,210]]],
+  chain:   (tw) => [[t('tower.chain.special',   tw.level),            [100,200,255,210]]],
+  magnet:  ()   => [[t('tower.magnet.special'),                       [140,100,255,210]]],
+  ghost:   (tw) => [[t('tower.ghost.special',   tw.level),            [200,100,255,210]]],
+  scatter: (tw) => [[t('tower.scatter.special', [3,5,7][tw.level-1]), [255,80,120,210]]],
+  nova:    ()   => [[t('tower.nova.special'),                         [255,160,50,210]]],
+  cannon:  (tw) => {
+    const br = TOWER_DEFS.cannon.cannonBlastRadius[tw.level-1];
     return [
-      ['◆ 全图轨道炮  空陆两用',    [255,80,80,210]],
-      ['◆ 爆炸半径 '+br+'  优先打空中', [255,140,60,200]],
+      [t('tower.cannon.special1'),     [255,80,80,210]],
+      [t('tower.cannon.special2', br), [255,140,60,200]],
     ];
   },
 };

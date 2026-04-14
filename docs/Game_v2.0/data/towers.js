@@ -15,7 +15,7 @@
 
 const TOWER_DEFS = {
   rapid: {
-    name: '快速塔', label: 'RAPID', cost: 110,
+    label: 'RAPID', cost: 110,
     // ★ 唯一能无视机器人护盾的塔；充能20次可激活超级机枪模式
     levels: [
       { dmg: 16, range: 130, fireRate: 20, upgradeCost: 100 },
@@ -26,7 +26,7 @@ const TOWER_DEFS = {
     ignoreRobotShield: true,
   },
   laser: {
-    name: '激光切割者', label: 'LASER', cost: 180,
+    label: 'LASER', cost: 180,
     // Lv1=1目标 Lv2=2目标 Lv3=3目标，蓄力后同时对所有目标发射
     levels: [
       { dmg: 65,  range: 150, fireRate: 163, upgradeCost: 170 },
@@ -36,7 +36,7 @@ const TOWER_DEFS = {
     projSpd: 0, color: [0, 255, 150], antiAir: false,
   },
   nova: {
-    name: 'Nova穿透炮', label: 'NOVA', cost: 200,
+    label: 'NOVA', cost: 200,
     // 直线穿透子弹，打穿所有地面怪，落点范围爆炸
     levels: [
       { dmg: 55,  range: 155, fireRate: 95,  upgradeCost: 190 },
@@ -46,7 +46,7 @@ const TOWER_DEFS = {
     projSpd: 5.5, color: [255, 140, 30], antiAir: false,
   },
   chain: {
-    name: '链式电弧塔', label: 'CHAIN', cost: 160,
+    label: 'CHAIN', cost: 160,
     // 命中后跳链：Lv1跳1次  Lv2跳2次  Lv3跳3次，每跳伤害×0.72
     // ★ 唯一能无视坦克护盾屏障的塔
     levels: [
@@ -58,7 +58,7 @@ const TOWER_DEFS = {
     ignoreTankBarrier: true, // 无视坦克护盾屏障
   },
   magnet: {
-    name: '磁场干扰塔', label: 'MAGNET', cost: 130,
+    label: 'MAGNET', cost: 130,
     // 无伤害，持续减速：Lv1减50%  Lv2减65%  Lv3减80%（越靠近越慢）
     levels: [
       { dmg: 0, range: 140, fireRate: 999, upgradeCost: 110 },
@@ -69,7 +69,7 @@ const TOWER_DEFS = {
     slowFactor: [0.5, 0.35, 0.2],
   },
   ghost: {
-    name: '幽灵导弹塔', label: 'GHOST', cost: 190,
+    label: 'GHOST', cost: 190,
     // 发射追踪导弹：Lv1=1枚  Lv2=2枚  Lv3=3枚，命中范围爆炸
     // ★ 攻击范围几乎覆盖大半张地图（升级后接近全图）
     levels: [
@@ -80,7 +80,7 @@ const TOWER_DEFS = {
     projSpd: 3.5, color: [200, 100, 255], antiAir: false,
   },
   scatter: {
-    name: '散射对空炮', label: 'SCATTER', cost: 160,
+    label: 'SCATTER', cost: 160,
     // 扇形发射多弹专打飞行怪：Lv1=3弹  Lv2=5弹  Lv3=7弹
     levels: [
       { dmg: 45,  range: 200, fireRate: 55,  upgradeCost: 150 },
@@ -90,7 +90,7 @@ const TOWER_DEFS = {
     projSpd: 14, color: [255, 80, 120], antiAir: true, onlyAir: true,
   },
   cannon: {
-    name: '轨道巨炮', label: 'CANNON', cost: 350,
+    label: 'CANNON', cost: 350,
     // 全图攻击范围，超大范围爆炸，同时打击地面与空中
     // 蓄力时间最长，随机选择目标
     levels: [

@@ -71,11 +71,12 @@ function drawBuildMenu() {
 function drawTowerHoverTooltip() {
   if (!hoverTowerType) return;
 
-  let box = _tooltipBoxCache[hoverTowerType];
+  // 缓存 key 加入语言维度，语言切换后自动重算宽度
+  const cacheKey = hoverTowerType + '|' + currentLang;
+  let box = _tooltipBoxCache[cacheKey];
   if (!box) {
-    const tip = TOWER_TIPS[hoverTowerType];
-    if (!tip) return;
-    const [name, desc] = tip;
+    const name = t('tower.' + hoverTowerType + '.tipName');
+    const desc = t('tower.' + hoverTowerType + '.tipDesc');
     const padding = 12;
     textFont('monospace');
     textSize(14);
@@ -83,7 +84,7 @@ function drawTowerHoverTooltip() {
     textSize(12);
     const descW = textWidth(desc);
     box = { name, desc, w: Math.max(titleW, descW) + padding * 2, h: 44, pad: padding };
-    _tooltipBoxCache[hoverTowerType] = box;
+    _tooltipBoxCache[cacheKey] = box;
   }
 
   const { name, desc, w, h, pad: padding } = box;

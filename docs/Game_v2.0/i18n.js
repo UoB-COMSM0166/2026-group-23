@@ -59,6 +59,54 @@ const I18N = {
     'level.4.desc':     'Winding paths, swarms of high-speed enemies.',
     'level.5.subtitle': 'Omega Gate',
     'level.5.desc':     'Final stage — all-elite forces and three Bosses.',
+
+    // ── tower names (displayed in upgrade panel title) ──
+    'tower.rapid.name':   'Rapid Fire',
+    'tower.laser.name':   'Laser Cutter',
+    'tower.nova.name':    'Nova Piercer',
+    'tower.chain.name':   'Chain Arc',
+    'tower.magnet.name':  'Magnet Field',
+    'tower.ghost.name':   'Ghost Missile',
+    'tower.scatter.name': 'Scatter AA',
+    'tower.cannon.name':  'Rail Cannon',
+
+    // ── tower hover tips (build-menu) ──
+    'tower.rapid.tipName':   'RAPID',
+    'tower.rapid.tipDesc':   'High fire rate, great for swarms',
+    'tower.laser.tipName':   'LASER',
+    'tower.laser.tipDesc':   'Multi-target lock-on, piercing beam',
+    'tower.nova.tipName':    'NOVA',
+    'tower.nova.tipDesc':    'Line pierce + impact explosion',
+    'tower.chain.tipName':   'CHAIN',
+    'tower.chain.tipDesc':   'Chain lightning, jumps between foes',
+    'tower.magnet.tipName':  'MAGNET',
+    'tower.magnet.tipDesc':  'AOE slow support tower',
+    'tower.ghost.tipName':   'GHOST',
+    'tower.ghost.tipDesc':   'Homing missiles with explosion',
+    'tower.scatter.tipName': 'AA-FAN',
+    'tower.scatter.tipDesc': 'Anti-air fan burst, fast intercept',
+    'tower.cannon.tipName':  'CANNON',
+    'tower.cannon.tipDesc':  'Map-wide strike, huge blast radius',
+
+    // ── tower specials (upgrade panel) ──
+    'tower.laser.special':    '◆ Multi-lock × {0}',
+    'tower.chain.special':    '◆ Chain × {0} jumps  ×0.72 falloff',
+    'tower.magnet.special':   '◆ No damage  AOE slow support',
+    'tower.ghost.special':    '◆ Homing × {0}  on-hit blast',
+    'tower.scatter.special':  '◆ AA fan × {0} pellets',
+    'tower.nova.special':     '◆ Line pierce + impact blast',
+    'tower.cannon.special1':  '◆ Orbital cannon  air & ground',
+    'tower.cannon.special2':  '◆ Blast radius {0}  air priority',
+
+    // ── tower upgrade/demolish panel ──
+    'tower.panel.atk':        'ATK  {0}',
+    'tower.panel.rng':        'RNG  {0}',
+    'tower.panel.spd':        'SPD  {0}/s',
+    'tower.panel.magnetSlow': 'Slow  up to -{0}%',
+    'tower.panel.upgrade':    'Upgrade to Lv.{0}   ¥{1}',
+    'tower.panel.maxed':      '★ MAX LEVEL',
+    'tower.panel.demolish':   'Demolish   refund ¥{0}',
+    'tower.panel.closeHint':  '[ Click elsewhere to close ]',
   },
 
   zh: {
@@ -107,6 +155,54 @@ const I18N = {
     'level.4.desc':     '迂回路径，高速怪物大量入侵。',
     'level.5.subtitle': '终极门户',
     'level.5.desc':     '终极关卡，全精英部队 + 三大 Boss。',
+
+    // ── 塔名（升级面板标题）──
+    'tower.rapid.name':   '快速塔',
+    'tower.laser.name':   '激光切割者',
+    'tower.nova.name':    'Nova 穿透炮',
+    'tower.chain.name':   '链式电弧塔',
+    'tower.magnet.name':  '磁场干扰塔',
+    'tower.ghost.name':   '幽灵导弹塔',
+    'tower.scatter.name': '散射对空炮',
+    'tower.cannon.name':  '轨道巨炮',
+
+    // ── 建造菜单悬浮提示 ──
+    'tower.rapid.tipName':   '快速塔',
+    'tower.rapid.tipDesc':   '高射速，适合清兵',
+    'tower.laser.tipName':   '激光切割者',
+    'tower.laser.tipDesc':   '多目标锁定，穿透射线',
+    'tower.nova.tipName':    'Nova 穿透炮',
+    'tower.nova.tipDesc':    '直线穿透 + 落点爆炸',
+    'tower.chain.tipName':   '链式电弧塔',
+    'tower.chain.tipDesc':   '链式闪电，跳跃目标',
+    'tower.magnet.tipName':  '磁场干扰塔',
+    'tower.magnet.tipDesc':  '范围减速辅助塔',
+    'tower.ghost.tipName':   '幽灵导弹塔',
+    'tower.ghost.tipDesc':   '追踪导弹，命中爆炸',
+    'tower.scatter.tipName': '散射对空炮',
+    'tower.scatter.tipDesc': '扇形对空速射拦截',
+    'tower.cannon.tipName':  '轨道巨炮',
+    'tower.cannon.tipDesc':  '全图打击，超大爆炸半径',
+
+    // ── 塔特殊能力（升级面板）──
+    'tower.laser.special':    '◆ 多目标锁定 × {0}',
+    'tower.chain.special':    '◆ 跳链 × {0} 次  衰减×0.72',
+    'tower.magnet.special':   '◆ 无伤害  范围减速辅助',
+    'tower.ghost.special':    '◆ 追踪导弹 × {0} 枚  爆炸',
+    'tower.scatter.special':  '◆ 对空扇射 × {0} 弹',
+    'tower.nova.special':     '◆ 穿透直线 + 落点爆炸',
+    'tower.cannon.special1':  '◆ 全图轨道炮  空陆两用',
+    'tower.cannon.special2':  '◆ 爆炸半径 {0}  优先打空中',
+
+    // ── 升级/拆除面板 ──
+    'tower.panel.atk':        'ATK  {0}',
+    'tower.panel.rng':        'RNG  {0}',
+    'tower.panel.spd':        'SPD  {0}/s',
+    'tower.panel.magnetSlow': '减速  最高 -{0}%',
+    'tower.panel.upgrade':    '升级至 Lv.{0}   ¥{1}',
+    'tower.panel.maxed':      '★ 已达满级 MAX',
+    'tower.panel.demolish':   '拆除   退还 ¥{0}',
+    'tower.panel.closeHint':  '[ 点击其他处关闭 ]',
   },
 };
 
