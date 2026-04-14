@@ -39,6 +39,26 @@ const I18N = {
     'tutorial.step5.title': '④ Ready for Battle!',
     'tutorial.step5.body':  'Enemies advance along ground / air paths toward your base.\nPlace towers wisely, cover anti-air, and hold until the final wave.\n\nGood luck, Commander.',
     'tutorial.step5.btn':   'Launch  ▶',
+
+    // ── level map ──
+    'levelmap.title':       '— MISSION SELECT —',
+    'levelmap.difficulty':  'DIFFICULTY: {0}',
+    'levelmap.back':        '◀ BACK',
+    'levelmap.start':       '▶ START MISSION',
+    'levelmap.waves':       '◈ WAVES: {0}',
+    'levelmap.threat':      '◈ THREAT: {0} / 5',
+    'levelmap.startCoins':  '◈ START ¥: {0}',
+
+    'level.1.subtitle': 'Recruit Training',
+    'level.1.desc':     'Entry-level map. Simple paths, mostly infantry.',
+    'level.2.subtitle': 'Nebula Rift',
+    'level.2.desc':     'Dual lanes — airborne enemies appear for the first time.',
+    'level.3.subtitle': 'Iron Citadel',
+    'level.3.desc':     'Complex terrain, heavily armored foes and a boss.',
+    'level.4.subtitle': 'Void Maze',
+    'level.4.desc':     'Winding paths, swarms of high-speed enemies.',
+    'level.5.subtitle': 'Omega Gate',
+    'level.5.desc':     'Final stage — all-elite forces and three Bosses.',
   },
 
   zh: {
@@ -67,6 +87,26 @@ const I18N = {
     'tutorial.step5.title': '④ 准备迎战！',
     'tutorial.step5.body':  '敌人会沿着地面/空中路径冲向基地。\n合理布置塔阵、注意抵御飞行单位，守到最后一波！\n\n祝好运，指挥官。',
     'tutorial.step5.btn':   '出发  ▶',
+
+    // ── level map ──
+    'levelmap.title':       '— 任务选择 —',
+    'levelmap.difficulty':  '难度: {0}',
+    'levelmap.back':        '◀ 返回',
+    'levelmap.start':       '▶ 开始任务',
+    'levelmap.waves':       '◈ 波次: {0}',
+    'levelmap.threat':      '◈ 威胁: {0} / 5',
+    'levelmap.startCoins':  '◈ 起始金币: {0}',
+
+    'level.1.subtitle': '新兵训练区',
+    'level.1.desc':     '入门关卡，路径简洁，单路步兵为主。',
+    'level.2.subtitle': '星云裂隙',
+    'level.2.desc':     '双路并进，飞行敌人首次出现。',
+    'level.3.subtitle': '钢铁要塞',
+    'level.3.desc':     '复杂地形，重装甲怪物与 Boss 登场。',
+    'level.4.subtitle': '虚空迷宫',
+    'level.4.desc':     '迂回路径，高速怪物大量入侵。',
+    'level.5.subtitle': '终极门户',
+    'level.5.desc':     '终极关卡，全精英部队 + 三大 Boss。',
   },
 };
 

@@ -57,9 +57,9 @@ function drawLevelMap() {
   textFont('monospace'); textAlign(CENTER, CENTER);
   const pulse = sin(levelMapAnim * 0.05) * 0.2 + 0.8;
   noStroke(); fill(0, 200, 255, 220 * pulse); textSize(20);
-  text('— MISSION SELECT —', width / 2, 30);
+  text(t('levelmap.title'), width / 2, 30);
   fill(0, 140, 200, 150); textSize(9);
-  text('DIFFICULTY: ' + (gameDifficulty ? gameDifficulty.toUpperCase() : '---'), width / 2, 52);
+  text(t('levelmap.difficulty', gameDifficulty ? gameDifficulty.toUpperCase() : '---'), width / 2, 52);
 
   // ── 关卡连线 ──
   for (let i = 0; i < LEVEL_NODES.length - 1; i++) {
@@ -128,7 +128,7 @@ function drawLevelMap() {
     fill(locked ? color(58,76,108,145) : color(r,g,b, hov?240:185));
     textSize(hov ? 11 : 10); text(info.name, nx, ny2);
     fill(locked ? color(48,62,88,115) : color(200,218,238, hov?175:125));
-    textSize(8); text(info.subtitle, nx, ny2 + 15);
+    textSize(8); text(t('level.' + lv + '.subtitle'), nx, ny2 + 15);
     if (!locked) {
       fill(r, g, b, 120); textSize(7);
       text('THREAT ' + '█'.repeat(info.threat) + '░'.repeat(5 - info.threat), nx, ny2 + 28);
@@ -153,21 +153,21 @@ function drawLevelMap() {
     rect(px, py2, pw, ph, 6);
     noStroke(); fill(r, g, b, 190); textSize(13); textAlign(CENTER, CENTER);
     text(info.name, px + pw/2, py2 + 20);
-    fill(r, g, b, 125); textSize(9); text(info.subtitle, px + pw/2, py2 + 36);
+    fill(r, g, b, 125); textSize(9); text(t('level.' + levelHovered + '.subtitle'), px + pw/2, py2 + 36);
     stroke(r, g, b, 55); strokeWeight(1); line(px + 10, py2 + 48, px + pw - 10, py2 + 48);
     noStroke(); fill(178, 208, 238, 185); textSize(9); textAlign(LEFT, CENTER);
-    text(info.desc, px + 12, py2 + 64, pw - 22, 40);
+    text(t('level.' + levelHovered + '.desc'), px + 12, py2 + 64, pw - 22, 40);
     fill(r, g, b, 135); textSize(8);
     const wc = WAVE_CONFIGS[levelHovered] ? WAVE_CONFIGS[levelHovered].length : '?';
-    text('◈ WAVES: ' + wc, px + 12, py2 + 110);
-    text('◈ THREAT: ' + info.threat + ' / 5', px + 12, py2 + 124);
+    text(t('levelmap.waves', wc), px + 12, py2 + 110);
+    text(t('levelmap.threat', info.threat), px + 12, py2 + 124);
     const cs = gameDifficulty === 'easy' ? Math.floor(info.startCoins * 1.3) : info.startCoins;
-    text('◈ START ¥: ' + cs, px + 12, py2 + 138);
+    text(t('levelmap.startCoins', cs), px + 12, py2 + 138);
     const btnY = py2 + ph - 42;
     fill(r*0.55, g*0.55, b*0.55, 195); stroke(r, g, b, 190); strokeWeight(1.2);
     rect(px + 12, btnY, pw - 24, 28, 5);
     noStroke(); fill(255, 255, 255, 225); textSize(12); textAlign(CENTER, CENTER);
-    text('▶ START MISSION', px + pw/2, btnY + 14);
+    text(t('levelmap.start'), px + pw/2, btnY + 14);
   }
 
   // ── 返回按钮 ──
@@ -175,7 +175,7 @@ function drawLevelMap() {
   fill(bkH ? color(0, 45, 75, 220) : color(5, 10, 24, 200));
   stroke(0, 160, 215, bkH ? 200 : 95); strokeWeight(1); rect(6, 6, 82, 26, 4);
   noStroke(); fill(0, 200, 255, bkH ? 240 : 175); textSize(10); textAlign(CENTER, CENTER);
-  text('◀ BACK', 47, 19);
+  text(t('levelmap.back'), 47, 19);
   textAlign(LEFT, BASELINE);
 }
 
