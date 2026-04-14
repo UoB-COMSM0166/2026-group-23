@@ -4,7 +4,7 @@
 // ============================================================
 
 
-let waveCountdownActive = false;
+// waveCountdownActive 已移至 state.js
 
 function launchWave(n) {
   waveNum = n;

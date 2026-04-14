@@ -17,54 +17,11 @@ const GRID_COLS  = 14;
 const GRID_ROWS  = 12;
 const HUD_HEIGHT = 46;
 
-// ── 游戏阶段 ──
-let gamePhase = 'launch'; // 'launch' | 'difficulty' | 'levelmap' | 'playing' | 'endpanel'
-
-// ── 难度 ──
-let gameDifficulty = null; // 'easy' | 'difficult'
-
-// ── 关卡进度 ──
-let currentLevel  = 1;
-let unlockedLevel = 1;
-let levelResults  = {}; // { 1: 'win'|'lose', ... }
-
-// ── 核心数值 ──
-let coins     = 2000;
-let baseHp    = 50;
-let baseHpMax = 50;
-let waveNum   = 0;
-
-// ── 波次 ──
-let TOTAL_WAVES        = 6;
-let waveState          = 'waiting';
-let waveCountdownEnd   = 0;
+// ── 波次常量 ──
 const COUNTDOWN_FRAMES = 300;
 
-// ── 干扰系统 ──
-let jammedUntilFrame = 0;
-let jamPos = { x: 0, y: 0 };
-
-// ── 路径 & 管理器 ──
-let manager      = null;
-let MAIN_PATH_PX = null;
-let EDGE_PATH_PX = null;
-let AIR_PATH_PX  = null;
-let homeTowers   = [];
-
-// ── 启动页辅助状态（screens/launch-screen.js 读写）──
-let launchAnim      = 0;
-let launchReady     = false;
-let launchParticles = [];
-
-// ── 关卡地图辅助状态（screens/level-map.js 读写）──
-let levelMapAnim = 0;
-
-// ── 结算面板辅助状态（screens/end-panel.js 读写）──
-let endPanelAnim  = 0;
-let _endPanelWon  = false;
-
-// ── 内部标志 ──
-let _gameEndFired = false;
+// 全局可变状态（gamePhase / coins / baseHp / manager / 路径 / 启动页与结算动画 等）
+// 已集中到 state.js 声明，本文件直接按原名读写即可。
 
 // ============================================================
 //  p5 setup

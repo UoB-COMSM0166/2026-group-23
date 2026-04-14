@@ -13,6 +13,9 @@
   <!-- 第三方库 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 
+  <!-- ── 全局可变状态（集中声明，必须最先加载）── -->
+  <script src="state.js"></script>        <!-- GamePhase / coins / manager / UI 状态 等 -->
+
   <!-- ── 纯数据配置（data/，必须先于依赖它们的模块加载）── -->
   <script src="data/towers.js"></script>  <!-- TOWER_DEFS -->
   <script src="data/waves.js"></script>   <!-- WAVE_CONFIGS / WAVE_CONFIG -->

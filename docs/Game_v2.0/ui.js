@@ -9,25 +9,11 @@
 //      → screens/difficulty-select.js
 // ============================================================
 
-// ── 状态变量 ──
-let selectedTowerType = null;
-let selectedTower     = null;
-let hoverTowerType    = null;
-let BUILD_BTN_Y;
-let clickEffects;
-
-// ── 暂停系统 ──
-let gamePaused       = false;
-let pauseConfirmMode = false;
-let _pauseBtnRect    = null;
-
-// ── 加农炮瞄准 ──
-let _mortarAiming = false;
-let _mortarTower  = null;
-
-// ── 波次结束面板 ──
-let waveEndPanelVisible = false;
-let waveEndBtnRect      = null;
+// UI 状态变量（selectedTowerType / selectedTower / hoverTowerType / BUILD_BTN_Y /
+// clickEffects / gamePaused / pauseConfirmMode / _pauseBtnRect / _mortarAiming /
+// _mortarTower / waveEndPanelVisible / waveEndBtnRect）
+// 已集中到 state.js 声明。本文件内的 HUD 渲染缓存（_hudHpFill / _wcDesc* 等）
+// 属于模块内部实现，仍保留在下方。
 
 // ============================================================
 //  模块级常量（避免每帧重建对象）
