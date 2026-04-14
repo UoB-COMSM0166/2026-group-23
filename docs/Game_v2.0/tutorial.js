@@ -19,39 +19,13 @@ const TUTORIAL_FLAG_KEY = 'qd_tutorial_l1_done';
 //   highlight — 可选，需要用发光矩形突出显示的屏幕区域 {x,y,w,h}
 //   panelAt   — 面板相对高亮区域的位置：'below' | 'above' | 'center'
 //   btn       — 按钮文字
+// 每一步配置结构不变，只是 title/body/btn 改为 i18n key，绘制时再通过 t() 解析。
 const TUTORIAL_STEPS = [
-  {
-    title: '欢迎来到 QUANTUM DROP',
-    body:  '作为指挥官，你需要建造防御塔，阻止机械敌军抵达基地。\n在开始之前，先花 20 秒熟悉一下基本操作。',
-    panelAt: 'center',
-    btn: '开始学习  ▶',
-  },
-  {
-    title: '① 观察战况',
-    body:  '顶栏：金币 ¥、基地 HP、当前波次、剩余敌人、进度条。\n基地 HP 归零即失败；右上角 ⏸ 或按 ESC 可随时暂停。',
-    highlight: () => ({ x: 0, y: 0, w: width, h: HUD_HEIGHT }),
-    panelAt: 'below',
-    btn: '下一步  ▶',
-  },
-  {
-    title: '② 建造防御塔',
-    body:  '点击底部塔按钮选中一种塔（注意金币是否够），\n然后点击地图上的空白格子放下塔。再点一次同按钮可取消。',
-    highlight: () => ({ x: 0, y: BUILD_BTN_Y, w: 8 * 91 + 4, h: 48 }),
-    panelAt: 'below',
-    btn: '下一步  ▶',
-  },
-  {
-    title: '③ 升级与拆除',
-    body:  '点击已建造的塔会弹出升级面板：\n  · 绿色按钮 → 升级至下一等级（最高 Lv.3）\n  · 红色按钮 → 拆除并退还 80% 金币',
-    panelAt: 'center',
-    btn: '下一步  ▶',
-  },
-  {
-    title: '④ 准备迎战！',
-    body:  '敌人会沿着地面/空中路径冲向基地。\n合理布置塔阵、注意抵御飞行单位，守到最后一波！\n\n祝好运，指挥官。',
-    panelAt: 'center',
-    btn: '出发  ▶',
-  },
+  { key: 'step1', panelAt: 'center' },
+  { key: 'step2', panelAt: 'below',  highlight: () => ({ x: 0, y: 0, w: width, h: HUD_HEIGHT }) },
+  { key: 'step3', panelAt: 'below',  highlight: () => ({ x: 0, y: BUILD_BTN_Y, w: 8 * 91 + 4, h: 48 }) },
+  { key: 'step4', panelAt: 'center' },
+  { key: 'step5', panelAt: 'center' },
 ];
 
 
@@ -153,17 +127,17 @@ function drawTutorial() {
     ellipse(dotStartX + i * dotGap, dotY, active ? 8 : 5, active ? 8 : 5);
   }
 
-  // 文本
+  // 文本（通过 i18n 动态查询）
   textFont('monospace');
   fill(0, 220, 255, 240); textSize(18); textAlign(LEFT, TOP);
-  text(step.title, px + 22, py + 20);
+  text(t('tutorial.' + step.key + '.title'), px + 22, py + 20);
 
   stroke(0, 180, 255, 80); strokeWeight(1);
   line(px + 22, py + 50, px + PW - 22, py + 50);
   noStroke();
 
   fill(210, 230, 250, 220); textSize(12);
-  text(step.body, px + 22, py + 64, PW - 44, 100);
+  text(t('tutorial.' + step.key + '.body'), px + 22, py + 64, PW - 44, 100);
 
   // 下一步按钮
   const b = _tutorialNextBtnRect(px, py, PW, PH);
@@ -173,7 +147,7 @@ function drawTutorial() {
   rect(b.x, b.y, b.w, b.h, 5);
   noStroke(); fill(hov ? 255 : 220, 255, 255, 240);
   textSize(13); textAlign(CENTER, CENTER);
-  text(step.btn, b.x + b.w / 2, b.y + b.h / 2);
+  text(t('tutorial.' + step.key + '.btn'), b.x + b.w / 2, b.y + b.h / 2);
 
   // 右上角"跳过"
   const s = _tutorialSkipBtnRect();
@@ -183,7 +157,7 @@ function drawTutorial() {
   rect(s.x, s.y, s.w, s.h, 4);
   noStroke(); fill(255, 150, 130, shov ? 240 : 180);
   textSize(11); textAlign(CENTER, CENTER);
-  text('跳过引导', s.x + s.w / 2, s.y + s.h / 2);
+  text(t('tutorial.btn.skip'), s.x + s.w / 2, s.y + s.h / 2);
 
   textAlign(LEFT, BASELINE);
   pop();

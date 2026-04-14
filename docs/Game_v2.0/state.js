@@ -25,6 +25,15 @@ let gamePhase      = 'launch';
 let gameDifficulty = null;  // 'easy' | 'difficult'
 
 
+// ── 语言（默认 English，玩家可在启动页切换；写入 localStorage）──
+let currentLang = (() => {
+  try {
+    const v = localStorage.getItem('qd_lang');
+    return (v === 'zh' || v === 'en') ? v : 'en';
+  } catch (e) { return 'en'; }
+})();
+
+
 // ── 关卡进度 ──
 let currentLevel   = 1;
 let unlockedLevel  = 1;

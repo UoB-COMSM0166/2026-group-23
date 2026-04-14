@@ -90,7 +90,9 @@ function draw() {
 function mousePressed() {
   switch (gamePhase) {
     case 'launch':
-      // 测试入口优先检测
+      // 语言切换按钮最高优先：点击后仅切换语言，不进入下一界面
+      if (handleLaunchLangBtn(mouseX, mouseY)) return;
+      // 测试入口次优先检测
       if (launchReady && handleLaunchTestBtn(mouseX, mouseY)) {
         activateTestMode();
         return;

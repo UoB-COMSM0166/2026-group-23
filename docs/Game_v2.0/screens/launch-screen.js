@@ -115,6 +115,9 @@ function drawLaunchScreen() {
     _drawTestModeBtn();
   }
 
+  // ── 语言切换（右上角） ──
+  _drawLangToggleBtn();
+
   // ── 底栏 ──
   noStroke(); fill(0, 80, 140, 50); rect(0, height - 22, width, 22);
   stroke(0, 130, 195, 45); strokeWeight(1); line(0, height - 22, width, height - 22);
@@ -142,6 +145,41 @@ function _drawTestModeBtn() {
 function handleLaunchTestBtn(mx, my) {
   const bx = width - 138, by = height - 54, bw = 128, bh = 26;
   return mx >= bx && mx <= bx + bw && my >= by && my <= by + bh;
+}
+
+// ── 语言切换按钮（右上角，EN / 中 两段式）──
+function _langBtnRects() {
+  const bw = 34, bh = 22, gap = 4, rx = width - 10 - bw;
+  const enRect = { x: rx - bw - gap, y: 10, w: bw, h: bh };
+  const zhRect = { x: rx,            y: 10, w: bw, h: bh };
+  return { enRect, zhRect };
+}
+
+function _drawLangToggleBtn() {
+  const { enRect, zhRect } = _langBtnRects();
+  textFont('monospace'); textAlign(CENTER, CENTER); textSize(11);
+
+  for (const [r, lang, label] of [[enRect, 'en', 'EN'], [zhRect, 'zh', '中']]) {
+    const active = currentLang === lang;
+    const hov = mouseX >= r.x && mouseX <= r.x + r.w && mouseY >= r.y && mouseY <= r.y + r.h;
+    noStroke();
+    fill(active ? color(0, 80, 140, 220) : (hov ? color(20, 40, 70, 200) : color(8, 16, 30, 170)));
+    stroke(0, 200, 255, active ? 230 : (hov ? 180 : 110)); strokeWeight(1);
+    rect(r.x, r.y, r.w, r.h, 4);
+    noStroke();
+    fill(active ? color(220, 245, 255, 250) : color(130, 180, 220, hov ? 230 : 170));
+    text(label, r.x + r.w / 2, r.y + r.h / 2);
+  }
+  textAlign(LEFT, BASELINE);
+}
+
+// 检测语言按钮点击；命中则切换并返回 true
+function handleLaunchLangBtn(mx, my) {
+  const { enRect, zhRect } = _langBtnRects();
+  const inRect = (r) => mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h;
+  if (inRect(enRect)) { setLang('en'); return true; }
+  if (inRect(zhRect)) { setLang('zh'); return true; }
+  return false;
 }
 
 // 激活测试模式：解锁全部关卡，直接跳地图

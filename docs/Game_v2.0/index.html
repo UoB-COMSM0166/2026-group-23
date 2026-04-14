@@ -14,7 +14,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 
   <!-- ── 全局可变状态（集中声明，必须最先加载）── -->
-  <script src="state.js"></script>        <!-- GamePhase / coins / manager / UI 状态 等 -->
+  <script src="state.js"></script>        <!-- GamePhase / coins / manager / UI 状态 / currentLang 等 -->
+  <script src="i18n.js"></script>         <!-- I18N 字典 + t(key) 查询 + setLang() -->
 
   <!-- ── 纯数据配置（data/，必须先于依赖它们的模块加载）── -->
   <script src="data/towers.js"></script>  <!-- TOWER_DEFS -->
