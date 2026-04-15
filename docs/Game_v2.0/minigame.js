@@ -191,30 +191,107 @@ function pickSub() {
   return random(pool);
 }
 
+function _getMinigameProfile() {
+  const lv = constrain((typeof currentLevel !== 'undefined' ? currentLevel : 1), 1, 5);
+  const info = (typeof LEVEL_INFO !== 'undefined' && LEVEL_INFO[lv]) ? LEVEL_INFO[lv] : null;
+  const threat = info ? constrain(info.threat || lv, 1, 5) : lv;
+  const hard = (typeof gameDifficulty !== 'undefined' && gameDifficulty === 'difficult');
+
+  // 基础布局参数：困难更密、行更多；高关卡再逐步提升复杂度
+  const rows = constrain((hard ? 5 : 4) + (threat >= 3 ? 1 : 0), 4, 6);
+  const targetMulMin = hard ? max(2, 4 - floor(threat / 3)) : 4;
+  const targetMulMax = hard ? 5 : 6;
+  const bounceMin = hard ? 1 : 0;
+  const bounceMax = hard ? (threat >= 4 ? 2 : 1) : 1;
+
+  return {
+    lv,
+    threat,
+    hard,
+    rows,
+    targetMulMin,
+    targetMulMax,
+    bounceMin,
+    bounceMax,
+    // row 门数量概率（1~3门）
+    rowCountWeights: hard ? [0.12, 0.48, 0.40] : [0.26, 0.54, 0.20],
+    // 顶层更容易给乘法，底层略收敛，避免雪球失控
+    mulBiasTop: hard ? 0.58 : 0.68,
+    mulBiasBottom: hard ? 0.30 : 0.40,
+    // 难度越高门越窄
+    minGateDiv: hard ? 8.8 : 7.4,
+    maxGateDiv: hard ? 4.7 : 4.2,
+  };
+}
+
+function _pickRowGateCount(weights) {
+  const r = random();
+  if (r < weights[0]) return 1;
+  if (r < weights[0] + weights[1]) return 2;
+  return 3;
+}
+
+function _calcScoreBalanced(landed, profile) {
+  // 平衡版：收益更稳定，波动小
+  const difficultyMul = profile.hard ? 1.08 : 1.0;
+  const levelMul = 1 + (profile.threat - 1) * 0.10;
+  const perBall = 1.5;
+  const raw = floor(landed * perBall * difficultyMul * levelMul);
+  const floorScore = 3 + profile.threat + (profile.hard ? 1 : 0);
+  return max(raw, floorScore);
+}
+
+function _calcScoreClassicJackpot(landed, profile) {
+  // 旧版风格：常规稳定 + 极好运爆发（可冲高分）
+  const perBall = 2.0;
+  const base = landed * perBall;
+  let burst = 0;
+  if (landed > 200) burst += min(landed - 200, 300) * 2;
+  if (landed > 500) burst += min(landed - 500, 400) * 4;
+  if (landed > 900) burst += (landed - 900) * 8;
+
+  const levelMul = 1 + (profile.threat - 1) * 0.08;
+  const difficultyMul = profile.hard ? 1.08 : 1.0;
+  const raw = floor((base + burst) * levelMul * difficultyMul);
+
+  // 保底较低，仅兜底，不主导收益
+  const floorScore = 3 + profile.threat + (profile.hard ? 1 : 0);
+  return max(raw, floorScore);
+}
+
+function _calcMinigameScore(landed) {
+  const profile = _getMinigameProfile();
+  // const scoreMode = 'stable_balanced';
+  const scoreMode = 'classic_jackpot';
+
+  // if (scoreMode === 'stable_balanced') return _calcScoreBalanced(landed, profile);
+  if (scoreMode === 'classic_jackpot') return _calcScoreClassicJackpot(landed, profile);
+  return _calcScoreClassicJackpot(landed, profile);
+}
+
 function generateGates() {
   mgGates = [];
-
-  const rows    = 5;
+  const profile = _getMinigameProfile();
+  const rows    = profile.rows;
   const usableH = MG.h - 130;
   const stepY   = usableH / (rows + 1);
   const gateH   = 34;
   const innerL  = MG.x + 28;
   const innerW  = MG.w - 56;
 
-  const minGW = floor(MG.w / 7);
-  const maxGW = floor(MG.w / 4);
+  const minGW = floor(MG.w / profile.minGateDiv);
+  const maxGW = floor(MG.w / profile.maxGateDiv);
 
-  const TARGET_MUL = floor(random(3, 7));
+  const TARGET_MUL = floor(random(profile.targetMulMin, profile.targetMulMax + 1));
   let mulCount = 0;
 
-  // 弹跳门：0~2 个，记录哪些行/列位置已放置，后面插入
-  const bounceCount  = floor(random(3));   // 0, 1, 2
+  // 弹跳门数量按难度/关卡决定，记录可替换坑位（仍禁止上两层）
+  const bounceCount  = floor(random(profile.bounceMin, profile.bounceMax + 1));
   const bounceSlots  = [];   // { row, col } 记录坑位
 
   for (let row = 0; row < rows; row++) {
     const y = MG.y + 80 + stepY * (row + 1);
-    const rCount = random();
-    const count = rCount < 0.25 ? 1 : rCount < 0.75 ? 2 : 3;
+    const count = _pickRowGateCount(profile.rowCountWeights);
 
     const widths = Array.from({length: count}, () => floor(random(minGW, maxGW)));
     const rawTotal = widths.reduce((a, b) => a + b, 0);
@@ -234,7 +311,8 @@ function generateGates() {
       const remaining = rows - row;
       const mulLeft   = TARGET_MUL - mulCount;
       const mustMul   = mulLeft >= remaining * count;
-      const mulBias   = row < 3 ? 0.60 : 0.35;
+      const rowT      = rows <= 1 ? 0 : row / (rows - 1);
+      const mulBias   = lerp(profile.mulBiasTop, profile.mulBiasBottom, rowT);
       const placeMul  = mulCount < TARGET_MUL && (mustMul || random() < mulBias);
 
       let def;
@@ -252,14 +330,33 @@ function generateGates() {
         y,
         w: finalW[c],
         h: gateH,
+        row,
         type: def.type, value: def.value,
         label: def.label, col: def.col,
         triggered: false,
         flashTimer: 0,
       });
-      bounceSlots.push({ gateIdx: mgGates.length - 1, row, col: c });
+      // 弹力板不允许出现在最上两层（row 0 / 1）
+      if (row >= 2) bounceSlots.push({ gateIdx: mgGates.length - 1, row, col: c });
 
       curX += finalW[c] + gaps_n[c + 1];
+    }
+  }
+
+  // 保证下半区至少有一个 × 门，避免全负门导致体验过硬
+  const lowerRow = floor(rows / 2);
+  const hasLowerMul = mgGates.some(g => g.row >= lowerRow && g.type === 'mul');
+  if (!hasLowerMul) {
+    const candidates = mgGates.filter(g => g.row >= lowerRow && g.type !== 'bounce');
+    if (candidates.length > 0) {
+      const g = random(candidates);
+      const m = pickMul();
+      g.type = 'mul';
+      g.value = m.value;
+      g.label = m.label;
+      g.col = [...m.col];
+      g.triggered = false;
+      g.flashTimer = 0;
     }
   }
 
@@ -439,7 +536,7 @@ function checkSettlement() {
   if (spawnQueue.length > 0) return;
   const alive = mgBalls.filter(b => b.alive).length;
   if (alive === 0) {
-    minigameResult = Math.floor(landedBalls * 1.5);
+    minigameResult = _calcMinigameScore(landedBalls);
     minigameState  = 'result';
     resultTimer    = RESULT_SHOW;
   }
@@ -449,18 +546,34 @@ function checkSettlement() {
 //  绘制：背景（保持游戏科幻风格，用深蓝半透明遮罩）
 // ============================================================
 function drawMgBackground() {
+  // 主底色（和主游戏面板一致的深蓝）
   noStroke();
-  fill(2, 5, 18, 225);
+  fill(4, 8, 22, 238);
   rect(MG.x, MG.y, MG.w, MG.h);
 
-  // 网格
-  stroke(0, 150, 220, 14); strokeWeight(1);
-  for (let x = MG.x; x < MG.x + MG.w; x += 40) line(x, MG.y, x, MG.y + MG.h);
-  for (let y = MG.y; y < MG.y + MG.h; y += 40) line(MG.x, y, MG.x + MG.w, y);
+  // 边缘压暗，减少“平铺网格”割裂感
+  fill(0, 0, 0, 42);
+  rect(MG.x, MG.y, 28, MG.h);
+  rect(MG.x + MG.w - 28, MG.y, 28, MG.h);
+  rect(MG.x, MG.y, MG.w, 18);
+  rect(MG.x, MG.y + MG.h - 18, MG.w, 18);
 
-  // 底部落地线
-  stroke(0, 200, 255, 100); strokeWeight(1.5);
-  line(MG.x, MG.y + MG.h - 20, MG.x + MG.w, MG.y + MG.h - 20);
+  // 轻量网格 + 扫描线，和全局科幻 UI 风格保持一致
+  stroke(0, 150, 220, 12); strokeWeight(1);
+  for (let x = MG.x; x < MG.x + MG.w; x += 44) line(x, MG.y, x, MG.y + MG.h);
+  for (let y = MG.y; y < MG.y + MG.h; y += 44) line(MG.x, y, MG.x + MG.w, y);
+  noStroke();
+  fill(0, 0, 0, 12);
+  for (let y = MG.y; y < MG.y + MG.h; y += 4) rect(MG.x, y, MG.w, 2);
+
+  // 面板内框，和结束面板同色系
+  noFill();
+  stroke(0, 180, 255, 70); strokeWeight(1.2);
+  rect(MG.x + 8, MG.y + 8, MG.w - 16, MG.h - 16, 8);
+
+  // 底部落地线（稍亮，便于读轨迹）
+  stroke(0, 200, 255, 120); strokeWeight(1.6);
+  line(MG.x + 10, MG.y + MG.h - 20, MG.x + MG.w - 10, MG.y + MG.h - 20);
 }
 
 // ============================================================
@@ -622,7 +735,7 @@ function drawMgHUD() {
   fill(0, 255, 170); textSize(15); text(landedBalls, MG.x + 110, MG.y + 35);
 
   fill(0, 160, 255); textSize(10); text(t('mg.estCoins'), MG.x + 210, MG.y + 16);
-  fill(255, 225, 30); textSize(15); text('¥' + Math.floor(landedBalls * 1.5), MG.x + 210, MG.y + 35);
+  fill(255, 225, 30); textSize(15); text('¥' + _calcMinigameScore(landedBalls), MG.x + 210, MG.y + 35);
 
   if (minigameState === 'playing') {
     fill(0, 180, 255, 130); textSize(10);

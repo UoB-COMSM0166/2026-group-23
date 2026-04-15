@@ -7,6 +7,15 @@
 //  主绘制入口 & 初始化
 // ============================================================
 function drawUI() {
+  const inMinigame = minigameState !== 'idle';
+  if (inMinigame) {
+    // 小游戏期间隐藏建造/塔面板等 UI，但保留主 HUD
+    drawHUD();
+    drawWaveUI();    // 保留波次间隔确认框等必要流程 UI
+    drawPauseMenu(); // 暂停菜单仍可用
+    return;
+  }
+
   drawBuildMenu();
   drawTowerHoverTooltip();
   drawPlacementPreview();
