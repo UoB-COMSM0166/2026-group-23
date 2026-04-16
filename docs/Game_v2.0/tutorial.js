@@ -45,6 +45,11 @@ function _finishTutorial() {
   tutorialActive = false;
   tutorialStep   = 0;
   try { localStorage.setItem(TUTORIAL_FLAG_KEY, '1'); } catch (e) {}
+
+  // 首次进关时，教程结束后再补启动开场小游戏，避免教程与小游戏 UI 互相遮挡
+  if (waveState === 'countdown' && minigameState === 'idle' && typeof startMinigame === 'function') {
+    startMinigame();
+  }
 }
 
 

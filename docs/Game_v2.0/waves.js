@@ -28,7 +28,8 @@ function beginAutoWave() {
   waveState = 'countdown';
   waveCountdownActive = false;
   waveCountdownEnd    = 0;
-  if (typeof startMinigame === 'function') {
+  // 教程期间先保留主界面，等教程结束后再进入首个小游戏
+  if (!tutorialActive && typeof startMinigame === 'function') {
     startMinigame();
   }
 }
