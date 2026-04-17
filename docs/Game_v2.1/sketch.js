@@ -26,9 +26,14 @@ const COUNTDOWN_FRAMES = 300;
 // ============================================================
 //  p5 setup
 // ============================================================
+// 画布"设计分辨率"（内部始终 980×840），CSS 缩放到窗口大小
+const STAGE_W = GRID_COLS * CELL_SIZE;  // 980
+const STAGE_H = GRID_ROWS * CELL_SIZE;  // 840
+
 function setup() {
-  createCanvas(GRID_COLS * CELL_SIZE, GRID_ROWS * CELL_SIZE);
+  createCanvas(STAGE_W, STAGE_H);
   textFont('monospace');
+  _fitCanvasToWindow();
 
   // 初始化启动页粒子
   for (let i = 0; i < 90; i++) {
@@ -131,6 +136,28 @@ function mousePressed() {
 
 function mouseMoved() {
   if (minigameState !== 'idle') handleMinigameMove(mouseX, mouseY);
+}
+
+// ============================================================
+//  屏幕自适应：保持内部 STAGE_W × STAGE_H 分辨率不变，
+//  用 CSS 把 canvas 等比缩放到当前窗口（letterbox / pillarbox）。
+//  mouseX / mouseY 是 p5 的画布坐标（自动反算），所以游戏里
+//  所有像素判定都不用改。
+// ============================================================
+function windowResized() {
+  _fitCanvasToWindow();
+}
+
+function _fitCanvasToWindow() {
+  const cvs = (typeof canvas !== 'undefined' && canvas && canvas.canvas) ? canvas.canvas
+            : document.querySelector('canvas');
+  if (!cvs) return;
+  // 留 8px 边距，避免窗口贴边时把发光 box-shadow 切掉
+  const availW = Math.max(200, windowWidth  - 16);
+  const availH = Math.max(200, windowHeight - 16);
+  const s = Math.min(availW / STAGE_W, availH / STAGE_H);
+  cvs.style.width  = Math.floor(STAGE_W * s) + 'px';
+  cvs.style.height = Math.floor(STAGE_H * s) + 'px';
 }
 
 // 键盘事件：ESC 暂停；F 切换性能 HUD

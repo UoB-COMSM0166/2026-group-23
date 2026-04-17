@@ -6,8 +6,48 @@
   <title>Quantum Drop — 数字塔防</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #050810; display: flex; justify-content: center; align-items: center; height: 100vh; }
-    canvas { display: block; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #050810;
+      /* 画布外的"赛博空间"：扫描线 + 科幻网格 + 径向暗角（从外向内渐暗到纯黑）*/
+      background-image:
+        /* 顶层：细扫描线（每 3px 一条青光，极低不透明度）*/
+        repeating-linear-gradient(
+          0deg,
+          rgba(0, 200, 255, 0.025) 0 1px,
+          transparent 1px 3px
+        ),
+        /* 中层：科幻网格（每 60px 的经纬线）*/
+        repeating-linear-gradient(
+          90deg,
+          rgba(0, 140, 220, 0.05) 0 1px,
+          transparent 1px 60px
+        ),
+        repeating-linear-gradient(
+          0deg,
+          rgba(0, 140, 220, 0.05) 0 1px,
+          transparent 1px 60px
+        ),
+        /* 底层：径向暗角，中心略亮，边缘化黑 */
+        radial-gradient(
+          ellipse at center,
+          rgba(0, 80, 140, 0.25) 0%,
+          rgba(5, 8, 16, 1)      70%
+        );
+    }
+    /* 画布自身加青色发光描边，把"舞台"和"外界"在视觉上分开 */
+    canvas {
+      display: block;
+      box-shadow:
+        0 0 0 1px rgba(0, 200, 255, 0.35),
+        0 0 40px rgba(0, 180, 255, 0.25),
+        0 0 80px rgba(90, 50, 200, 0.15);
+      /* CSS 缩放时保留清晰度（让浏览器用最近邻优先，而非过度平滑）*/
+      image-rendering: auto;
+    }
   </style>
 
   <!-- 第三方库 -->
