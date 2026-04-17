@@ -50,15 +50,16 @@ function setup() {
 // ============================================================
 function draw() {
   switch (gamePhase) {
-    case 'launch':     drawLaunchScreen();    return;
-    case 'difficulty': drawDifficultySelect(); return;
-    case 'levelmap':   drawLevelMap();         return;
+    case 'launch':     drawLaunchScreen();     drawPerfHud(); return;
+    case 'difficulty': drawDifficultySelect(); drawPerfHud(); return;
+    case 'levelmap':   drawLevelMap();         drawPerfHud(); return;
 
     case 'endpanel':
       endPanelAnim++;
       drawBackground(); drawPaths();
       for (const ht of homeTowers) ht.draw();
       drawEndPanel();
+      drawPerfHud();
       return;
 
     case 'playing':
@@ -80,6 +81,7 @@ function draw() {
       }
       drawUI(); // drawUI 内部会调用 drawPauseMenu()
       drawTutorial(); // 若激活则绘制引导覆盖层（始终盖在 UI 之上）
+      drawPerfHud();  // 始终最上层，菜单/暂停/引导都不遮挡
       if (!_frozen && waveState === 'complete' && manager.monsters.length === 0 && !_gameEndFired) {
         _gameEndFired = true;
         setTimeout(() => handleGameEnd(true), 1800);
@@ -131,11 +133,17 @@ function mouseMoved() {
   if (minigameState !== 'idle') handleMinigameMove(mouseX, mouseY);
 }
 
-// ESC 键暂停（引导期间吞掉 ESC，避免叠加暂停菜单）
+// 键盘事件：ESC 暂停；F 切换性能 HUD
 function keyPressed() {
   if (keyCode === ESCAPE) {
     if (tutorialActive) return;
     handlePauseKey();
+    return;
+  }
+  // F：切换性能 HUD（任何阶段；引导期间也允许，方便演示时抓帧率）
+  if (key === 'f' || key === 'F') {
+    togglePerfHud();
+    return;
   }
 }
 

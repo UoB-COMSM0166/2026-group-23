@@ -41,6 +41,13 @@ let audioMuted = (() => {
 })();
 
 
+// ── 性能 HUD（默认关闭，F 键切换；写入 localStorage）──
+let showPerfHud = (() => {
+  try { return localStorage.getItem('qd_perf') === '1'; }
+  catch (e) { return false; }
+})();
+
+
 // ── 关卡进度 ──
 let currentLevel   = 1;
 let unlockedLevel  = 1;
