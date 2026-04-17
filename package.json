@@ -1,0 +1,12 @@
+{
+  "name": "quantum-drop",
+  "version": "2.1.0",
+  "private": true,
+  "description": "Quantum Drop — tower defense × ball-drop minigame (COMSM0166). The runnable game is in docs/Game_v2.1/ and is a zero-build static site. This package.json only exists to wire up node:test for the unit test suite in tests/.",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

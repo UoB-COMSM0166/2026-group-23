@@ -52,7 +52,62 @@ VIDEO. Include a demo video of your game here (you don't have to wait until the 
 
 > **Tip:** After editing any file, press `Ctrl+S` to save — the browser reloads automatically.  
 > **Debugging:** Press `F12` to open DevTools; check the `Console` tab for errors.  
-> **Quick Test:** Click the `DEV: ALL LEVELS` button in the bottom-right of the launch screen to unlock all levels instantly.
+> **Quick Test:** Click the `DEV: ALL LEVELS` button in the bottom-right of the launch screen to unlock all levels instantly.  
+> **Perf HUD:** Press `F` in-game to toggle a bottom-left performance overlay (FPS / entity counts / current phase).
+
+---
+
+## Running the Unit Tests
+
+The **game** has zero build toolchain — but we ship a small unit test suite
+for the pure-data configs and pure-logic helpers (`data/*.js`, `i18n.js`,
+`map/map-core.js`). Tests use Node's built-in `node:test` — **no npm install
+needed**.
+
+### Requirements
+- Node.js ≥ 18 (ships with `node:test` and `node:assert` out of the box)
+
+### Steps
+
+```bash
+# From the repo root
+npm test
+```
+
+or equivalently:
+
+```bash
+node --test tests/*.test.js
+```
+
+### What's Covered (48 tests, ~80 ms total)
+
+| File | Scope |
+|---|---|
+| `tests/i18n.test.js` | `t(key)` lookup, `{0}`/`{1}` param substitution, zh→en→key fallback chain, `setLang()` persistence |
+| `tests/data-towers.test.js` | 8 towers × 3 tiers schema, monotonic dmg / range / fireRate progression, MAGNET slowFactor, CANNON blast radius, anti-air flags |
+| `tests/data-waves.test.js` | 5 levels × expected wave counts, spawn spec shape `[type, count, interval, delay]`, monster-type whitelist, boss singleton `interval=9999` convention, difficulty ramp |
+| `tests/data-levels.test.js` | `LEVEL_INFO` ↔ `LEVEL_NODES` consistency, threat tier = level number, start-coins monotonically decrease |
+| `tests/map-core.test.js` | `pathToPixels()` geometry, `isCellBuildable()` — out-of-bounds / HUD row / path cells / tower occupation / level switching |
+
+### How It Works (for curious readers)
+
+Source files in `docs/Game_v2.1/` are plain `<script>` tags meant for a
+browser — they have no `module.exports` and they depend on p5.js globals
+(`color`, `lerp`, `floor`, ...) and on browser objects (`localStorage`).
+
+`tests/helpers/load.js` builds a Node `vm.createContext` sandbox that:
+1. Fakes just enough of p5 (math helpers + drawing no-ops) and the
+   browser (`localStorage`, `document`) for our data / logic modules to
+   initialise without crashing.
+2. Concatenates the requested source files and runs them once in that
+   sandbox — the same way a browser loads sequential script tags.
+3. Appends a small epilogue that copies known top-level `const` /
+   `let` bindings onto `globalThis`, so tests can reach them via
+   `ctx.TOWER_DEFS`, `ctx.t(...)`, `ctx.isCellBuildable(...)`.
+
+No source file is modified — the browser game and the tests both read
+the same unchanged files.
 
 ---
 
