@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Drop — 数字塔防</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #050810; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    canvas { display: block; }
+  </style>
+
+  <!-- 第三方库 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+
+  <!-- ── 全局可变状态（集中声明，必须最先加载）── -->
+  <script src="state.js"></script>        <!-- GamePhase / coins / manager / UI 状态 / currentLang 等 -->
+  <script src="i18n.js"></script>         <!-- I18N 字典 + t(key) 查询 + setLang() -->
+
+  <!-- ── 纯数据配置（data/，必须先于依赖它们的模块加载）── -->
+  <script src="data/towers.js"></script>  <!-- TOWER_DEFS -->
+  <script src="data/waves.js"></script>   <!-- WAVE_CONFIGS / WAVE_CONFIG -->
+  <script src="data/levels.js"></script>  <!-- LEVEL_INFO / LEVEL_NODES -->
+
+  <!-- ── 地图系统（map/ 目录，按顺序加载）── -->
+  <script src="map/map-core.js"></script>  <!-- 路径定义、格子判定、缓存、drawPaths、共享辅助 -->
+  <script src="map/map-lv1.js"></script>   <!-- 关卡1  青草地 -->
+  <script src="map/map-lv2.js"></script>   <!-- 关卡2  星云冰蓝地 -->
+  <script src="map/map-lv3.js"></script>   <!-- 关卡3  熔岩炽核地 -->
+  <script src="map/map-lv4.js"></script>   <!-- 关卡4  虚空迷宫 -->
+  <script src="map/map-lv5.js"></script>   <!-- 关卡5  焦土废墟 -->
+
+  <!-- ── 游戏核心：怪物（基类→普通→Boss→管理器）── -->
+  <script src="monsters/core.js"></script>              <!-- 路径工具、粒子、Monster 基类 -->
+  <script src="monsters/mobs/snake.js"></script>        <!-- MechSnake -->
+  <script src="monsters/mobs/spider.js"></script>       <!-- MechSpider -->
+  <script src="monsters/mobs/robot.js"></script>        <!-- MechRobot -->
+  <script src="monsters/mobs/phoenix.js"></script>      <!-- MechPhoenix -->
+  <script src="monsters/mobs/tank.js"></script>         <!-- MechTank -->
+  <script src="monsters/mobs/ghostbird.js"></script>    <!-- GhostBird -->
+  <script src="monsters/bosses/fission.js"></script>    <!-- BossFission + FissionCore -->
+  <script src="monsters/bosses/phantom.js"></script>    <!-- BossPhantom -->
+  <script src="monsters/bosses/antmech.js"></script>    <!-- BossAntMech -->
+  <script src="monsters/bosses/carrier.js"></script>    <!-- BossCarrier -->
+  <script src="monsters/manager.js"></script>           <!-- MonsterManager -->
+
+  <!-- ── 游戏核心：塔（base 最先，然后 8 种变种通过 prototype 注入行为）── -->
+  <script src="towers/base.js"></script>              <!-- Tower 基类（构造/升级/调度）-->
+  <script src="towers/variants/rapid.js"></script>    <!-- RAPID 快速塔 -->
+  <script src="towers/variants/laser.js"></script>    <!-- LASER 激光切割者 -->
+  <script src="towers/variants/nova.js"></script>     <!-- NOVA 穿透炮 -->
+  <script src="towers/variants/chain.js"></script>    <!-- CHAIN 链式电弧塔 -->
+  <script src="towers/variants/magnet.js"></script>   <!-- MAGNET 磁场干扰塔 -->
+  <script src="towers/variants/ghost.js"></script>    <!-- GHOST 幽灵导弹塔 -->
+  <script src="towers/variants/scatter.js"></script>  <!-- SCATTER 散射对空炮 -->
+  <script src="towers/variants/cannon.js"></script>   <!-- CANNON 轨道巨炮 -->
+  <script src="towers/projectile.js"></script>        <!-- Projectile 子弹类 -->
+  <script src="towers/effects.js"></script>           <!-- 跳链/爆炸/迫击炮视觉 -->
+  <script src="towers/manager.js"></script>           <!-- towers[]/projectiles[] + updateAndDrawTowers -->
+  <script src="home-tower.js"></script>               <!-- HomeTower 终点基地 -->
+  <script src="waves.js"></script>                    <!-- 波次推进逻辑 -->
+  <script src="minigame.js"></script>                 <!-- 投球小游戏 -->
+
+  <!-- ── 战斗 UI（ui/，common 最先，index 最后）── -->
+  <script src="ui/common.js"></script>       <!-- 常量 / HUD缓存 / 工具函数 / 点击特效 -->
+  <script src="ui/hud.js"></script>          <!-- 顶部 HUD -->
+  <script src="ui/pause.js"></script>        <!-- 暂停菜单 -->
+  <script src="ui/wave-ui.js"></script>      <!-- 波次倒计时 / 结束面板 / 通关提示 -->
+  <script src="ui/build-menu.js"></script>   <!-- 底部建造菜单 + 悬浮提示 -->
+  <script src="ui/tower-panel.js"></script>  <!-- 塔升级/拆除面板 -->
+  <script src="ui/placement.js"></script>    <!-- 放置预览 + 战场点击路由 -->
+  <script src="ui/index.js"></script>        <!-- drawUI / initUI 调度 -->
+
+  <!-- ── 全屏界面（screens/）── -->
+  <script src="screens/launch-screen.js"></script>      <!-- 启动页 + 测试入口 -->
+  <script src="screens/difficulty-select.js"></script>  <!-- 难度选择 -->
+  <script src="screens/level-map.js"></script>          <!-- 关卡地图 -->
+  <script src="screens/end-panel.js"></script>          <!-- 结算面板 -->
+
+  <!-- ── 新手引导（依赖 state.js + ui 常量，位于 sketch.js 之前）── -->
+  <script src="tutorial.js"></script>      <!-- 第 1 关首次进入时的 5 步引导 -->
+
+  <!-- ── 主循环（最后加载）── -->
+  <script src="sketch.js"></script>        <!-- setup / draw / 事件路由 -->
+</head>
+<body></body>
+</html>
