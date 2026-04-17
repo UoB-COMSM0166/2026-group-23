@@ -95,6 +95,7 @@ function _updateDrawMortarShells() {
       s.exploded = true;
       s.blastLife = 30;
       spawnParticles(s.tx, s.ty, color(255,160,20), 35);
+      playSfx('explode');
       // 范围伤害：无视坦克护盾（除坦克自身护盾激活时）
       if (typeof manager !== 'undefined') {
         for (const m of manager.monsters) {

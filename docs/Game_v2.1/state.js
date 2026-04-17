@@ -34,6 +34,13 @@ let currentLang = (() => {
 })();
 
 
+// ── 音频静音（默认开声；启动页右上角按钮切换；写入 localStorage）──
+let audioMuted = (() => {
+  try { return localStorage.getItem('qd_muted') === '1'; }
+  catch (e) { return false; }
+})();
+
+
 // ── 关卡进度 ──
 let currentLevel   = 1;
 let unlockedLevel  = 1;

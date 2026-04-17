@@ -133,6 +133,7 @@ class Projectile {
         // 爆炸粒子
         spawnParticles(this.targetX, this.targetY, color(...this.col), 30);
         _cannonBlasts.push({ x: this.targetX, y: this.targetY, r: this.blastRadius, life: 30 });
+        playSfx('explode');
         this.alive = false;
       }
       return;

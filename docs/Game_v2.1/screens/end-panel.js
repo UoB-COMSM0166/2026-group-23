@@ -75,6 +75,7 @@ function handleEndPanelClick(mx, my) {
 
   // RETRY
   if (mx >= px+20 && mx <= px+pw/2-10 && my >= b1y && my <= b1y + 26) {
+    playSfx('click');
     endPanelAnim  = 0;
     _gameEndFired = false;
     gamePhase     = 'playing';
@@ -83,13 +84,16 @@ function handleEndPanelClick(mx, my) {
   }
   // STAGES
   if (mx >= px+pw/2+10 && mx <= px+pw-20 && my >= b1y && my <= b1y + 26) {
+    playSfx('click');
     endPanelAnim = 0;
     gamePhase    = 'levelmap';
+    setBgm('launch');  // 回到菜单音乐
     return;
   }
   // NEXT LEVEL
   if (_endPanelWon && currentLevel < 5) {
     if (mx >= px+20 && mx <= px+pw-20 && my >= b2y && my <= b2y + 26) {
+      playSfx('click');
       endPanelAnim  = 0;
       currentLevel++;
       _gameEndFired = false;

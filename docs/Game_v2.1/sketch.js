@@ -39,6 +39,10 @@ function setup() {
       col: random() > 0.5 ? [0, 200, 255] : [110, 70, 255],
     });
   }
+
+  // 菜单 BGM（首次用户点击前浏览器会阻止自动播放，
+  // audio.js 会把这个名字排队，等 unlockAudio() 触发时再开始）
+  setBgm('launch');
 }
 
 // ============================================================
@@ -88,16 +92,20 @@ function draw() {
 //  p5 mousePressed — 阶段路由
 // ============================================================
 function mousePressed() {
+  // 首次点击解锁浏览器自动播放限制；之后多次调用为 no-op
+  unlockAudio();
   switch (gamePhase) {
     case 'launch':
-      // 语言切换按钮最高优先：点击后仅切换语言，不进入下一界面
+      // 静音切换按钮最高优先：点击后仅切换音频状态，不进入下一界面
+      if (typeof handleLaunchMuteBtn === 'function' && handleLaunchMuteBtn(mouseX, mouseY)) return;
+      // 语言切换按钮次高优先：点击后仅切换语言，不进入下一界面
       if (handleLaunchLangBtn(mouseX, mouseY)) return;
       // 测试入口次优先检测
       if (launchReady && handleLaunchTestBtn(mouseX, mouseY)) {
         activateTestMode();
         return;
       }
-      if (launchReady) { gamePhase = 'difficulty'; }
+      if (launchReady) { playSfx('click'); gamePhase = 'difficulty'; }
       return;
 
     case 'difficulty': handleDifficultyClick(mouseX, mouseY); return;
@@ -175,6 +183,9 @@ function initGame() {
   initUI();
   beginAutoWave();
   startTutorialIfNeeded(); // 第 1 关首次进入时弹出新手引导
+
+  // 切到该关卡的 BGM（launch → level{N}）
+  setBgm('level' + currentLevel);
 }
 
 // ============================================================
@@ -187,4 +198,7 @@ function handleGameEnd(won) {
   endPanelAnim = 0;
   _endPanelWon = won;
   gamePhase    = 'endpanel';
+  // 停 BGM，留给胜/负音效独自响一下
+  stopBgm();
+  playSfx(won ? 'win' : 'lose');
 }

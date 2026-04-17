@@ -100,11 +100,12 @@ function _drawDiffCard(x, y, w, h, col, title, subtitle, lines) {
 
 function handleDifficultyClick(mx, my) {
   // 返回按钮
-  if (mx < 92 && my < 38) { gamePhase = 'launch'; return; }
+  if (mx < 92 && my < 38) { playSfx('click'); gamePhase = 'launch'; return; }
 
   // EASY
   const eX = width / 2 - 210, eY = height / 2 - 90, eW = 190, eH = 240;
   if (mx >= eX && mx <= eX + eW && my >= eY && my <= eY + eH) {
+    playSfx('click');
     gameDifficulty = 'easy';
     gamePhase      = 'levelmap';
     return;
@@ -112,6 +113,7 @@ function handleDifficultyClick(mx, my) {
   // DIFFICULT
   const dX = width / 2 + 20, dY = height / 2 - 90, dW = 190, dH = 240;
   if (mx >= dX && mx <= dX + dW && my >= dY && my <= dY + dH) {
+    playSfx('click');
     gameDifficulty = 'difficult';
     gamePhase      = 'levelmap';
     return;

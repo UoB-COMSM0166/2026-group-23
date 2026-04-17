@@ -131,6 +131,7 @@ function handlePlacementClick(mx, my) {
     if (isCellBuildable(gx, gy) && coins >= placeDef.cost) {
       coins -= placeDef.cost;
       towers.push(new Tower(gx, gy, selectedTowerType));
+      playSfx('place');
       selectedTowerType = null;
     } else if (my > HUD_HEIGHT) {
       selectedTower = null;

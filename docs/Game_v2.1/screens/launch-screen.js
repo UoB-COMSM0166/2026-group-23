@@ -118,6 +118,9 @@ function drawLaunchScreen() {
   // ── 语言切换（右上角） ──
   _drawLangToggleBtn();
 
+  // ── 静音切换（语言按钮左侧） ──
+  _drawMuteToggleBtn();
+
   // ── 底栏 ──
   noStroke(); fill(0, 80, 140, 50); rect(0, height - 22, width, 22);
   stroke(0, 130, 195, 45); strokeWeight(1); line(0, height - 22, width, height - 22);
@@ -179,6 +182,51 @@ function handleLaunchLangBtn(mx, my) {
   const inRect = (r) => mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h;
   if (inRect(enRect)) { setLang('en'); return true; }
   if (inRect(zhRect)) { setLang('zh'); return true; }
+  return false;
+}
+
+// ── 静音切换按钮（语言按钮左侧的方块） ──
+function _muteBtnRect() {
+  // 语言 EN 按钮之左再让出 8px
+  const { enRect } = _langBtnRects();
+  const bw = 28, bh = 22, gap = 8;
+  return { x: enRect.x - gap - bw, y: enRect.y, w: bw, h: bh };
+}
+
+function _drawMuteToggleBtn() {
+  const r = _muteBtnRect();
+  const hov = mouseX >= r.x && mouseX <= r.x + r.w && mouseY >= r.y && mouseY <= r.y + r.h;
+  noStroke();
+  fill(audioMuted ? color(60, 14, 20, 220) : color(8, 16, 30, 170));
+  stroke(audioMuted ? color(255, 80, 80, 220) : color(0, 200, 255, hov ? 180 : 110));
+  strokeWeight(1);
+  rect(r.x, r.y, r.w, r.h, 4);
+  // 图标：喇叭 + （静音时）斜线
+  noStroke();
+  const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+  fill(audioMuted ? color(255, 140, 140, 235) : color(180, 230, 255, hov ? 240 : 200));
+  // 喇叭主体：简化为梯形 + 三条波纹
+  rect(cx - 7, cy - 3, 4, 6, 1);
+  triangle(cx - 3, cy - 6, cx + 2, cy - 9, cx + 2, cy + 9);
+  triangle(cx - 3, cy + 6, cx + 2, cy - 9, cx + 2, cy + 9);
+  if (!audioMuted) {
+    stroke(180, 230, 255, hov ? 240 : 200); strokeWeight(1); noFill();
+    arc(cx + 3, cy, 6, 10, -PI / 3, PI / 3);
+    arc(cx + 3, cy, 10, 14, -PI / 4, PI / 4);
+  } else {
+    stroke(255, 120, 120, 240); strokeWeight(1.5);
+    line(cx - 8, cy - 7, cx + 8, cy + 7);
+  }
+  noStroke();
+}
+
+// 命中返回 true（切换静音，不消费后续点击）
+function handleLaunchMuteBtn(mx, my) {
+  const r = _muteBtnRect();
+  if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
+    toggleAudioMuted();
+    return true;
+  }
   return false;
 }
 

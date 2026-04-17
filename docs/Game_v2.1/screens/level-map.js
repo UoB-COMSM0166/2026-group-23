@@ -181,7 +181,7 @@ function drawLevelMap() {
 
 function handleLevelMapClick(mx, my) {
   // 返回
-  if (mx < 92 && my < 38) { gamePhase = 'difficulty'; return; }
+  if (mx < 92 && my < 38) { playSfx('click'); gamePhase = 'difficulty'; return; }
 
   // 节点直接点击
   for (let i = 0; i < 5; i++) {
@@ -190,6 +190,7 @@ function handleLevelMapClick(mx, my) {
     const nd = LEVEL_NODES[i];
     const nx = nd.x * width, ny = nd.y * (height - 100) + 70;
     if (Math.hypot(mx - nx, my - ny) < 38) {
+      playSfx('click');
       currentLevel = lv;
       gamePhase    = 'playing';
       _gameEndFired = false;
@@ -203,6 +204,7 @@ function handleLevelMapClick(mx, my) {
     const { px, py: py2, pw, ph } = _levelCardRect(levelHovered);
     const btnY = py2 + ph - 42;
     if (mx >= px+12 && mx <= px+pw-12 && my >= btnY && my <= btnY + 28) {
+      playSfx('click');
       currentLevel  = levelHovered;
       gamePhase     = 'playing';
       _gameEndFired = false;

@@ -123,6 +123,7 @@ function _drawPauseConfirm(px, py, pw, ph, pulse) {
 function handlePauseClick(mx, my) {
   // 点击 HUD 暂停按钮（使用传入坐标，与全局 mouseX/Y 解耦）
   if (_pauseBtnRect && inRect(mx, my, _pauseBtnRect.x, _pauseBtnRect.y, _pauseBtnRect.w, _pauseBtnRect.h)) {
+    playSfx('click');
     gamePaused = !gamePaused;
     pauseConfirmMode = false;
     return true;
@@ -133,10 +134,12 @@ function handlePauseClick(mx, my) {
   if (!pauseConfirmMode) {
     const [b0, b1, b2] = pauseMenuState.btns;
     if (b0 && inRect(mx, my, b0.x, b0.y, b0.w, b0.h)) {
+      playSfx('click');
       gamePaused = false;
       return true;
     }
     if (b1 && inRect(mx, my, b1.x, b1.y, b1.w, b1.h)) {
+      playSfx('click');
       gamePaused = false;
       pauseConfirmMode = false;
       _gameEndFired = false;
@@ -144,6 +147,7 @@ function handlePauseClick(mx, my) {
       return true;
     }
     if (b2 && inRect(mx, my, b2.x, b2.y, b2.w, b2.h)) {
+      playSfx('click');
       pauseConfirmMode = true;
       return true;
     }
@@ -151,12 +155,15 @@ function handlePauseClick(mx, my) {
     const { px, pw, confirmY, cancelY } = pauseMenuState;
     // 与 _drawPauseConfirm 中 rect(px + 30, …, pw - 60, …) 一致
     if (confirmY && inRect(mx, my, px + 30, confirmY, pw - 60, 44)) {
+      playSfx('click');
       gamePaused = false;
       pauseConfirmMode = false;
       gamePhase = 'levelmap';
+      setBgm('launch');  // 回到菜单音乐
       return true;
     }
     if (cancelY && inRect(mx, my, px + 30, cancelY, pw - 60, 40)) {
+      playSfx('click');
       pauseConfirmMode = false;
       return true;
     }
