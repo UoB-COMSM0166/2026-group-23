@@ -9,6 +9,7 @@
 let minigameState     = 'idle';
 let minigameResult    = 0;
 let minigameInitBalls = 10;
+let _bonusBallPending = 0;   // 触发 bonusball 门后，下一局开始时才加入 initBalls，结束后清零
 
 // ── 面板区域 ──
 let MG = { x:0, y:0, w:0, h:0 };
@@ -61,7 +62,9 @@ function startMinigame() {
   spawnQueue     = [];
   shootTimer     = 0;
   shootCount     = 0;
-  shootTotal     = minigameInitBalls;
+  // 应用上一局的奖励球加成，然后立即重置（仅生效一局）
+  shootTotal     = minigameInitBalls + _bonusBallPending;
+  _bonusBallPending = 0;
   shootDone      = false;
   aimConfirmed   = false;
   landedBalls    = 0;
@@ -82,7 +85,13 @@ function endMinigame() {
 }
 
 function updateMinigame() {
-  if (minigameState === 'idle' || minigameState === 'aiming') return;
+  if (minigameState === 'idle') return;
+
+  // 瞄准阶段也要更新门的滑动位置，让玩家发射前就能看到门在动
+  if (minigameState === 'aiming') {
+    updateMgGates();
+    return;
+  }
 
   if (minigameState === 'playing') {
     shootBalls();
@@ -199,10 +208,11 @@ function _getMinigameProfile() {
 
   // 基础布局参数：困难更密、行更多；高关卡再逐步提升复杂度
   const rows = constrain((hard ? 5 : 4) + (threat >= 3 ? 1 : 0), 4, 6);
-  const targetMulMin = hard ? max(2, 4 - floor(threat / 3)) : 4;
-  const targetMulMax = hard ? 5 : 6;
-  const bounceMin = hard ? 1 : 0;
-  const bounceMax = hard ? (threat >= 4 ? 2 : 1) : 1;
+  // 困难模式提高 mulBias，减少减法门比例
+  const targetMulMin = hard ? max(3, 4 - floor(threat / 3)) : 4;
+  const targetMulMax = hard ? 6 : 6;
+  const bounceMin = hard ? 1 : 1;   // 简单也保底1个
+  const bounceMax = hard ? (threat >= 4 ? 3 : 2) : 2;  // 略微提高上限
 
   return {
     lv,
@@ -215,12 +225,14 @@ function _getMinigameProfile() {
     bounceMax,
     // row 门数量概率（1~3门）
     rowCountWeights: hard ? [0.12, 0.48, 0.40] : [0.26, 0.54, 0.20],
-    // 顶层更容易给乘法，底层略收敛，避免雪球失控
-    mulBiasTop: hard ? 0.58 : 0.68,
-    mulBiasBottom: hard ? 0.30 : 0.40,
+    // 困难模式提高乘法门偏置，变相减少减法门数量
+    mulBiasTop: hard ? 0.68 : 0.68,
+    mulBiasBottom: hard ? 0.42 : 0.40,
     // 难度越高门越窄
     minGateDiv: hard ? 8.8 : 7.4,
     maxGateDiv: hard ? 4.7 : 4.2,
+    // 奖励球门出现概率（每局最多 1 个，约 40% 概率出现）
+    bonusBallProb: 0.40,
   };
 }
 
@@ -242,19 +254,16 @@ function _calcScoreBalanced(landed, profile) {
 }
 
 function _calcScoreClassicJackpot(landed, profile) {
-  // 旧版风格：常规稳定 + 极好运爆发（可冲高分）
-  const perBall = 2.0;
-  const base = landed * perBall;
-  let burst = 0;
-  if (landed > 200) burst += min(landed - 200, 300) * 2;
-  if (landed > 500) burst += min(landed - 500, 400) * 4;
-  if (landed > 900) burst += (landed - 900) * 8;
+  // 单一平滑公式：score = 2000 * (1 - exp(-k * x^p))
+  // 拟合锚点 50→250, 500→1500，后续极缓慢趋近 2000
+  // p=1.0163, k=0.002506（由两点联立方程解得）
+  const P = 1.0163, K = 0.002506;
+  const base = 2000 * (1 - Math.exp(-K * Math.pow(Math.max(landed, 0), P)));
 
   const levelMul = 1 + (profile.threat - 1) * 0.08;
   const difficultyMul = profile.hard ? 1.08 : 1.0;
-  const raw = floor((base + burst) * levelMul * difficultyMul);
+  const raw = floor(base * levelMul * difficultyMul);
 
-  // 保底较低，仅兜底，不主导收益
   const floorScore = 3 + profile.threat + (profile.hard ? 1 : 0);
   return max(raw, floorScore);
 }
@@ -325,8 +334,50 @@ function generateGates() {
         def = { type:'sub', value: s.value, label: s.label, col: [...s.col] };
       }
 
+      // ── 滑动门：行 ≥ 1 时约 30% 概率变为左右滑动 ──
+      const isSliding = row >= 1 && random() < 0.30;
+      const gateBaseX = curX + finalW[c] / 2;
+      // 滑动范围：感知两侧空闲空间，空间越大范围越大
+      let slideRange = 0;
+      if (isSliding) {
+        const spaceL = gateBaseX - finalW[c] / 2 - innerL;
+        const spaceR = (innerL + innerW) - (gateBaseX + finalW[c] / 2);
+        const freeSpace = min(spaceL, spaceR);
+        slideRange = constrain(freeSpace * 0.55, 18, 120);
+
+        // 防止与同行已有的滑动门运动区间重叠
+        // 同行门列表：当前 row 中已生成的门
+        const rowGates = mgGates.filter(gg => gg.row === row);
+        for (const gg of rowGates) {
+          if (!gg.sliding) continue;
+          // gg 的运动区间：[gg.slideBaseX - gg.slideRange - gg.w/2, gg.slideBaseX + gg.slideRange + gg.w/2]
+          const ggLeft  = gg.slideBaseX - gg.slideRange - gg.w / 2;
+          const ggRight = gg.slideBaseX + gg.slideRange + gg.w / 2;
+          const myLeft  = gateBaseX - finalW[c] / 2;
+          const myRight = gateBaseX + finalW[c] / 2;
+
+          // 如果当前门在已有门右侧，左边界不能越过 ggRight；反之同理
+          if (myLeft >= gg.slideBaseX) {
+            // 当前门在右边：左端 + slideRange 不能碰到 ggRight
+            const maxR = myLeft - ggRight - 4;   // 4px 安全间距
+            slideRange = constrain(slideRange, 0, max(0, maxR));
+          } else {
+            // 当前门在左边：右端 + slideRange 不能碰到 ggLeft
+            const maxR = ggLeft - myRight - 4;
+            slideRange = constrain(slideRange, 0, max(0, maxR));
+          }
+        }
+        // 裁剪后如果范围过小就取消滑动
+        if (slideRange < 10) slideRange = 0;
+      }
+      // 滑动速度（每帧像素）：随机方向，困难模式更快
+      const finalSliding = isSliding && slideRange >= 10;
+      const slideSpeed = finalSliding
+        ? random(profile.hard ? 0.8 : 0.5, profile.hard ? 1.6 : 1.1) * (random() < 0.5 ? 1 : -1)
+        : 0;
+
       mgGates.push({
-        x: curX + finalW[c] / 2,
+        x: gateBaseX,
         y,
         w: finalW[c],
         h: gateH,
@@ -335,6 +386,12 @@ function generateGates() {
         label: def.label, col: def.col,
         triggered: false,
         flashTimer: 0,
+        // 滑动属性
+        sliding:    finalSliding,
+        slideBaseX: gateBaseX,
+        slideRange,
+        slideSpeed,
+        slidePhase: random(TWO_PI),   // 初始相位错开，避免所有门同步运动
       });
       // 弹力板不允许出现在最上两层（row 0 / 1）
       if (row >= 2) bounceSlots.push({ gateIdx: mgGates.length - 1, row, col: c });
@@ -375,6 +432,22 @@ function generateGates() {
       g.label     = '↯';
       g.col       = [180, 60, 255];
       g.triggered = false;   // 弹跳门可多次触发（每球触发一次）
+    }
+  }
+
+  // ── 随机插入奖励球门（每局最多 1 个，约 bonusBallProb 概率出现）──
+  // 从中间行中随机挑一个普通门替换，不覆盖 bounce 门
+  if (random() < profile.bonusBallProb) {
+    const midStart = floor(rows * 0.3);
+    const candidates = mgGates.filter(g => g.row >= midStart && g.type !== 'bounce');
+    if (candidates.length > 0) {
+      const g = random(candidates);
+      g.type      = 'bonusball';
+      g.value     = 10;          // 下一局 +10 初始球
+      g.label     = '+10🎱';
+      g.col       = [50, 230, 120];
+      g.triggered = false;
+      g.flashTimer = 0;
     }
   }
 }
@@ -448,6 +521,59 @@ function updateMgGates() {
   for (const g of mgGates) {
     if (g.flashTimer > 0) g.flashTimer--;
 
+    // ── 滑动门位置更新 ──
+    if (g.sliding) {
+      g.slidePhase += g.slideSpeed * 0.045;
+      g.x = g.slideBaseX + sin(g.slidePhase) * g.slideRange;
+      // 硬夹边：门不能超出可用区域
+      const halfW = g.w / 2 + 8;
+      const minX  = MG.x + 28 + halfW;
+      const maxX  = MG.x + MG.w - 28 - halfW;
+      g.x = constrain(g.x, minX, maxX);
+    }
+  }
+
+  // ── 同行滑动门互斥推开（防止快速移动时重叠）──
+  const GATE_PAD = 4;  // 最小间距
+  // 按行分组处理
+  const rowMap = {};
+  for (const g of mgGates) {
+    if (!rowMap[g.row]) rowMap[g.row] = [];
+    rowMap[g.row].push(g);
+  }
+  for (const rowGates of Object.values(rowMap)) {
+    // 只对含滑动门的行处理
+    const sliding = rowGates.filter(g => g.sliding);
+    if (sliding.length === 0) continue;
+    // 按 x 排序，逐对推开
+    rowGates.sort((a, b) => a.x - b.x);
+    for (let i = 0; i < rowGates.length - 1; i++) {
+      const a = rowGates[i], b = rowGates[i + 1];
+      const minDist = a.w / 2 + b.w / 2 + GATE_PAD;
+      const overlap = minDist - (b.x - a.x);
+      if (overlap > 0) {
+        // 只推开滑动的那个（或各推一半）
+        const aMoves = a.sliding, bMoves = b.sliding;
+        if (aMoves && bMoves) {
+          a.x -= overlap / 2;
+          b.x += overlap / 2;
+        } else if (aMoves) {
+          a.x -= overlap;
+        } else if (bMoves) {
+          b.x += overlap;
+        }
+        // 推开后再夹边
+        const clamp = (g) => {
+          const hw = g.w / 2 + 8;
+          g.x = constrain(g.x, MG.x + 28 + hw, MG.x + MG.w - 28 - hw);
+        };
+        clamp(a); clamp(b);
+      }
+    }
+  }
+
+  // ── 球碰门触发 ──
+  for (const g of mgGates) {
     for (const b of mgBalls) {
       if (!b.alive || b.settled) continue;
 
@@ -507,6 +633,14 @@ function triggerGate(g, ball) {
       });
     }
     spawnMgPart(g.x, g.y, color(...g.col), 16);
+
+  } else if (g.type === 'bonusball') {
+    // 奖励球门：一次性触发，仅下一局 +10，之后恢复原值
+    if (g.triggered) return;
+    g.triggered  = true;
+    g.flashTimer = 55;
+    _bonusBallPending += g.value;   // 存入待用池，下局 startMinigame 时消费
+    spawnMgPart(g.x, g.y, color(...g.col), 20);
 
   } else {
     // - 门：一次性，消灭 N 个活跃球
@@ -637,6 +771,43 @@ function drawMgGates() {
       continue;   // 跳过后面的通用绘制
     }
 
+    // ── 奖励球门专属外观 ──
+    if (g.type === 'bonusball') {
+      const [r3, g3, b3] = g.col;
+      const t3 = sin(frameCount * 0.18) * 0.5 + 0.5;
+      const faded3 = g.triggered;
+      const alpha3 = faded3 ? 60 : 215;
+      // 外光晕（绿色）
+      noStroke(); fill(r3, g3, b3, faded3 ? 8 : 20 + t3 * 30);
+      rect(g.x - g.w/2 - 12, g.y - g.h/2 - 12, g.w + 24, g.h + 24, 16);
+      // 底色
+      fill(r3 * 0.15, g3 * 0.25, b3 * 0.15, alpha3);
+      rect(g.x - g.w/2, g.y - g.h/2, g.w, g.h, 8);
+      // 门面
+      fill(r3, g3, b3, faded3 ? 55 : 170 + t3 * 45);
+      rect(g.x - g.w/2, g.y - g.h/2, g.w, g.h - 5, 8);
+      // 高光
+      fill(200, 255, 220, faded3 ? 10 : 70 + t3 * 60);
+      rect(g.x - g.w/2 + 5, g.y - g.h/2 + 4, g.w - 10, 4, 3);
+      // 稀有脉冲边框
+      if (!faded3) {
+        noFill(); stroke(100, 255, 180, 140 * t3); strokeWeight(2);
+        rect(g.x - g.w/2 - 4, g.y - g.h/2 - 4, g.w + 8, g.h + 8, 10);
+      }
+      // 标签
+      noStroke(); fill(faded3 ? 120 : 220, 255, faded3 ? 120 : 200, faded3 ? 100 : 235);
+      textSize(g.w < 80 ? 11 : 13); textAlign(CENTER, CENTER);
+      text(faded3 ? '✓ +10🎱' : '+10🎱', g.x, g.y);
+      // 触发闪光
+      if (g.flashTimer > 0) {
+        const fv = g.flashTimer / 55;
+        noFill(); stroke(r3, g3, b3, fv * 240); strokeWeight(2 + fv * 7);
+        rect(g.x - g.w/2 - (1-fv)*16, g.y - g.h/2 - (1-fv)*16,
+             g.w + (1-fv)*32, g.h + (1-fv)*32, 14);
+      }
+      textAlign(LEFT, BASELINE);
+      continue;
+    }
 
     if (!faded) {
       noStroke();
@@ -696,6 +867,28 @@ function drawMgGates() {
       strokeWeight(2 + flash * 5);
       rect(g.x - g.w/2 - (1-flash)*14, g.y - g.h/2 - (1-flash)*14,
            g.w + (1-flash)*28, g.h + (1-flash)*28, 12);
+    }
+
+    // ── 滑动门专属：运动轨道线 + 箭头 ──
+    if (g.sliding && !faded) {
+      const trackL = g.slideBaseX - g.slideRange;
+      const trackR = g.slideBaseX + g.slideRange;
+      const midY   = g.y;
+      // 轨道虚线
+      stroke(0, 220, 255, 55); strokeWeight(1.2);
+      drawingContext.setLineDash([4, 6]);
+      line(trackL, midY, trackR, midY);
+      drawingContext.setLineDash([]);
+      // 两端箭头（三角形）
+      const arrSize = 5;
+      noStroke(); fill(0, 220, 255, 90);
+      triangle(trackL - arrSize, midY, trackL + arrSize, midY - arrSize, trackL + arrSize, midY + arrSize);
+      triangle(trackR + arrSize, midY, trackR - arrSize, midY - arrSize, trackR - arrSize, midY + arrSize);
+      // 移动门外框发光（蓝白细边）
+      const slPulse = sin(frameCount * 0.16 + g.slidePhase) * 0.4 + 0.6;
+      noFill();
+      stroke(160, 230, 255, 120 * slPulse); strokeWeight(1.5);
+      rect(g.x - g.w/2 - 3, g.y - g.h/2 - 3, g.w + 6, g.h + 6, 10);
     }
   }
   textAlign(LEFT, BASELINE);
