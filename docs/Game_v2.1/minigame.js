@@ -11,6 +11,11 @@ let minigameResult    = 0;
 let minigameInitBalls = 10;
 let _bonusBallPending = 0;   // 触发 bonusball 门后，下一局开始时才加入 initBalls，结束后清零
 
+// ── 问号帮助面板 ──
+let _mgHelpOpen        = false;
+let _mgHelpSeen        = false;   // 本次游戏会话是否已提示过
+const MG_HELP_FLAG_KEY = 'qd_mg_help_seen';
+
 // ── 面板区域 ──
 let MG = { x:0, y:0, w:0, h:0 };
 
@@ -69,11 +74,16 @@ function startMinigame() {
   aimConfirmed   = false;
   landedBalls    = 0;
 
+  _mgHelpOpen = false;
+  // 检查是否曾经看过帮助（首次进入显示引导箭头）
+  try { _mgHelpSeen = localStorage.getItem(MG_HELP_FLAG_KEY) === '1'; } catch(e) { _mgHelpSeen = false; }
+
   MG.x = 0;
   MG.y = HUD_HEIGHT;
   MG.w = width;
   MG.h = height - HUD_HEIGHT;
 
+  _mgStars = null;   // 重新按实际尺寸生成星场
   aimX = MG.x + MG.w / 2;
 
   generateGates();
@@ -119,6 +129,9 @@ function drawMinigame() {
   drawMgBalls();
   drawMgParticles();
   drawMgHUD();
+  drawMgHelpBtn();
+  if (!_mgHelpSeen) drawMgHelpGuide();
+  if (_mgHelpOpen)  drawMgHelpPanel();
   if (minigameState === 'aiming') drawAimUI();
   if (minigameState === 'result') drawResultUI();
 }
@@ -126,6 +139,20 @@ function drawMinigame() {
 // 鼠标点击
 function handleMinigameClick(mx, my) {
   if (minigameState === 'idle') return false;
+
+  // 问号帮助按钮
+  const hb = _mgHelpBtnRect();
+  if (_mgInRect(mx, my, hb)) {
+    _mgHelpOpen = !_mgHelpOpen;
+    if (!_mgHelpSeen) {
+      _mgHelpSeen = true;
+      try { localStorage.setItem(MG_HELP_FLAG_KEY, '1'); } catch(e) {}
+    }
+    return true;
+  }
+  // 面板打开时点任意处关闭
+  if (_mgHelpOpen) { _mgHelpOpen = false; return true; }
+
   if (minigameState === 'aiming') {
     aimX          = constrain(mx, MG.x + 20, MG.x + MG.w - 20);
     aimConfirmed  = true;
@@ -677,37 +704,67 @@ function checkSettlement() {
 }
 
 // ============================================================
-//  绘制：背景（保持游戏科幻风格，用深蓝半透明遮罩）
+//  绘制：背景（科幻量子空间风格）
 // ============================================================
+let _mgStars = null;
+function _initMgStars() {
+  _mgStars = [];
+  for (let i = 0; i < 110; i++) {
+    _mgStars.push({
+      x: random(MG.w), y: random(MG.h),
+      r: random(0.5, 2.2),
+      spd: random(0.003, 0.012),
+      phase: random(TWO_PI),
+    });
+  }
+}
+
 function drawMgBackground() {
-  // 主底色（和主游戏面板一致的深蓝）
+  if (!_mgStars || _mgStars.length === 0) _initMgStars();
+  push();
+  // 深空底色渐变：上深蓝 -> 下深紫
   noStroke();
-  fill(4, 8, 22, 238);
-  rect(MG.x, MG.y, MG.w, MG.h);
-
-  // 边缘压暗，减少“平铺网格”割裂感
-  fill(0, 0, 0, 42);
-  rect(MG.x, MG.y, 28, MG.h);
-  rect(MG.x + MG.w - 28, MG.y, 28, MG.h);
-  rect(MG.x, MG.y, MG.w, 18);
-  rect(MG.x, MG.y + MG.h - 18, MG.w, 18);
-
-  // 轻量网格 + 扫描线，和全局科幻 UI 风格保持一致
-  stroke(0, 150, 220, 12); strokeWeight(1);
-  for (let x = MG.x; x < MG.x + MG.w; x += 44) line(x, MG.y, x, MG.y + MG.h);
-  for (let y = MG.y; y < MG.y + MG.h; y += 44) line(MG.x, y, MG.x + MG.w, y);
+  for (let y = 0; y < MG.h; y += 3) {
+    const t = y / MG.h;
+    fill(lerp(2,8,t), lerp(5,4,t), lerp(22,16,t), 255);
+    rect(MG.x, MG.y + y, MG.w, 3);
+  }
+  // 星场（闪烁）
+  for (const s of _mgStars) {
+    const bri = sin(frameCount * s.spd + s.phase) * 0.45 + 0.55;
+    noStroke(); fill(180, 210, 255, bri * 155);
+    ellipse(MG.x + s.x, MG.y + s.y, s.r * 2, s.r * 2);
+  }
+  // 横向扫描光带（慢速下移）
+  const scanY = ((frameCount * 0.4) % (MG.h + 60)) - 30;
   noStroke();
-  fill(0, 0, 0, 12);
+  for (let dy = 0; dy < 28; dy++) {
+    fill(0, 160, 255, sin(dy / 28 * PI) * 18);
+    rect(MG.x, MG.y + scanY + dy, MG.w, 1);
+  }
+  // 网格（轻量）
+  stroke(0, 130, 210, 10); strokeWeight(1);
+  for (let x = MG.x; x < MG.x + MG.w; x += 52) line(x, MG.y, x, MG.y + MG.h);
+  for (let y = MG.y; y < MG.y + MG.h; y += 52) line(MG.x, y, MG.x + MG.w, y);
+  // 扫描线纹理
+  noStroke(); fill(0, 0, 0, 14);
   for (let y = MG.y; y < MG.y + MG.h; y += 4) rect(MG.x, y, MG.w, 2);
-
-  // 面板内框，和结束面板同色系
-  noFill();
-  stroke(0, 180, 255, 70); strokeWeight(1.2);
+  // 边缘内框
+  noFill(); stroke(0, 180, 255, 65); strokeWeight(1.2);
   rect(MG.x + 8, MG.y + 8, MG.w - 16, MG.h - 16, 8);
-
-  // 底部落地线（稍亮，便于读轨迹）
+  // 底部落地线
   stroke(0, 200, 255, 120); strokeWeight(1.6);
   line(MG.x + 10, MG.y + MG.h - 20, MG.x + MG.w - 10, MG.y + MG.h - 20);
+  // 四边渐暗压边
+  noStroke();
+  for (let i = 0; i < 32; i++) {
+    fill(0, 0, 0, lerp(40, 0, i / 32));
+    rect(MG.x, MG.y + i, MG.w, 1);
+    rect(MG.x, MG.y + MG.h - i - 1, MG.w, 1);
+    rect(MG.x + i, MG.y, 1, MG.h);
+    rect(MG.x + MG.w - i - 1, MG.y, 1, MG.h);
+  }
+  pop();
 }
 
 // ============================================================
@@ -960,10 +1017,10 @@ function drawAimUI() {
   textSize(10); textAlign(CENTER, CENTER);
   text('×' + shootTotal, aimX, MG.y + 28 + 24);
 
-  // 提示
-  fill(0, 200, 255, 200); textSize(13);
-  text('Click to launch', MG.x + MG.w / 2, MG.y + MG.h / 2);
-  text('Click to launch', MG.x + MG.w / 2, MG.y + MG.h / 2);
+  // 提示文字改为底部小字，不再遮挡中央
+  fill(0, 200, 255, 140); textSize(11);
+  textAlign(CENTER, CENTER);
+  text('← click anywhere to launch →', MG.x + MG.w / 2, MG.y + MG.h - 36);
   textAlign(LEFT, BASELINE);
 }
 
@@ -1038,4 +1095,156 @@ function demolishTower(t) {
   const refund = Math.floor(TOWER_DEFS[t.type].cost * 0.8);
   coins += refund;
   towers = towers.filter(tower => tower !== t);
+}
+
+// ============================================================
+//  小游戏帮助系统
+// ============================================================
+
+// 问号按钮矩形（暂停键正下方）
+function _mgHelpBtnRect() {
+  // _pauseBtnRect 由 ui/pause.js 在每帧绘制时填入，优先使用
+  const pb = (typeof _pauseBtnRect !== 'undefined' && _pauseBtnRect)
+    ? _pauseBtnRect
+    : { x: width - 46, y: 6, w: 36, h: 36 };   // 退回估算值
+  const GAP = 6;
+  return { x: pb.x, y: pb.y + pb.h + GAP, w: pb.w, h: pb.h };
+}
+
+function _mgInRect(mx, my, r) {
+  return mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h;
+}
+
+// ── 问号按钮 ──
+function drawMgHelpBtn() {
+  const r = _mgHelpBtnRect();
+  const hov = _mgInRect(mouseX, mouseY, r);
+  const pulse = sin(frameCount * 0.12) * 0.3 + 0.7;
+
+  push();
+  // 外发光（首次未看时更显眼）
+  if (!_mgHelpSeen) {
+    noFill(); stroke(0, 220, 255, 90 * pulse); strokeWeight(4);
+    rect(r.x - 4, r.y - 4, r.w + 8, r.h + 8, 10);
+  }
+  // 按钮底色
+  noStroke();
+  fill(hov ? color(0, 60, 120, 230) : color(5, 20, 50, 210));
+  rect(r.x, r.y, r.w, r.h, 7);
+  // 边框
+  noFill();
+  stroke(hov ? color(0, 240, 255, 240) : color(0, 180, 255, 160));
+  strokeWeight(1.5);
+  rect(r.x, r.y, r.w, r.h, 7);
+  // 问号文字
+  noStroke();
+  fill(hov ? color(255, 255, 255, 255) : color(0, 210, 255, 220));
+  textFont('monospace'); textSize(18); textAlign(CENTER, CENTER);
+  text('?', r.x + r.w / 2, r.y + r.h / 2 + 1);
+  pop();
+  textAlign(LEFT, BASELINE);
+}
+
+// ── 首次进入：箭头引导 ──
+function drawMgHelpGuide() {
+  if (_mgHelpSeen || _mgHelpOpen) return;
+  const r  = _mgHelpBtnRect();
+  const cx = r.x + r.w / 2;
+  const cy = r.y + r.h / 2;
+  const pulse = sin(frameCount * 0.14) * 0.4 + 0.6;
+
+  push();
+  // 高亮圆环
+  noFill(); stroke(0, 220, 255, 180 * pulse); strokeWeight(2.5);
+  ellipse(cx, cy, r.w + 18 + pulse * 6, r.h + 18 + pulse * 6);
+
+  // 箭头（从按钮左下方指向按钮）
+  const ax = cx - 68, ay = cy + 52;
+  stroke(0, 220, 255, 200 * pulse); strokeWeight(2);
+  // 弯曲感用折线模拟：起点 → 转折 → 终点
+  line(ax, ay, cx - 14, cy + 14);
+  // 箭头头
+  const ang = atan2(cy - (ay), cx - 14 - ax) ; // 指向右上
+  const hs = 10;
+  line(cx - 14, cy + 14, cx - 14 - cos(ang + 0.4) * hs, cy + 14 - sin(ang + 0.4) * hs);
+  line(cx - 14, cy + 14, cx - 14 - cos(ang - 0.4) * hs, cy + 14 - sin(ang - 0.4) * hs);
+
+  // 提示文字
+  noStroke(); fill(0, 220, 255, 210 * pulse);
+  textFont('monospace'); textSize(11); textAlign(CENTER, TOP);
+  text('How to play?', ax, ay + 8);
+  pop();
+  textAlign(LEFT, BASELINE);
+}
+
+// ── 帮助面板 ──
+function drawMgHelpPanel() {
+  const PW = min(520, width - 32), PH = 390;
+  const px = (width - PW) / 2;
+  const py = MG.y + (MG.h - PH) / 2;
+
+  push();
+  // 遮罩
+  noStroke(); fill(0, 0, 0, 160);
+  rect(MG.x, MG.y, MG.w, MG.h);
+
+  // 面板背景
+  fill(3, 8, 22, 248);
+  rect(px, py, PW, PH, 12);
+  stroke(0, 200, 255, 200); strokeWeight(2); noFill();
+  rect(px, py, PW, PH, 12);
+  // 顶部色条
+  noStroke(); fill(0, 200, 255, 190);
+  rect(px, py, PW, 6, 12, 12, 0, 0);
+
+  // 标题
+  textFont('monospace');
+  fill(0, 220, 255, 240); textSize(16); textAlign(LEFT, TOP);
+  text('HOW TO PLAY — MINIGAME', px + 20, py + 18);
+
+  stroke(0, 180, 255, 70); strokeWeight(1);
+  line(px + 20, py + 46, px + PW - 20, py + 46);
+  noStroke();
+
+  // ── 基本操作 ──
+  fill(180, 210, 255, 200); textSize(11);
+  text('① Move mouse to aim  ·  Click to launch all balls', px + 20, py + 58);
+
+  // ── 门类型说明 ──
+  const entries = [
+    { col: [255, 175, 0],  label: '× Multiply', desc: 'Each ball splits into N copies — chain for big combos!' },
+    { col: [220, 55, 55],  label: '− Subtract',  desc: 'One-shot trap: destroys N balls nearest to the gate.' },
+    { col: [180, 60, 255], label: '↯ BOUNCE',    desc: 'Launches ball upward — great for extra gate hits.' },
+    { col: [50, 230, 120], label: '+10 🎱 Bonus', desc: 'Next round starts with 10 extra balls (one time only).' },
+    { col: [160, 230, 255],label: '⇄ Sliding',   desc: 'Some gates slide left/right — time your shot!' },
+  ];
+
+  let ey = py + 82;
+  for (const e of entries) {
+    const [er, eg, eb] = e.col;
+    // 色块
+    noStroke(); fill(er, eg, eb, 200);
+    rect(px + 20, ey, 10, 10, 2);
+    // 标签
+    fill(er, eg, eb, 230); textSize(12);
+    text(e.label, px + 38, ey);
+    // 描述
+    fill(180, 205, 240, 185); textSize(10);
+    text(e.desc, px + 38, ey + 15);
+    ey += 48;
+  }
+
+  // ── 分数说明 ──
+  stroke(0, 180, 255, 55); strokeWeight(1);
+  line(px + 20, ey + 4, px + PW - 20, ey + 4);
+  noStroke();
+  fill(255, 220, 60, 210); textSize(11);
+  text('Score  ≈  50 balls → ¥250  ·  200 → ¥800  ·  500 → ¥1500  ·  1000 → ¥2000+', px + 20, ey + 16);
+
+  // ── 关闭提示 ──
+  fill(0, 160, 200, 140); textSize(10); textAlign(CENTER, TOP);
+  text('[ click anywhere to close ]', px + PW / 2, py + PH - 20);
+
+  pop();
+  textAlign(LEFT, BASELINE);
 }
