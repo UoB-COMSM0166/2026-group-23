@@ -33,13 +33,19 @@ function calcProgress(pos, seg, path) {
 //  粒子系统
 // ============================================================
 let particles = [];
+const MAX_PARTICLES = 400;   // 硬上限：防止齐射瞬间粒子爆量拖帧
 
 function spawnParticles(x, y, col, count) {
+  // 补丁 1：硬上限 + 本次裁剪
+  if (particles.length >= MAX_PARTICLES) return;
+  count = Math.min(count, MAX_PARTICLES - particles.length);
+  // 补丁 2：预解析 col 的 r/g/b，避免 updateParticles 里每帧每粒子调用 red/green/blue
+  const pr = red(col), pg = green(col), pb = blue(col);
   for (let i = 0; i < count; i++) {
     const a = random(TWO_PI), s = random(1.5, 5);
     particles.push({
       x, y, vx: cos(a)*s, vy: sin(a)*s,
-      life: 1.0, col, size: random(2, 7),
+      life: 1.0, r: pr, g: pg, b: pb, size: random(2, 7),
     });
   }
 }
@@ -51,7 +57,7 @@ function updateParticles() {
     p.vx *= 0.88; p.vy *= 0.88;
     p.life -= 0.04;
     noStroke();
-    fill(red(p.col), green(p.col), blue(p.col), p.life * 220);
+    fill(p.r, p.g, p.b, p.life * 220);   // 补丁 2：直接用预解析的 r/g/b
     push(); translate(p.x, p.y); rotate(p.vx * 0.5);
     rectMode(CENTER); rect(0, 0, p.size*p.life*1.4, p.size*p.life*0.7);
     rectMode(CORNER); pop();
