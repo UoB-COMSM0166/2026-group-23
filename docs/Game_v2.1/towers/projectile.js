@@ -126,12 +126,12 @@ class Projectile {
             if (m instanceof GhostBird && m.isGhost) continue;
             if (Math.hypot(m.pos.x - this.targetX, m.pos.y - this.targetY) <= this.blastRadius) {
               m.takeDamage(this.dmg);
-              spawnParticles(m.pos.x, m.pos.y, color(...this.col), 8);
+              spawnParticles(m.pos.x, m.pos.y, color(...this.col), 4);   // 补丁 3：8→4
             }
           }
         }
         // 爆炸粒子
-        spawnParticles(this.targetX, this.targetY, color(...this.col), 30);
+        spawnParticles(this.targetX, this.targetY, color(...this.col), 15);   // 补丁 3：30→15
         _cannonBlasts.push({ x: this.targetX, y: this.targetY, r: this.blastRadius, life: 30 });
         playSfx('explode');
         this.alive = false;
