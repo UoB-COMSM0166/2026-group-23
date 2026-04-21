@@ -297,10 +297,9 @@ function _calcScoreClassicJackpot(landed, profile) {
 
 function _calcMinigameScore(landed) {
   const profile = _getMinigameProfile();
-  // const scoreMode = 'stable_balanced';
-  const scoreMode = 'classic_jackpot';
+  const scoreMode = 'stable_balanced';
 
-  // if (scoreMode === 'stable_balanced') return _calcScoreBalanced(landed, profile);
+  if (scoreMode === 'stable_balanced') return _calcScoreBalanced(landed, profile);
   if (scoreMode === 'classic_jackpot') return _calcScoreClassicJackpot(landed, profile);
   return _calcScoreClassicJackpot(landed, profile);
 }
