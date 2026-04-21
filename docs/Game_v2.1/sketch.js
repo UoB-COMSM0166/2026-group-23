@@ -216,8 +216,10 @@ function initGame() {
 
   initTowers();
   initUI();
-  beginAutoWave();
+  // 先决定教程状态，再进入波次系统；
+  // 否则 beginAutoWave() 会在教程置位前启动小游戏，导致教程期看不到塔面板/建造栏。
   startTutorialIfNeeded(); // 第 1 关首次进入时弹出新手引导
+  beginAutoWave();
 
   // 切到该关卡的 BGM（launch → level{N}）
   setBgm('level' + currentLevel);
