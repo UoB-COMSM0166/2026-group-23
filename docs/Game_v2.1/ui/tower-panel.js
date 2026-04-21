@@ -11,7 +11,10 @@ function drawTowerPanel() {
 
   // 使用 tw 作为塔对象别名，避免遮蔽全局 i18n 的 t()
   const tw     = selectedTower;
-  const panelW = 178, panelH = 158;
+  // 加农炮说明更长，面板略放大并允许说明换行，缓解拥挤
+  const isCannon = tw.type === 'cannon';
+  const panelW = isCannon ? 196 : 178;
+  const panelH = isCannon ? 174 : 158;
   const px     = constrain(tw.px + 35, 0, width  - panelW - 4);
   const py     = constrain(tw.py - 30, HUD_HEIGHT + 4, height - panelH - 4);
 
@@ -44,26 +47,30 @@ function drawTowerPanel() {
   let specialY = py + 78;
   const specials = TOWER_SPECIALS[tw.type];
   if (specials) {
+    const textW = panelW - 20;
     for (const [label, col] of specials(tw)) {
       fill(...col); noStroke(); textSize(9);
-      text(label, px + 10, specialY);
-      specialY += 14;
+      text(label, px + 10, specialY, textW, 28);
+      const lineCount = max(1, Math.ceil(textWidth(label) / textW));
+      specialY += lineCount * 11 + 3;
     }
   }
+  // 防止说明挤压到底部按钮区域
+  const upgradeY = min(specialY, py + panelH - 64);
 
   // 升级按钮
   if (!isMaxed) {
     const canUpg = coins >= tw.upgradeCost;
     fill(canUpg ? color(0, 150, 75, 200) : color(55, 55, 55, 180));
     stroke(canUpg ? color(0, 210, 95, 200) : color(95, 95, 95, 120)); strokeWeight(1);
-    rect(px + 8, specialY, panelW - 16, 24, 3);
+    rect(px + 8, upgradeY, panelW - 16, 24, 3);
     fill(canUpg ? color(175, 255, 195, 230) : color(135, 135, 135, 180));
     noStroke(); textSize(9); textAlign(CENTER, CENTER);
-    text(t('tower.panel.upgrade', tw.level + 1, tw.upgradeCost), px + panelW / 2, specialY + 12);
-    tw._btnRect = { x: px + 8, y: specialY, w: panelW - 16, h: 24 };
+    text(t('tower.panel.upgrade', tw.level + 1, tw.upgradeCost), px + panelW / 2, upgradeY + 12);
+    tw._btnRect = { x: px + 8, y: upgradeY, w: panelW - 16, h: 24 };
   } else {
     fill(255, 200, 50, 155); noStroke(); textSize(9); textAlign(CENTER, CENTER);
-    text(t('tower.panel.maxed'), px + panelW / 2, specialY + 8);
+    text(t('tower.panel.maxed'), px + panelW / 2, upgradeY + 8);
     tw._btnRect = null;
   }
 

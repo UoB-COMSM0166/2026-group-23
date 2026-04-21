@@ -55,6 +55,62 @@ let landedBalls = 0;
 // ── 待添加队列（避免迭代中修改数组） ──
 let spawnQueue = [];
 
+// ── 门布局约束与重掷评分参数（三档预设） ──
+const MG_LAYOUT_PRESETS = {
+  conservative: {
+    rules: {
+      maxBouncePerRow: 1,
+      bounceSameColXTol: 62,
+      maxRerolls: 3,
+      minAcceptScoreEasy: 3,
+      minAcceptScoreHard: 2,
+    },
+    weights: {
+      mul: 1.25,
+      bonus: 0.9,
+      sub: -1.0,
+      bounce: -0.5,
+      sameColBouncePenalty: -1.8,
+    },
+  },
+  standard: {
+    rules: {
+      maxBouncePerRow: 1,
+      bounceSameColXTol: 54,
+      maxRerolls: 2,
+      minAcceptScoreEasy: 2,
+      minAcceptScoreHard: 1,
+    },
+    weights: {
+      mul: 1.2,
+      bonus: 0.8,
+      sub: -0.9,
+      bounce: -0.35,
+      sameColBouncePenalty: -1.5,
+    },
+  },
+  aggressive: {
+    rules: {
+      maxBouncePerRow: 1,
+      bounceSameColXTol: 46,
+      maxRerolls: 1,
+      minAcceptScoreEasy: 1,
+      minAcceptScoreHard: 0,
+    },
+    weights: {
+      mul: 1.1,
+      bonus: 0.7,
+      sub: -0.8,
+      bounce: -0.2,
+      sameColBouncePenalty: -1.0,
+    },
+  },
+};
+
+const MG_LAYOUT_PRESET_NAME = 'standard';
+const MG_GATE_LAYOUT_RULES = MG_LAYOUT_PRESETS[MG_LAYOUT_PRESET_NAME].rules;
+const MG_GATE_LAYOUT_SCORE_WEIGHTS = MG_LAYOUT_PRESETS[MG_LAYOUT_PRESET_NAME].weights;
+
 // ============================================================
 //  对外接口
 // ============================================================
@@ -304,7 +360,7 @@ function _calcMinigameScore(landed) {
   return _calcScoreClassicJackpot(landed, profile);
 }
 
-function generateGates() {
+function generateGates(_rerollTry = 0) {
   mgGates = [];
   const profile = _getMinigameProfile();
   const rows    = profile.rows;
@@ -319,6 +375,7 @@ function generateGates() {
 
   const TARGET_MUL = floor(random(profile.targetMulMin, profile.targetMulMax + 1));
   let mulCount = 0;
+  let guaranteedMulGate = null; // 下半区保底加分门，用于后续“上方通道保护”
 
   // 弹跳门数量按难度/关卡决定，记录可替换坑位（仍禁止上两层）
   const bounceCount  = floor(random(profile.bounceMin, profile.bounceMax + 1));
@@ -440,18 +497,69 @@ function generateGates() {
       g.col = [...m.col];
       g.triggered = false;
       g.flashTimer = 0;
+      guaranteedMulGate = g;
+    }
+  }
+  // 若已天然存在下半区乘法门，选一个最靠下的作为“保底加分门”来保护上方通道
+  if (!guaranteedMulGate) {
+    const lowerMuls = mgGates.filter(g => g.row >= lowerRow && g.type === 'mul');
+    if (lowerMuls.length > 0) {
+      guaranteedMulGate = lowerMuls.sort((a, b) => b.row - a.row)[0];
     }
   }
 
   // ── 随机替换 bounceCount 个普通门为弹跳门 ──
   if (bounceCount > 0 && bounceSlots.length > 0) {
-    // 打乱并取前 bounceCount 个
-    for (let i = bounceSlots.length - 1; i > 0; i--) {
-      const j = floor(random(i + 1));
-      [bounceSlots[i], bounceSlots[j]] = [bounceSlots[j], bounceSlots[i]];
+    let slots = bounceSlots;
+    // 尽量避免在“保底加分门”正上方刷出弹跳门，减少进线路径遮挡
+    if (guaranteedMulGate) {
+      const laneHalfWidth = guaranteedMulGate.w * 0.65 + 26;
+      const safeSlots = bounceSlots.filter(s => {
+        const gg = mgGates[s.gateIdx];
+        if (!gg) return false;
+        const isAboveGuaranteed = gg.row < guaranteedMulGate.row;
+        const inProtectedLane = abs(gg.x - guaranteedMulGate.x) < laneHalfWidth;
+        return !(isAboveGuaranteed && inProtectedLane);
+      });
+      if (safeSlots.length > 0) slots = safeSlots;
     }
-    for (let k = 0; k < min(bounceCount, bounceSlots.length); k++) {
-      const idx = bounceSlots[k].gateIdx;
+    // 打乱并取前 bounceCount 个
+    for (let i = slots.length - 1; i > 0; i--) {
+      const j = floor(random(i + 1));
+      [slots[i], slots[j]] = [slots[j], slots[i]];
+    }
+
+    // 约束随机：
+    // 1) 每行最多 1 个弹跳门
+    // 2) 同列禁连跳（同列附近一旦已有 bounce，不再放第二个）
+    const pickedSlots = [];
+    const rowUsed = Object.create(null);
+
+    for (const s of slots) {
+      if (pickedSlots.length >= bounceCount) break;
+      const g = mgGates[s.gateIdx];
+      if (!g) continue;
+
+      if ((rowUsed[g.row] || 0) >= MG_GATE_LAYOUT_RULES.maxBouncePerRow) continue;
+
+      const hasSameColumnBounce = pickedSlots.some(ps => {
+        const pg = mgGates[ps.gateIdx];
+        if (!pg) return false;
+        return abs(pg.x - g.x) < MG_GATE_LAYOUT_RULES.bounceSameColXTol;
+      });
+      if (hasSameColumnBounce) continue;
+
+      pickedSlots.push(s);
+      rowUsed[g.row] = (rowUsed[g.row] || 0) + 1;
+    }
+
+    // 若约束过严导致一个都选不出，保底放 1 个，避免弹跳机制完全消失
+    if (pickedSlots.length === 0 && slots.length > 0) {
+      pickedSlots.push(slots[0]);
+    }
+
+    for (let k = 0; k < pickedSlots.length; k++) {
+      const idx = pickedSlots[k].gateIdx;
       const g   = mgGates[idx];
       g.type      = 'bounce';
       g.value     = 0;
@@ -465,7 +573,17 @@ function generateGates() {
   // 从中间行中随机挑一个普通门替换，不覆盖 bounce 门
   if (random() < profile.bonusBallProb) {
     const midStart = floor(rows * 0.3);
-    const candidates = mgGates.filter(g => g.row >= midStart && g.type !== 'bounce');
+    let candidates = mgGates.filter(g => g.row >= midStart && g.type !== 'bounce');
+    // 同样尽量避免在保底加分门上方保护通道放置特殊门
+    if (guaranteedMulGate) {
+      const laneHalfWidth = guaranteedMulGate.w * 0.65 + 26;
+      const safeCandidates = candidates.filter(g => {
+        const isAboveGuaranteed = g.row < guaranteedMulGate.row;
+        const inProtectedLane = abs(g.x - guaranteedMulGate.x) < laneHalfWidth;
+        return !(isAboveGuaranteed && inProtectedLane);
+      });
+      if (safeCandidates.length > 0) candidates = safeCandidates;
+    }
     if (candidates.length > 0) {
       const g = random(candidates);
       g.type      = 'bonusball';
@@ -476,6 +594,61 @@ function generateGates() {
       g.flashTimer = 0;
     }
   }
+
+  // 最后兜底：尽量清理保底加分门上方同列的遮挡门（sub/bounce/bonusball）
+  if (guaranteedMulGate) {
+    const laneHalfWidth = guaranteedMulGate.w * 0.65 + 22;
+    for (const g of mgGates) {
+      if (g === guaranteedMulGate) continue;
+      const isAboveGuaranteed = g.row < guaranteedMulGate.row;
+      const inProtectedLane = abs(g.x - guaranteedMulGate.x) < laneHalfWidth;
+      const isBlocker = (g.type === 'sub' || g.type === 'bounce' || g.type === 'bonusball');
+      if (isAboveGuaranteed && inProtectedLane && isBlocker && random() < 0.8) {
+        const m = pickMul();
+        g.type = 'mul';
+        g.value = m.value;
+        g.label = m.label;
+        g.col = [...m.col];
+        g.triggered = false;
+        g.flashTimer = 0;
+      }
+    }
+  }
+
+  // 低分重掷：若布局得分过低，重生门布局（最多重掷 2 次）
+  const layoutScore = _scoreGateLayoutForReroll(mgGates);
+  const minAcceptScore = profile.hard
+    ? MG_GATE_LAYOUT_RULES.minAcceptScoreHard
+    : MG_GATE_LAYOUT_RULES.minAcceptScoreEasy;
+  if (layoutScore < minAcceptScore && _rerollTry < MG_GATE_LAYOUT_RULES.maxRerolls) {
+    generateGates(_rerollTry + 1);
+  }
+}
+
+function _scoreGateLayoutForReroll(gates) {
+  if (!gates || gates.length === 0) return -99;
+  let mul = 0, sub = 0, bounce = 0, bonus = 0;
+  const bounceCols = [];
+  for (const g of gates) {
+    if (g.type === 'mul') mul++;
+    else if (g.type === 'sub') sub++;
+    else if (g.type === 'bounce') {
+      bounce++;
+      bounceCols.push(g.x);
+    } else if (g.type === 'bonusball') bonus++;
+  }
+  // 同列 bounce 复用越多，扣分越高（虽然前面已约束，这里作为兜底评分）
+  let sameColPenalty = 0;
+  for (let i = 0; i < bounceCols.length; i++) {
+    for (let j = i + 1; j < bounceCols.length; j++) {
+      if (abs(bounceCols[i] - bounceCols[j]) < MG_GATE_LAYOUT_RULES.bounceSameColXTol) sameColPenalty++;
+    }
+  }
+  return mul * MG_GATE_LAYOUT_SCORE_WEIGHTS.mul
+      + bonus * MG_GATE_LAYOUT_SCORE_WEIGHTS.bonus
+      + sub * MG_GATE_LAYOUT_SCORE_WEIGHTS.sub
+      + bounce * MG_GATE_LAYOUT_SCORE_WEIGHTS.bounce
+      + sameColPenalty * MG_GATE_LAYOUT_SCORE_WEIGHTS.sameColBouncePenalty;
 }
 
 // ============================================================
