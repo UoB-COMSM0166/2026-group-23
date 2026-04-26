@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quantum Drop · Debug Codex</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #050a14 0%, #0a1525 100%);
+      color: #cfeafe;
+      font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
+      min-height: 100vh;
+    }
+    header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #1a3050;
+      background: rgba(8, 16, 28, 0.85);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(6px);
+    }
+    h1 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      letter-spacing: 2px;
+      color: #5aeaff;
+    }
+    h1 .sub { color: #6a8caa; font-weight: normal; font-size: 11px; margin-left: 12px; }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 16px;
+      font-size: 12px;
+    }
+    .tabs { display: inline-flex; gap: 4px; }
+    .tab-btn {
+      background: #0d1828;
+      color: #cfeafe;
+      border: 1px solid #1f3a5e;
+      padding: 5px 14px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+    .tab-btn:hover { background: #14243a; }
+    .tab-btn.active {
+      background: #1a3a60;
+      border-color: #5aeaff;
+      color: #5aeaff;
+    }
+    .toolbar label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+    .toolbar select, .toolbar input[type=range] {
+      background: #0d1828;
+      color: #cfeafe;
+      border: 1px solid #1f3a5e;
+      font-family: inherit;
+      padding: 2px 6px;
+    }
+    .toolbar input[type=range] { width: 90px; }
+    #canvas-mount {
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+    }
+    canvas { display: block; }
+    .legend {
+      padding: 10px 20px 16px 20px;
+      font-size: 11px;
+      color: #6a8caa;
+      border-top: 1px solid #1a3050;
+      line-height: 1.6;
+    }
+    .legend code {
+      background: #0d1828;
+      padding: 1px 5px;
+      border-radius: 2px;
+      color: #9fc8e8;
+    }
+    .arrow-h  { color: #ff6080; }
+    .trail-h  { color: #5aeaff; }
+    .path-h   { color: #6a9fc8; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>QUANTUM DROP <span class="sub">· DEBUG CODEX · live monster &amp; tower preview</span></h1>
+    <div class="toolbar">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="monsters">Monsters</button>
+        <button class="tab-btn" data-tab="towers">Towers</button>
+      </div>
+      <label>Path:
+        <select id="path-shape">
+          <option value="square">Square (4× 90° turns)</option>
+          <option value="circle">Circle (smooth)</option>
+          <option value="fig8">Figure-8</option>
+          <option value="hline">Horizontal only</option>
+          <option value="vline">Vertical only</option>
+        </select>
+      </label>
+      <label>Speed: <input type="range" id="speed" min="0.25" max="3" step="0.25" value="1"> <span id="speed-val">1.00×</span></label>
+      <label><input type="checkbox" id="show-heading" checked> Heading vector</label>
+      <label><input type="checkbox" id="show-trail" checked> Trail</label>
+      <label><input type="checkbox" id="show-grid" checked> Grid</label>
+    </div>
+  </header>
+
+  <div id="canvas-mount"></div>
+
+  <div class="legend">
+    Legend:
+    <span class="arrow-h">▶ red arrow</span> = current movement heading (atan2 of position delta) ·
+    <span class="trail-h">· cyan dots</span> = position trail (last ~30 frames) ·
+    <span class="path-h">— blue line</span> = scripted path ·
+    <code>h:DEG°</code> = heading in degrees (0 = right, 90 = down). Use this to compare the sprite's body orientation against its heading once direction-aware rotation is implemented.
+  </div>
+
+  <!-- p5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+
+  <!-- Stub audio + p5.sound-style globals so codex stays silent and never autoplays anything -->
+  <script>
+    window.playSfx  = function () {};
+    window.playBgm  = function () {};
+    window.stopBgm  = function () {};
+    window.setMuted = function () {};
+    window.unlockAudioOnGesture = function () {};
+  </script>
+
+  <!-- Game scripts (subset of index.html — skips sketch / screens / minigame / tutorial / ui) -->
+  <script src="state.js"></script>
+  <script src="data/towers.js"></script>
+  <script src="data/waves.js"></script>
+  <script src="data/levels.js"></script>
+  <script src="i18n.js"></script>
+  <script src="map/map-core.js"></script>
+  <script src="monsters/core.js"></script>
+  <script src="monsters/mobs/snake.js"></script>
+  <script src="monsters/mobs/spider.js"></script>
+  <script src="monsters/mobs/tank.js"></script>
+  <script src="monsters/mobs/robot.js"></script>
+  <script src="monsters/mobs/phoenix.js"></script>
+  <script src="monsters/mobs/ghostbird.js"></script>
+  <script src="monsters/bosses/fission.js"></script>
+  <script src="monsters/bosses/phantom.js"></script>
+  <script src="monsters/bosses/antmech.js"></script>
+  <script src="monsters/bosses/carrier.js"></script>
+  <script src="monsters/manager.js"></script>
+  <script src="towers/base.js"></script>
+  <script src="towers/projectile.js"></script>
+  <script src="towers/effects.js"></script>
+  <script src="towers/variants/rapid.js"></script>
+  <script src="towers/variants/laser.js"></script>
+  <script src="towers/variants/nova.js"></script>
+  <script src="towers/variants/chain.js"></script>
+  <script src="towers/variants/magnet.js"></script>
+  <script src="towers/variants/ghost.js"></script>
+  <script src="towers/variants/scatter.js"></script>
+  <script src="towers/variants/cannon.js"></script>
+  <script src="towers/manager.js"></script>
+
+  <!-- Codex sketch -->
+  <script src="codex.js"></script>
+</body>
+</html>

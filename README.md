@@ -53,7 +53,8 @@ VIDEO. Include a demo video of your game here (you don't have to wait until the 
 > **Tip:** After editing any file, press `Ctrl+S` to save — the browser reloads automatically.  
 > **Debugging:** Press `F12` to open DevTools; check the `Console` tab for errors.  
 > **Quick Test:** Click the `DEV: ALL LEVELS` button in the bottom-right of the launch screen to unlock all levels instantly.  
-> **Perf HUD:** Press `F` in-game to toggle a bottom-left performance overlay (FPS / entity counts / current phase).
+> **Perf HUD:** Press `F` in-game to toggle a bottom-left performance overlay (FPS / entity counts / current phase).  
+> **Debug Codex:** Open `codex.html` (right-click → Open with Live Server) for a live grid preview of every monster + tower. Switch path shape (square / circle / fig-8 / horizontal / vertical) to inspect direction-aware sprite work — heading-vector overlay, trail toggle and speed slider included.
 
 ---
 
