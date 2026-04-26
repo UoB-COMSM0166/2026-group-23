@@ -484,16 +484,22 @@ function runMonsterCard(card) {
   m.spd = origSpd;
   if (m.baseSpd !== undefined) m.baseSpd = origBaseSpd;
 
-  // Heading from positional delta (smoothed to suppress jitter)
-  const dx = m.pos.x - card.lastPos.x;
-  const dy = m.pos.y - card.lastPos.y;
-  if (Math.hypot(dx, dy) > 0.05) {
-    const newH = Math.atan2(dy, dx);
-    // Lerp angle (handle wrap-around)
-    let diff = newH - card.heading;
-    while (diff >  Math.PI) diff -= Math.PI * 2;
-    while (diff < -Math.PI) diff += Math.PI * 2;
-    card.heading += diff * 0.25;
+  // Heading: prefer the monster's own smoothed heading (set by base
+  // _updateHeading) so the debug arrow shows EXACTLY the angle that
+  // drives any rotate() in the sprite. Fallback to a local recompute
+  // for any future class that disables the base heading.
+  if (typeof m.heading === 'number') {
+    card.heading = m.heading;
+  } else {
+    const dx = m.pos.x - card.lastPos.x;
+    const dy = m.pos.y - card.lastPos.y;
+    if (Math.hypot(dx, dy) > 0.05) {
+      const newH = Math.atan2(dy, dx);
+      let diff = newH - card.heading;
+      while (diff >  Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      card.heading += diff * 0.25;
+    }
   }
   card.lastPos = { x: m.pos.x, y: m.pos.y };
 

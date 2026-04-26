@@ -75,6 +75,24 @@ class Monster {
     this.alive = true; this.reached = false; this.progress = 0;
     this.radius = 14; this.hitFlash = 0;
     this.deathColor = color(180, 20, 10);
+    // 方向感动画支持：heading 由 _updateHeading 维护，绘制层可直接用 rotate(this.heading)
+    // 初值取自路径首段，避免首帧从 0 弹到目标角的视觉跳变
+    const next = path[1] || path[0];
+    this.heading = Math.atan2(next.y - path[0].y, next.x - path[0].x);
+    this._lastPosForHeading = { x: this.pos.x, y: this.pos.y };
+  }
+  // 由位置差推 heading，并做角度 lerp 平滑（避免 90° 急转的瞬切）
+  _updateHeading() {
+    const dx = this.pos.x - this._lastPosForHeading.x;
+    const dy = this.pos.y - this._lastPosForHeading.y;
+    if (Math.hypot(dx, dy) > 0.05) {
+      const newH = Math.atan2(dy, dx);
+      let diff = newH - this.heading;
+      while (diff >  Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      this.heading += diff * 0.18;   // ≈5–6 帧追上目标角
+    }
+    this._lastPosForHeading = { x: this.pos.x, y: this.pos.y };
   }
   takeDamage(dmg) {
     this.hp -= dmg; this.hitFlash = 6;
@@ -146,7 +164,9 @@ class Monster {
       }
       return;
     }
-    this.move(); this.draw(); this.drawHealthBar();
+    this.move();
+    this._updateHeading();
+    this.draw(); this.drawHealthBar();
   }
 }
 

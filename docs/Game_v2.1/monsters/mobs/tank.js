@@ -72,7 +72,7 @@ class MechTank extends Monster {
   draw() {
     push(); translate(this.pos.x, this.pos.y);
 
-    // 护盾光环效果
+    // ── 护盾光环（状态层，世界坐标，不随车身旋转）──
     if (this.shieldActive) {
       const p = sin(this.shieldPulse * 3) * 0.4 + 0.6;
       noFill(); stroke(255, 210, 60, 80 * p); strokeWeight(12);
@@ -83,7 +83,10 @@ class MechTank extends Monster {
       ellipse(0, 0, this.shieldRadius * 2, this.shieldRadius * 2);
     }
 
-    // 履带（左右）
+    // ── 车身（履带 + 炮塔 + 核心）随 heading 旋转 ──
+    push(); rotate(this.heading);
+
+    // 履带（沿车身长轴方向，前后两条）
     const ls = sin(this.walkTime) * 3;
     fill(55, 45, 20); stroke(100, 80, 30, 200); strokeWeight(1.2);
     rect(-20, 8 + ls, 40, 10, 2);
@@ -99,7 +102,7 @@ class MechTank extends Monster {
     fill(60, 50, 20); stroke(120, 100, 40, 200); strokeWeight(1.5);
     ellipse(0, -4, 34, 28);
 
-    // 旋转炮塔
+    // 旋转炮塔（自转，叠在车身旋转之上）
     push(); rotate(this.turretAngle);
     fill(50, 42, 18); stroke(130, 110, 45, 220); strokeWeight(1.3);
     ellipse(0, 0, 26, 26);
@@ -118,6 +121,8 @@ class MechTank extends Monster {
     fill(this.shieldActive ? color(255, 220, 60, 220) : color(220, 170, 40, 200));
     noStroke(); ellipse(0, -4, cr, cr);
     fill(255, 255, 200, 180); ellipse(0, -4, cr * 0.4, cr * 0.4);
+
+    pop();   // ← 结束车身旋转
 
     pop();
     this.drawHealthBar();

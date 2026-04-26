@@ -225,12 +225,15 @@ class BossCarrier extends Monster {
     const fy = this.floatY;
     push(); translate(this.pos.x, this.pos.y + fy);
 
-    // 护盾
+    // ── 护盾（状态层，世界坐标，不随机身旋转）──
     if (this.shieldActive) {
       const sp = this.shieldPulse > 0 ? map(this.shieldPulse,30,0,1,0.4) : sin(frameCount*0.06)*0.3+0.7;
       noFill(); stroke(180,210,255,160*sp); strokeWeight(4+sp*2);
       ellipse(0, 0, 90+sp*8, 60+sp*4);
     }
+
+    // ── 机身（含座舱、引擎、螺旋桨、尾翼、空投门）随 heading 旋转 ──
+    push(); rotate(this.heading);
 
     // 机身主体
     fill(40,50,70); stroke(120,160,220,200); strokeWeight(1.8);
@@ -270,6 +273,8 @@ class BossCarrier extends Monster {
     stroke(dropping ? color(255,220,100) : color(80,120,180,150)); strokeWeight(1);
     rectMode(CENTER); rect(0, 10, 20, 6, 1); rectMode(CORNER);
 
+    pop();   // ← 结束机身旋转
+
     pop();
     this.drawHealthBar();
   }
@@ -277,17 +282,17 @@ class BossCarrier extends Monster {
   _drawGround() {
     push(); translate(this.pos.x, this.pos.y);
 
-    // 坠落震动效果
+    // 坠落震动效果（位移层，外层应用，不参与旋转）
     const shake = this.groundedAnim > 0 ? (Math.random()-0.5)*4*(this.groundedAnim/40) : 0;
     translate(shake, shake*0.5);
 
-    // 地面护盾光环
+    // ── 地面护盾光环（状态层，世界坐标）──
     const ap = sin(this.auraPulse)*0.4+0.6;
     noFill(); stroke(180,210,255,50*ap); strokeWeight(12);
     ellipse(0,0,this.auraRadius*2,this.auraRadius*2);
     stroke(180,210,255,100*ap); strokeWeight(3);
     ellipse(0,0,this.auraRadius*2,this.auraRadius*2);
-    // 旋转光点
+    // 旋转光点（自转，不跟机身）
     push(); rotate(this.auraPulse*0.5);
     for (let i=0;i<6;i++) {
       const a=i*PI/3, rr=this.auraRadius;
@@ -295,6 +300,16 @@ class BossCarrier extends Monster {
       ellipse(cos(a)*rr, sin(a)*rr, 8, 8);
     }
     pop();
+
+    // 护盾环（状态层）
+    if (this.shieldActive) {
+      const sp = this.shieldPulse>0 ? map(this.shieldPulse,25,0,1,0.4) : sin(frameCount*0.07)*0.3+0.7;
+      noFill(); stroke(180,210,255,150*sp); strokeWeight(3+sp*2);
+      ellipse(0,0,100+sp*6,60+sp*4);
+    }
+
+    // ── 残骸机身随 heading 旋转 ──
+    push(); rotate(this.heading);
 
     // 残骸机身（压扁变形）
     fill(50,55,75); stroke(100,140,200,180); strokeWeight(1.5);
@@ -314,14 +329,9 @@ class BossCarrier extends Monster {
     stroke(255,80,30,160); strokeWeight(1.5);
     line(-8,-8,2,-2); line(4,-10,10,-4);
 
-    // 护盾
-    if (this.shieldActive) {
-      const sp = this.shieldPulse>0 ? map(this.shieldPulse,25,0,1,0.4) : sin(frameCount*0.07)*0.3+0.7;
-      noFill(); stroke(180,210,255,150*sp); strokeWeight(3+sp*2);
-      ellipse(0,0,100+sp*6,60+sp*4);
-    }
+    pop();   // ← 结束机身旋转
 
-    // 标签
+    // 标签（顶部，世界坐标）
     if (this.hp/this.maxHp < 0.2) {
       fill(255,80,30,220); noStroke(); textSize(9); textAlign(CENTER);
       text('💥 CRITICAL', 0, -28);
