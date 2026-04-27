@@ -107,6 +107,9 @@ function mousePressed() {
       if (typeof handleLaunchMuteBtn === 'function' && handleLaunchMuteBtn(mouseX, mouseY)) return;
       // 语言切换按钮次高优先：点击后仅切换语言，不进入下一界面
       if (handleLaunchLangBtn(mouseX, mouseY)) return;
+      // 图鉴入口（在新标签页打开，不进入下一界面）
+      if (launchReady && typeof handleLaunchCodexBtn === 'function'
+          && handleLaunchCodexBtn(mouseX, mouseY)) return;
       // 测试入口次优先检测
       if (launchReady && handleLaunchTestBtn(mouseX, mouseY)) {
         activateTestMode();

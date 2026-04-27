@@ -113,6 +113,7 @@ function drawLaunchScreen() {
   // ── 测试模式入口（右下角） ──
   if (launchAnim > 80) {
     _drawTestModeBtn();
+    _drawCodexBtn();
   }
 
   // ── 语言切换（右上角） ──
@@ -148,6 +149,38 @@ function _drawTestModeBtn() {
 function handleLaunchTestBtn(mx, my) {
   const bx = width - 138, by = height - 54, bw = 128, bh = 26;
   return mx >= bx && mx <= bx + bw && my >= by && my <= by + bh;
+}
+
+// ── 图鉴入口按钮（DEV 按钮左侧）──
+function _codexBtnRect() {
+  const bw = 100, bh = 26;
+  // 紧贴 DEV 按钮左边，留 8px 间隔
+  const bx = width - 138 - 8 - bw;
+  const by = height - 54;
+  return { x: bx, y: by, w: bw, h: bh };
+}
+
+function _drawCodexBtn() {
+  const r = _codexBtnRect();
+  const hov = mouseX >= r.x && mouseX <= r.x + r.w && mouseY >= r.y && mouseY <= r.y + r.h;
+  noStroke(); fill(hov ? color(0, 50, 80, 220) : color(2, 12, 22, 190));
+  stroke(0, 200, 255, hov ? 220 : 110); strokeWeight(hov ? 1.5 : 1);
+  rect(r.x, r.y, r.w, r.h, 4);
+  noStroke(); fill(0, 220, 255, hov ? 245 : 175);
+  textFont('monospace'); textAlign(CENTER, CENTER); textSize(10);
+  text('📖  CODEX', r.x + r.w / 2, r.y + r.h / 2);
+  textAlign(LEFT, BASELINE);
+}
+
+// 检测图鉴按钮点击；命中则在新标签页打开 codex.html 并返回 true
+function handleLaunchCodexBtn(mx, my) {
+  const r = _codexBtnRect();
+  if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
+    try { window.open('codex.html', '_blank'); }
+    catch (e) { /* 弹窗被拦截时静默失败 */ }
+    return true;
+  }
+  return false;
 }
 
 // ── 语言切换按钮（右上角，EN / 中 两段式）──
