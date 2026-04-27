@@ -80,6 +80,9 @@ class Monster {
     const next = path[1] || path[0];
     this.heading = Math.atan2(next.y - path[0].y, next.x - path[0].x);
     this._lastPosForHeading = { x: this.pos.x, y: this.pos.y };
+    // 朝向轴模式：'h' 水平为主（左右走）, 'v' 垂直为主（上下走）。
+    // 用于腿/翅膀等无法靠纯旋转表达的动画做"双套切换"，带迟滞防 45° 颤动。
+    this._headingMode = (Math.abs(Math.cos(this.heading)) >= Math.abs(Math.sin(this.heading))) ? 'h' : 'v';
   }
   // 由位置差推 heading，并做角度 lerp 平滑（避免 90° 急转的瞬切）
   _updateHeading() {
@@ -93,6 +96,12 @@ class Monster {
       this.heading += diff * 0.18;   // ≈5–6 帧追上目标角
     }
     this._lastPosForHeading = { x: this.pos.x, y: this.pos.y };
+    // 主轴判定（带 1.2× 迟滞）：必须明显偏向某一轴才切换，否则保持
+    const cosH = Math.abs(Math.cos(this.heading));
+    const sinH = Math.abs(Math.sin(this.heading));
+    if (cosH > sinH * 1.2)      this._headingMode = 'h';
+    else if (sinH > cosH * 1.2) this._headingMode = 'v';
+    // else: 维持上次模式
   }
   takeDamage(dmg) {
     this.hp -= dmg; this.hitFlash = 6;

@@ -135,15 +135,30 @@ class BossAntMech extends Monster {
       // 膝盖弯曲：腿向后时弯曲更多（自然步态）
       const kneeBend = max(0.18, -sin(phase) * 0.5 + 0.22);
 
-      // 髋关节
       const hipX = side * 7;
-      // 大腿末端（膝盖）
-      const kneeX = hipX + sin(thighAngle) * legThigh;
-      const kneeY = hipY + cos(thighAngle) * legThigh;
-      // 小腿末端（脚踝）
       const shinAngle = thighAngle + kneeBend;
-      const footX = kneeX + sin(shinAngle) * legShin;
-      const footY = kneeY + cos(shinAngle) * legShin;
+
+      // 关节位置：根据 _headingMode 切换主摆动轴
+      let kneeX, kneeY, footX, footY, bootRot;
+      if (this._headingMode === 'h') {
+        // 水平行走：脚向前/后摆（X 轴）—— 原侧视骨骼
+        kneeX = hipX + sin(thighAngle) * legThigh;
+        kneeY = hipY + cos(thighAngle) * legThigh;
+        footX = kneeX + sin(shinAngle) * legShin;
+        footY = kneeY + cos(shinAngle) * legShin;
+        bootRot = shinAngle * 0.3;
+      } else {
+        // 垂直行走：腿径直向下（X 锁在 hip），脚在 Y 轴前后摆
+        // 一只脚向前迈（更靠下），另一只向后撤（缩回上抬），相位反相
+        const yLead = sin(phase) * 5;          // ±5px 的前后位移
+        const liftKnee = max(0, sin(phase)) * 3;
+        kneeX = hipX;
+        kneeY = hipY + cos(thighAngle) * legThigh - liftKnee + yLead * 0.4;
+        footX = kneeX;
+        footY = kneeY + cos(shinAngle) * legShin + yLead * 0.6;
+        // 靴子方向跟随脚的位移：往前(+Y)迈时朝下，往后撤时略翘
+        bootRot = yLead * 0.05;
+      }
 
       // 大腿
       drawLimb(hipX,hipY, kneeX,kneeY, 5, [25,105,40]);
@@ -151,9 +166,9 @@ class BossAntMech extends Monster {
       drawLimb(kneeX,kneeY, footX,footY, 4, [20,90,35]);
       // 膝关节
       drawJoint(kneeX,kneeY, 7, [40,160,60]);
-      // 靴子（脚掌朝前）
+      // 靴子
       fill(15,65,28,230); stroke(40,150,60,190); strokeWeight(1);
-      push(); translate(footX,footY); rotate(shinAngle * 0.3);
+      push(); translate(footX,footY); rotate(bootRot);
       rectMode(CENTER); rect(2,2,11,5,2); rectMode(CORNER);
       pop();
     }

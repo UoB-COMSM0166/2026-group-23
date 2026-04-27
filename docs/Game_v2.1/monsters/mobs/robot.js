@@ -89,8 +89,15 @@ class MechRobot extends Monster {
     }
     const ls = sin(this.walkTime) * 11;
     fill(20,28,46); stroke(55,115,195,185); strokeWeight(1.3);
-    beginShape(); vertex(-4,0); vertex(-9,2); vertex(-10,18+ls); vertex(-5,20+ls); vertex(-2,4); endShape(CLOSE);
-    beginShape(); vertex(4,0); vertex(9,2); vertex(10,18-ls); vertex(5,20-ls); vertex(2,4); endShape(CLOSE);
+    if (this._headingMode === 'h') {
+      // 水平行走：腿前后摆（脚位移在 X 轴），两腿反相
+      beginShape(); vertex(-4,0); vertex(-9,2); vertex(-10+ls,18); vertex(-5+ls,20); vertex(-2,4); endShape(CLOSE);
+      beginShape(); vertex( 4,0); vertex( 9,2); vertex( 10-ls,18); vertex( 5-ls,20); vertex( 2,4); endShape(CLOSE);
+    } else {
+      // 垂直行走：腿上下抬（脚位移在 Y 轴）—— 原始动画
+      beginShape(); vertex(-4,0); vertex(-9,2); vertex(-10,18+ls); vertex(-5,20+ls); vertex(-2,4); endShape(CLOSE);
+      beginShape(); vertex( 4,0); vertex( 9,2); vertex( 10,18-ls); vertex( 5,20-ls); vertex( 2,4); endShape(CLOSE);
+    }
     fill(18,26,46); stroke(58,125,208,200); strokeWeight(1.5);
     beginShape(); vertex(-10,-22); vertex(-8,-30); vertex(8,-30); vertex(10,-22); vertex(12,-10); vertex(10,0); vertex(-10,0); vertex(-12,-10); endShape(CLOSE);
     const cc = this.shielded ? color(55,165,255) : color(40,120,205);

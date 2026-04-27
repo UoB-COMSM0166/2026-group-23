@@ -100,8 +100,15 @@ class BossPhantom extends Monster {
     }
     const ls = sin(this.walkTime)*9;
     fill(18,28,52); stroke(60,140,255,160); strokeWeight(1.2);
-    beginShape(); vertex(-4,2); vertex(-8,4); vertex(-9,20+ls); vertex(-4,22+ls); vertex(-2,5); endShape(CLOSE);
-    beginShape(); vertex(4,2); vertex(8,4); vertex(9,20-ls); vertex(4,22-ls); vertex(2,5); endShape(CLOSE);
+    if (this._headingMode === 'h') {
+      // 水平行走：腿前后摆（脚位移在 X 轴）
+      beginShape(); vertex(-4,2); vertex(-8,4); vertex(-9+ls,20); vertex(-4+ls,22); vertex(-2,5); endShape(CLOSE);
+      beginShape(); vertex( 4,2); vertex( 8,4); vertex( 9-ls,20); vertex( 4-ls,22); vertex( 2,5); endShape(CLOSE);
+    } else {
+      // 垂直行走：腿上下抬（脚位移在 Y 轴）—— 原始动画
+      beginShape(); vertex(-4,2); vertex(-8,4); vertex(-9,20+ls); vertex(-4,22+ls); vertex(-2,5); endShape(CLOSE);
+      beginShape(); vertex( 4,2); vertex( 8,4); vertex( 9,20-ls); vertex( 4,22-ls); vertex( 2,5); endShape(CLOSE);
+    }
     fill(18,28,52); stroke(60,140,255,200); strokeWeight(1.5);
     beginShape(); vertex(-8,-24); vertex(-5,-34); vertex(5,-34); vertex(8,-24); vertex(10,-8); vertex(8,4); vertex(-8,4); vertex(-10,-8); endShape(CLOSE);
     fill(16,26,50); stroke(140,210,255,220); strokeWeight(1.8); ellipse(0,-42,22,24);
