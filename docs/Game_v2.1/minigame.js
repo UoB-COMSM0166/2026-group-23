@@ -327,26 +327,43 @@ function _pickRowGateCount(weights) {
 }
 
 function _calcScoreBalanced(landed, profile) {
-  // 平衡版：收益更稳定，波动小
-  const difficultyMul = profile.hard ? 1.08 : 1.0;
-  const levelMul = 1 + (profile.threat - 1) * 0.10;
-  const perBall = 1.5;
-  const raw = floor(landed * perBall * difficultyMul * levelMul);
+  // 平衡版：稳定收益 + 明确上限（防止极端爆分）
+  // 公式：score = cap * (1 - exp(-k * x^p))
+  // 当 x 增大时趋近 cap，不会无上限增长
+  const CAP = 2000;
+  const P = 1.02;
+  const K = 0.00255;
+  const x = Math.max(landed, 0);
+  const base = CAP * (1 - Math.exp(-K * Math.pow(x, P)));
+  const levelMul = 1 + (profile.threat - 1) * 0.05;
+  const difficultyMul = profile.hard ? 1.05 : 1.0;
+  const raw = floor(base * levelMul * difficultyMul);
+  const capped = min(raw, CAP);
   const floorScore = 3 + profile.threat + (profile.hard ? 1 : 0);
-  return max(raw, floorScore);
+  return max(capped, floorScore);
 }
 
 function _calcScoreClassicJackpot(landed, profile) {
-  // 单一平滑公式：score = 2000 * (1 - exp(-k * x^p))
-  // 拟合锚点 50→250, 500→1500，后续极缓慢趋近 2000
-  // p=1.0163, k=0.002506（由两点联立方程解得）
-  const P = 1.0163, K = 0.002506;
-  const base = 2000 * (1 - Math.exp(-K * Math.pow(Math.max(landed, 0), P)));
+  // 传统惊喜版：无上限，允许偶发高收益（jackpot）
+  // 主体为近线性增长，并叠加低概率大奖倍率 + 软上限衰减
+  const x = Math.max(landed, 0);
+  const levelMul = 1 + (profile.threat - 1) * 0.12;
+  const difficultyMul = profile.hard ? 1.12 : 1.0;
+  const base = x * 1.40 * levelMul * difficultyMul;
 
-  const levelMul = 1 + (profile.threat - 1) * 0.08;
-  const difficultyMul = profile.hard ? 1.08 : 1.0;
-  const raw = floor(base * levelMul * difficultyMul);
+  let surpriseMul = 1;
+  const r = random();
+  if (r < 0.002) surpriseMul = 2.6;       // 0.2% 超大奖（更稀有）
+  else if (r < 0.012) surpriseMul = 1.9;  // 1.0% 大奖
+  else if (r < 0.055) surpriseMul = 1.30; // 4.3% 小惊喜
 
+  const jackpotRaw = base * surpriseMul;
+  const SOFT_CAP_START = 2600;
+  const SOFT_CAP_KEEP = 0.35; // 超过阈值后仅保留 35% 增量
+  const softened = jackpotRaw <= SOFT_CAP_START
+    ? jackpotRaw
+    : SOFT_CAP_START + (jackpotRaw - SOFT_CAP_START) * SOFT_CAP_KEEP;
+  const raw = floor(softened);
   const floorScore = 3 + profile.threat + (profile.hard ? 1 : 0);
   return max(raw, floorScore);
 }
