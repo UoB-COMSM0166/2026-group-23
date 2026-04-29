@@ -71,6 +71,19 @@ flowchart TD
 
 Everything in *Must* and *Should* shipped; every *Could* except per-level star rating also shipped (sound, perf HUD toggled by `F`, responsive CSS scaling, and 48 `node:test` cases). *Won't* items are listed as future work.
 
+#### Development epics
+
+The MoSCoW list scopes *what* we want; the epic table below scopes *how it ships* — each epic is the unit of work behind one or more user stories, with concrete acceptance criteria the team could verify without a marker present.
+
+| Epic | Description | Key acceptance criteria |
+|---|---|---|
+| **Mini-game economy** | Pre-wave Plinko earns coins | Aim → drop → settlement; coins added 1:1 with final ball count; payouts within ±25 % of design target |
+| **Tower combat** | 8 variants × 3 tiers across 5 maps | Place from build menu, target/attack, upgrade/demolish; anti-air rules respected; CANNON manual aim; 80 % refund on demolish |
+| **Wave & monster system** | 5 levels × 6–10 waves with bosses | Spawn schedule per level; 10 enemy types; 3 multi-phase bosses; wave-clear bonus credits |
+| **HUD & flow** | Live HUD + screens | Coin/HP/wave update every frame; build menu, tower panel, end panel, level map, difficulty select |
+| **First-run experience** | Onboarding + bilingual UI | 5-step Level-1 tutorial; BALLS → COINS settlement card; EN / 中文 toggle persisted in `localStorage` |
+| **Performance** | Stable frame rate under load | 60 FPS for ordinary play; ≥ 50 FPS in worst-case (Level 5 + Boss-3 Berserk + ≥ 5-cannon volley) |
+
 ### Design
 
 #### System architecture
@@ -197,6 +210,34 @@ classDiagram
 4. **Caches keyed on `(state, language)`.** HUD text, tower tooltips, wave-preview boxes all cache rendered strings. Each cache signature includes `currentLang`, so toggling EN/中 at runtime invalidates them correctly.
 
 5. **Programmatic visuals.** No sprite sheets. Every entity is drawn from primitives + trigonometry so the aesthetic stays coherent across six contributors.
+
+#### User-experience design
+
+We treated three UX surfaces as design problems with explicit alternatives, not implementation tasks.
+
+**First-run tutorial (Level 1 only).** A five-step overlay with highlight boxes runs the first time a player enters Level 1; completion is persisted in `localStorage['qd_tutorial_l1_done']`, and the player can skip. We kept it Level-1 only because returning players don't need it, and we kept it *informational* rather than scripted — a forced "click this tower now" sequence breaks immersion and is harder to maintain when tower stats change. The trade-off is that a stubborn novice can still skip past the loop explanation; round-2 playtests showed 4/4 understood the loop by wave 2 anyway.
+
+**Internationalisation (EN / 中文).** The UI is bilingual with a runtime toggle on the launch screen, persisted in `localStorage['qd_lang']`. We chose runtime `t(key)` lookup over a build-time string-replace pre-processor because (a) p5.js has no build step — a pre-processor would have broken the zero-tooling promise; (b) players can switch language on the fly without a reload; (c) translations live in one file (`i18n.js`) so any team member can contribute in parallel. Stylised codes (`RAPID`, `LASER`, `SECTOR ALPHA`) stay in English by design — matching how other sci-fi games treat codes vs prose.
+
+**Level-map description cards.** In v1.4 the level description sat in a fixed sidebar panel; in v2.0 we anchored it next to each level node with a connecting line. This removes the *"which level is this describing?"* ambiguity when a player hovers between adjacent nodes — a heuristic-eval finding (issue #3 in *Evaluation › Heuristic*).
+
+#### Audio architecture
+
+`audio.js` wraps native `HTMLAudioElement` rather than `p5.sound` — the sound library was an unnecessary dependency given six BGM tracks and five SFX with no spatial mixing or DSP needs. The mute toggle persists in `localStorage['qd_muted']`; the launch BGM doubles as a *user-gesture gate* (browsers block auto-play until the player clicks the language button or DEV ALL LEVELS), which happens to satisfy autoplay-policy compliance for free.
+
+#### Per-level pacing
+
+Each level introduces one new mechanic and tightens one constraint, so players meet new ideas in isolation before having to combine them:
+
+| Level | Introduces | Tightens |
+|---|---|---|
+| 1 Sector Alpha | Core loop (mini-game → build → defend) | — (training wheels: ¥2000, 6 waves) |
+| 2 Nebula Rift | Dual lanes + first aerial enemies | Starting credits drop to ¥1800 |
+| 3 Iron Citadel | Armoured Tank + first Boss (Fission Core) | Path branches; AA towers become essential |
+| 4 Void Maze | Speed enemies (Diving Lizard at ~3.3× base) | Tight corner geometry — the path that motivated *Implementation › Challenge 3* |
+| 5 Omega Gate | All three bosses can co-exist in late waves | ¥1200 start; 10 waves; failure resets the level |
+
+`data/waves.js` follows this shape: each level's first wave teaches its new mechanic in isolation; final waves combine that mechanic with everything previously introduced. Balance values live alongside in `data/levels.js` and are covered by the `node:test` shape invariants (e.g. *startCoins is strictly decreasing across levels*).
 
 ### Implementation
 
@@ -354,6 +395,17 @@ We avoided "everybody does a bit of everything" because with six people it produ
 #### Workflow
 
 We used trunk-based development with short-lived feature branches (`feature/tower-cannon`, `feature/i18n`, `fix/wave5-boss-spawn`, …). PRs needed one reviewer; anything touching `state.js`, `data/*` or `sketch.js` needed the module owner specifically. Merges to `main` triggered the GitHub Pages redeploy, so we treated a broken build on `main` as an *"everyone stops, someone reverts"* incident. That happened twice during the term — both were script-load-order regressions after a file split — and the revert-first rule kept main shareable within minutes both times.
+
+#### Workshop cadence
+
+The Wednesday workshop ran ~90 minutes in four blocks:
+
+1. **5 min — round-the-table demo.** Each member showed one merged change from the past week, even if small. This kept everyone aware of what other modules looked like and surfaced visual inconsistencies early.
+2. **30 min — work session.** Pair- or triple-programming on the biggest current blocker, usually a cross-module integration.
+3. **45 min — sprint planning** for the next week, picking from the MoSCoW list. Anything that crossed module boundaries got assigned a primary owner *and* a reviewer in the same session.
+4. **10 min — short retro:** *"one thing going well, one thing blocked."* That ten-minute habit caught both the art-pipeline failure (week 4) and the god-file merge-conflict problem (week 7) early enough to act on them.
+
+The cadence was deliberately under-engineered: no Jira, no story points, no formal stand-ups. With six people and a ten-week timeline, a written sprint plan in `workshop/weekN/sprint.md` plus a Pages-preview demo loop did more for momentum than any heavier process would have.
 
 #### What went wrong (and what we changed)
 
