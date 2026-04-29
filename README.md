@@ -46,10 +46,11 @@
 4. [Implementation](#implementation)
 5. [Evaluation](#evaluation)
 6. [Process](#process)
-7. [Conclusion](#conclusion)
-8. [Team](#team)
-9. [Build & test (developers)](#build--test-developers)
-10. [Reference appendix](#reference-appendix)
+7. [Sustainability, Ethics & Accessibility](#sustainability-ethics--accessibility)
+8. [Conclusion](#conclusion)
+9. [Team](#team)
+10. [Build & test (developers)](#build--test-developers)
+11. [Reference appendix](#reference-appendix)
 
 ---
 
@@ -383,6 +384,86 @@ We used trunk-based development with short-lived feature branches (`feature/towe
 - **Script load order as the dependency graph.** A single file (`index.html`) makes the dependency DAG grep-able.
 - **Live Pages preview per merge.** We could share a URL with a playtester within minutes of a merge.
 - **Honest retros.** We kept a short retro every workshop ("one thing going well, one thing blocked"). That's how we caught the art-pipeline problem early enough to pivot.
+
+---
+
+## Sustainability, Ethics & Accessibility
+
+We applied the **Sustainability Awareness Framework (SusAF)** to Quantum Drop after the v2.0 refactor: by then the architecture was stable enough that we could ask "what trade-offs are we *actually* shipping?" rather than projecting onto a moving target. The dimensions below cover the build as it stands in v2.1 — what holds up, where we cut corners, and what a v2.2 would prioritise.
+
+### Approach
+
+Quantum Drop is a single-player **zero-build static site**: one `index.html`, a stack of `<script>` tags, no backend, no account system, no telemetry. State lives in four `localStorage` keys (`qd_lang`, `qd_muted`, `qd_perf`, `qd_tutorial_l1_done`) plus the unlocked-level number, all readable in the browser DevTools. That tech stance is the spine of every dimension below — it constrains what we *can* break (no servers to topple) and what we *can't* fix without changing platform (no native screen-reader access into a `<canvas>`).
+
+### Social
+
+- **Bilingual UI (EN / 中文)** with a launch-screen toggle persisted in `localStorage['qd_lang']`. Caches that store rendered text include `currentLang` in their signature, so a runtime switch invalidates them correctly. This roughly doubles who can play unaided.
+- **Procedural cyberpunk aesthetic** is deliberately *not* tied to a real-world place — there is no equivalent of Group 14's London-landmark framing. It costs us specificity but removes a class of representation risk we'd rather not navigate.
+- **Round-2 playtesters were strangers** drawn from each member's outside network (university friends, family) — every member ran one session, so design decisions reflect more than the team's own taste.
+- *Gap:* the difficulty curve is calibrated for tower-defence-literate players. Sectors 4–5 stay hard for first-time TD players even on Easy.
+
+### Individual (player wellbeing)
+
+- **Pause menu** (`ui/pause.js`) interrupts at any frame and restores phase + frame counter — players in distraction-prone settings can stop without losing progress.
+- **Difficulty toggle** (Easy / Difficult) widens the skill range we accommodate (Easy gives 1.3× starting credits and 30 base HP vs. 20).
+- **First-run tutorial** is a five-step overlay; it is *informational, not forced* — once dismissed, returning players never see it again, persisted via `localStorage['qd_tutorial_l1_done']`.
+- **No engagement-maximisation patterns**: no streaks, no daily login rewards, no FOMO timers, no IAP, no notifications, no ads.
+- *Gap:* no accessibility settings UI yet. Colour-blind palettes for tower range rings, a high-contrast theme, dyslexia-friendly font option, and keyboard-only input are tracked in the future-work list — none are shipped in v2.1.
+
+### Ethics
+
+- **Zero analytics, zero telemetry, zero tracking.** We grepped the source for the usual suspects (`gtag`, `ga(`, Sentry, Mixpanel, Amplitude, Matomo) and found nothing. The browser network tab during a full playthrough shows only the static asset fetches.
+- **No PII collected.** We do not even ask for a name. Highest-unlocked-level is the only progression record, stored locally in the browser.
+- **Asset provenance.** Every monster, tower, projectile, particle and background is generated procedurally in JS — there is no visual-asset library to trace. The audio layer (6 BGM tracks + 5 SFX) is the only third-party material; `assert/audio/README.txt` lists where each track is used, but a per-track source attribution is still on the to-do list (called out in *Future actions* below).
+- **Open licence.** [MIT](LICENSE) — anyone can fork, modify, redistribute.
+- *Gap:* there is no in-game text explaining what `localStorage` keys are written, and no "Delete save data" button. Both are 30-minute fixes deferred to v2.2.
+
+### Environmental
+
+The dominant cost is asset weight, not compute:
+
+| Asset class | Bytes (gzipped over the wire is similar — JPG/MP3 are already compressed) |
+|---|---:|
+| **BGM** (`assert/audio/bgm/*.mp3`, 6 tracks) | **~25.5 MB** |
+| **SFX** (`assert/audio/sfx/*`, 5 files) | ~2.6 MB |
+| Background art (`assert/*.png`, 1 file) | ~700 KB |
+| Source code (`*.js`) | ~150 KB |
+| **Total** | **~29 MB initial load** |
+
+Because there are no sprites — every entity is drawn from primitives — the visual layer is essentially free at rest and only costs CPU when on screen. Object pooling, a `MAX_PARTICLES = 400` cap, and an HUD-text cache keep the per-frame budget flat: a Level-5 final wave sustains ~58 FPS on a 2020 M1 Air. We do not run a per-frame `redraw` when no UI state has changed inside menus.
+
+*Gap:* a 25 MB BGM payload on first load is more than the rest of the build combined. The level-1 BGM loads eagerly so players hear something during the launch screen; levels 2–5 also currently preload. Lazy-loading levels 2–5 alongside their map data would cut first-load to ~10 MB without changing UX.
+
+### Economic
+
+- **Hosting cost: £0.** GitHub Pages serves the build for free as long as the repo is public, with no egress charge for the bandwidth Quantum Drop consumes.
+- **Toolchain cost: £0.** No build step, no npm install required to *run* (only to test); both the game and the test runner read the same source files.
+- **Operational cost: £0.** Zero servers, zero storage tier, zero account database. A new contributor's day-one cost is "install VS Code + Live Server".
+- *Risk:* this depends on GitHub Pages staying free for student org repos and on `p5.js` continuing as an active project. Neither is in our control. A migration plan would be: copy `docs/Game_v2.1/` to any static host, change zero lines of code.
+
+### Technical
+
+The v1.4 → v2.0 refactor *was* the technical-sustainability deliverable:
+
+- **Single source of truth for state** (`state.js`) — every shared global is declared once, with a comment saying who owns mutations.
+- **Data tables separated from logic** (`data/towers.js`, `data/waves.js`, `data/levels.js`) — balance changes never touch combat code.
+- **Concern-oriented modules** (`monsters/`, `towers/`, `ui/`, `screens/`) — six contributors can work in parallel without merge collisions on common files.
+- **48 `node:test` cases** as a regression fence on every data-table edit (`npm test`, no install).
+- **Mermaid architecture diagrams in the README** — they live next to the prose, diff cleanly when something changes, and never go out of sync with a separate diagram file.
+
+*Gap:* tuning numbers are centralised but spread across three `data/` files; a unified balance dashboard (or even a printed cheat-sheet) would help maintainers reason about cross-level effects. Visual regression remains manual — a canvas-hash test per fixed frame is on the future-work list.
+
+### Future actions summary
+
+The highest-leverage v2.2 sustainability work, ordered by ROI:
+
+1. **Lazy-load BGM** for levels 2–5 — single biggest first-load reduction (~15 MB saved).
+2. **Accessibility settings panel** — colour-blind palette, high-contrast theme, larger-font option, keyboard-only input.
+3. **In-game privacy text + "Delete save data" button** — closes the only remaining ethics gap.
+4. **Mobile / touch layout** — opens the game to a hardware class we currently exclude.
+5. **Audio-track credits** surfaced in-game (currently only in `README.txt`).
+
+Quantum Drop's strongest sustainability wins come from saying *no* to things we never built — no accounts, no servers, no analytics, no asset pipeline. The remaining work is mostly about **explicit accommodation** (accessibility) and **honest disclosure** (privacy text), not about undoing structural choices.
 
 ---
 
