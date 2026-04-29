@@ -470,3 +470,30 @@ Performance, by contrast, was the *easiest* challenge: object pooling, text cach
 We would explore three directions. **Persistent meta-progression**: unlocks that carry across runs (a roguelite layer on top of the current level-select), so that a run that ends in defeat still contributes to a long-horizon goal. **Authored minigame boards**: right now gate boards are procedural; curated boards that are paired to a specific wave's threat profile would let us tell a tighter mechanical story ("this wave has armoured mechs — the pre-wave board gives you more `×2` gates so you can afford a Chain Arc"). **Co-op**: two players sharing an economy but owning separate halves of the map. The underlying state model is already a phase state machine over a single shared coin counter, so the engineering risk is bounded — the design risk (how do two players trade off economy vs defence without arguing?) is much more interesting and would be the main research question.
 
 Quantum Drop proved that a six-person team, a ten-week timeline, and p5.js can produce a game that is both technically coherent and fun to demo. Every member touched every stage of the stack — from data tables, through physics, through visual polish, through testing — which was the real point of the module.
+
+### Contribution Statement
+
+| Contributor | Contribution |
+|---|---|
+| **Yu Chengyin** | Implemented the ball-drop mini-game physics in `minigame.js` — gravity / wall-bounce / friction integration, ball-gate AABB collision, and the `spawnQueue` mechanism that prevents in-loop array mutation. Integrated the audio layer (`audio.js`, six BGM tracks, five SFX) and wired the launch / difficulty / end-panel screens, including the mute toggle persisted in `localStorage['qd_muted']`. |
+| **Zhu Qihao** | Designed the gate lattice for the mini-game (column-by-column generation with the "no two `×N` in the same column" constraint) and tuned the per-level economy in `data/levels.js` so payouts land within ±25 % of the design target. Co-owns balance with Zhang Xun via the data tables. |
+| **Zhang Zhenyu** | Built the tower combat layer in `towers/` — eight tower variants (Rapid / Laser / Nova / Chain / Magnet / Ghost / Scatter / Cannon) plus the projectile and effects systems and special skills (CANNON manual aim, MAGNET slow). Owns performance profiling: designed the F-key perf HUD (`ui/perf-hud.js`) and led the CANNON-volley FPS regression diagnosis (particle cap + colour pre-resolve + emit-count tuning). |
+| **Zhang Xun** | Implemented the monster system (`monsters/`) — ten entity classes including the three multi-phase bosses (Fission Core, Phantom Protocol, Ant-Mech) — and the wave state machine. Authored the heuristic evaluation report (`workshop/week07/Heuristic_Evaluation_Report.md`, nine Nielsen-heuristic issues with severity scoring) that drove a wave of UI fixes in v1.4. Tuned wave compositions across all five levels. |
+| **Liu Bowen** | Owns the map / placement layer (`map/`, `ui/placement.js`) — per-level path geometry, cell-buildability rules, and the `pathCellSet` build-once cache. Wrote the four cache layers that kept Level-5 at vsync (HUD-text, tower-tooltip, wave-preview, path-cell). Co-led the v2.0 file-tree migration with Li Zhuolun; specifically split `monsters.js` into `monsters/` and verified gameplay parity across all five levels at both difficulties. |
+| **Li Zhuolun** | Coordinated the v1.4 → v2.0 refactor sprint and acted as integration lead. Personally migrated the UI layer (split `ui.js` into `hud / pause / wave-ui / build-menu / tower-panel / placement / index`), centralised mutable state into `state.js`, authored the first-run tutorial (`tutorial.js`), scaffolded the i18n table (`i18n.js`, EN / 中文), and built the `node:test` harness with the `vm.createContext` sandbox (48 tests, zero install). Authored this report and the presentation deck. |
+
+### AI Usage Statement
+
+We disclose AI tool usage in line with University of Bristol guidance. **Game runtime code was written by team members; no AI code generation was used inside `docs/Game_v2.1/`.**
+
+Specifically:
+
+- **Game runtime code (`docs/Game_v2.1/*.js`)** — written by team members. No AI-generated source files. All design decisions (architecture, balance values, level layouts, the v1.4 → v2.0 refactor strategy) are team work.
+- **Game entity visuals** — every monster, tower, projectile, particle and HUD element is drawn procedurally in JS from primitives + trigonometry. No AI-generated images are used for any in-game entity.
+- **Launch-screen background image** (`docs/Game_v2.1/assert/mrrockyd0710_sci-fi_tower_defense_world_map_top-down_futuristic_<uuid>.png`) — generated with **Midjourney** as a static menu backdrop. It does not affect gameplay and is not used for any in-game entity.
+- **Audio assets** (6 BGM tracks + 5 SFX in `assert/audio/`) — sourced from royalty-free libraries; per-track attribution is on the v2.2 to-do list (called out in *Sustainability › Future actions*).
+- **Documentation** (this `REPORT.md`, the README, `DESIGN.md`) — drafted by team members and refined with **Claude (Anthropic)** for English fluency, structure, and table layout. The Mermaid diagrams were drafted with AI help and verified against the actual source code (`gamePhase` / `minigameState` literal strings, `TOWER_DEFS` keys, etc.).
+- **Presentation deck** (`video/Quantum_Drop_Group23.pptx`) and **speaker scripts** (`video/Quantum_Drop_Speaker_Scripts.md`) — AI-assisted: the team supplied the structure, content, and engineering details; Claude helped with slide layout choices and prose tightening for read-aloud pacing.
+- **Playtests, evaluation findings, and the contribution statement above** — all human-authored. The two playtest rounds (4 testers each, eight unique participants) were run by team members face-to-face; no AI-generated participant data appears anywhere in this repo.
+
+If a marker has any concern about specific phrasing or any claim in this report, every Mermaid diagram, every code reference, and every number in the performance and sustainability tables can be cross-checked against the source files in this repo.
