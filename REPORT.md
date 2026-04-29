@@ -340,6 +340,25 @@ We used trunk-based development with short-lived feature branches (`feature/towe
 
 We applied the **Sustainability Awareness Framework (SusAF)** to Quantum Drop after the v2.0 refactor: by then the architecture was stable enough that we could ask "what trade-offs are we *actually* shipping?" rather than projecting onto a moving target. The dimensions below cover the build as it stands in v2.1 — what holds up, where we cut corners, and what a v2.2 would prioritise.
 
+```mermaid
+---
+config:
+  themeVariables:
+    cScale0: "#10B981"
+    cScale1: "#EF4444"
+---
+radar-beta
+  title Quantum Drop — Sustainability profile (v2.1)
+  axis s["Social"], i["Individual"], v["Environmental"], c["Economic"], t["Technical"]
+  curve a["Opportunities"]{4, 3, 3, 5, 5}
+  curve b["Risks"]{2, 4, 4, 1, 2}
+
+  max 5
+  min 0
+```
+
+> *SusAD-style summary: green lobe = positive opportunities, red lobe = negative risks, both scored 0–5 from the prose below. Strongest in Economic (£0 stack) and Technical (refactor + tests); biggest gaps in Individual (no a11y panel yet) and Environmental (29 MB BGM payload). [Static fallback render](docs/screenshots/sus-radar.png) · [source](docs/screenshots/sus-radar.mmd)*
+
 #### Approach
 
 Quantum Drop is a single-player **zero-build static site**: one `index.html`, a stack of `<script>` tags, no backend, no account system, no telemetry. State lives in four `localStorage` keys (`qd_lang`, `qd_muted`, `qd_perf`, `qd_tutorial_l1_done`) plus the unlocked-level number, all readable in the browser DevTools. That tech stance is the spine of every dimension below — it constrains what we *can* break (no servers to topple) and what we *can't* fix without changing platform (no native screen-reader access into a `<canvas>`).
