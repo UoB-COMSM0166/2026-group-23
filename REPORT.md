@@ -43,24 +43,18 @@ From these three seed stories we derived eighteen secondary ones — e.g. *"as a
 
 #### Use-case diagram (informal)
 
-```
-                       ┌────────────────────────┐
-                       │        Player          │
-                       └─┬─────────┬────────────┘
-                         │         │
-         plays minigame  │         │ places/upgrades towers
-                         ▼         ▼
-  ┌────────────────────────┐   ┌──────────────────────┐
-  │  Ball-Drop Economy     │──►│   Tower-Defence Map  │
-  │  (pre-wave earnings)   │   │   (per-wave combat)  │
-  └─────────┬──────────────┘   └──────────┬───────────┘
-            │  coins                       │  base HP
-            ▼                              ▼
-       ┌──────────────────────────────────────────┐
-       │       Game-phase state machine            │
-       │  launch → difficulty → level → playing    │
-       │            → minigame/build/combat → end  │
-       └──────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Player(["Player"])
+    Mini["<b>Ball-Drop Economy</b><br><i>pre-wave earnings</i>"]
+    Map["<b>Tower-Defence Map</b><br><i>per-wave combat</i>"]
+    Phase["<b>Game-phase state machine</b><br>launch → difficulty → levelSelect → playing → end<br><i>playing = minigame · build · combat</i>"]
+
+    Player -- "plays mini-game" --> Mini
+    Player -- "places / upgrades towers" --> Map
+    Mini == "coin payout" ==> Map
+    Mini -. "reports coin balance" .-> Phase
+    Map -. "reports base HP / wave" .-> Phase
 ```
 
 #### Requirement prioritisation (MoSCoW)
@@ -97,59 +91,92 @@ docs/Game_v2.1/
 
 At runtime the game is a **phase state machine** driven from `sketch.js::draw()`:
 
-```
-'launch' ──► 'difficulty' ──► 'levelSelect' ──► 'playing'
-                                                   │
-                 ┌─────────────────────────────────┘
-                 ▼
-         ┌──► minigame (state machine: idle → aiming
-         │                → playing → result)
-         │         │ result adds coins
-         │         ▼
-         │     build phase (tower placement / upgrade)
-         │         │ countdown ends
-         │         ▼
-         │     combat phase (waves.js spawns; towers engage)
-         │         │ wave clear
-         └─────────┘
-                 │ all waves clear → 'end' (victory)
-                 │ base HP ≤ 0     → 'end' (defeat)
-                 ▼
-              'end' ──► retry / stages / next level
+```mermaid
+stateDiagram-v2
+    direction TB
+    state "end" as gameEnd
+
+    [*] --> launch
+    launch --> difficulty
+    difficulty --> levelSelect
+    levelSelect --> playing
+
+    state playing {
+        [*] --> minigame
+        state minigame {
+            [*] --> idle
+            idle --> aiming
+            aiming --> shooting : click locks aim
+            shooting --> result : all balls settled
+        }
+        minigame --> build : result adds coins
+        build --> combat : countdown ends
+        combat --> minigame : wave clear
+    }
+
+    playing --> gameEnd : all waves clear (victory)
+    playing --> gameEnd : base HP ≤ 0 (defeat)
+    gameEnd --> levelSelect : retry / next level
+    gameEnd --> [*]
 ```
 
 #### Class diagram (central cluster)
 
-```
- ┌───────────────┐        spawns       ┌──────────────────┐
- │ MonsterManager│◄────────────────────│   WaveConfig     │
- │  monsters[]   │                     │ (data/waves.js)  │
- │  damageAt()   │                     └──────────────────┘
- │  inRange()    │
- └──┬────────────┘
-    │ contains *
-    ▼
- ┌───────────────┐ extends ┌──────────────────┐
- │   Monster     │◄────────│  MechSnake,      │
- │ (base class)  │         │  MechSpider,     │
- │  hp, speed    │         │  Boss1/2/3, ...  │
- │  update()     │         └──────────────────┘
- │  takeDamage() │
- └───────────────┘
-          ▲
-          │ targeted by
-          │
- ┌────────┴──────┐   reads   ┌──────────────────┐
- │   Tower       │──────────►│   TOWER_DEFS     │
- │  type,level   │           │  (data/towers.js)│
- │  update()     │           └──────────────────┘
- │  findTarget() │
- └──┬────────────┘
-    │ prototype-injected
-    ▼
- _updateRapid, _updateLaser, _updateNova,
- _updateChain, _updateMagnet, _updateGhost,
- _updateScatter, _updateCannon   (one file each)
+```mermaid
+classDiagram
+    direction TB
+
+    class WaveConfig {
+        <<data/waves.js>>
+        spawn specs
+        boss singletons
+    }
+    class MonsterManager {
+        +monsters : Monster[]
+        +damageAt(x, y, dmg)
+        +inRange(cx, cy, r)
+    }
+    class Monster {
+        <<base class>>
+        +hp
+        +speed
+        +update()
+        +takeDamage(dmg)
+    }
+    class Mobs_Bosses {
+        <<10 subclasses>>
+        MechSnake · MechSpider
+        Boss1 · Boss2 · Boss3 · ...
+    }
+    class Tower {
+        +type
+        +level
+        +update()
+        +findTarget()
+    }
+    class TOWER_DEFS {
+        <<data/towers.js>>
+        cost · damage · range
+        upgrade tiers
+    }
+    class TowerVariants {
+        <<prototype-injected — 8 files>>
+        _updateRapid()
+        _updateLaser()
+        _updateNova()
+        _updateChain()
+        _updateMagnet()
+        _updateGhost()
+        _updateScatter()
+        _updateCannon()
+    }
+
+    WaveConfig ..> MonsterManager : spawns
+    MonsterManager o-- Monster : contains *
+    Monster <|-- Mobs_Bosses : extends
+    Tower ..> Monster : targets
+    Tower ..> TOWER_DEFS : reads
+    TowerVariants ..> Tower : injected onto prototype
 ```
 
 #### Key design decisions (full rationale in `DESIGN.md`)
