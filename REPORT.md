@@ -200,7 +200,7 @@ classDiagram
 
 ### Implementation
 
-We focus this section on the **two biggest technical challenges**: the minigame physics + gate lattice, and the v1.4 → v2.0 refactor of three god-files into concern-oriented modules. Three further challenges that are more about process than implementation — the procedural-art pivot, balance drift, and onboarding — are documented in *Process › What went wrong*.
+We focus this section on the **three biggest technical challenges**: the minigame physics + gate lattice, the v1.4 → v2.0 refactor of three god-files into concern-oriented modules, and the multi-lane pathfinding integration that prevents fast enemies from tunnelling through path bends. Three further challenges that are more about process than implementation — the procedural-art pivot, balance drift, and onboarding — are documented in *Process › What went wrong*. A fourth, the canvas-based pseudo-3D mission-select rendering, is written up in [`workshop/week08/TECHNICAL_CHALLENGES.md`](workshop/week08/TECHNICAL_CHALLENGES.md) for the curious.
 
 #### Challenge 1 — Ball-drop minigame (`minigame.js`, 847 lines)
 
@@ -239,7 +239,57 @@ Verification was manual: before-and-after playthroughs of all five levels at bot
 
 The payoff became visible in week 9: three of us landed sound, the perf HUD, and responsive CSS *in parallel* with zero merge conflicts because the files they touched no longer overlapped.
 
+#### Challenge 3 — Multi-lane pathfinding without waypoint tunnelling
+
+Quantum Drop runs up to three simultaneous enemy paths (main / edge / air), with up to ten monsters of different types active at once and Magnet-tower slow effects modifying their speed mid-run. Each monster stores its position as a continuous **progress value** (0.0 → 1.0) along a pre-computed array of pixel waypoints; every frame, the engine must:
+
+1. Advance progress by `speed × dt × slowFactor`.
+2. Interpolate the pixel position from the waypoint array.
+3. Trigger a turn animation when a waypoint is crossed.
+4. Trigger base damage on reaching the endpoint.
+5. Handle the edge case where one frame's movement overshoots multiple waypoints.
+
+The naïve fixed-delta update broke step 5: fast enemies (MechPhoenix, Boss Ant-Mech at 2-3× normal speed) "tunnelled" through sharp corners — visually jumping past Level 4's bends instead of following them. The artefact was distracting and (worse) broke line-of-sight calculations for towers anchored near the corner.
+
+The fix is a **sub-step integration loop** in `monster.moveAlongPath()`. Each frame's movement is subdivided into micro-steps no longer than the next waypoint segment, so the geometry is followed exactly regardless of speed:
+
+```javascript
+moveAlongPath(dt) {
+  let remaining = this.speed * dt * slowFactor;
+  while (remaining > 0) {
+    const segLen = distToNextWaypoint(this.progress, this.pathArray);
+    const step   = min(remaining, segLen);
+    this.progress += step / totalPathLength;
+    remaining     -= step;
+    if (reachedWaypoint()) triggerTurnAnimation();
+    if (reachedEnd())      { triggerBaseDamage(); break; }
+  }
+}
+```
+
+The trade-off is per-frame cost proportional to monster speed, but the perf-HUD numbers showed it was within budget: even 20+ simultaneous high-speed enemies on Level 4 stayed at 60 fps. Tunnelling artefacts disappeared, and the integration also fixed a subtle latent bug where the base could occasionally take *less* damage than expected when fast enemies overshot the endpoint within the same tick that moved them past a waypoint.
+
 ### Evaluation
+
+Our evaluation ran in three layers, each at a different phase of the project: a structured **heuristic walkthrough** in Week 7 (expert review against Nielsen's heuristics), then **two playtest rounds** with strangers in Weeks 8-9 (think-aloud + post-session interview), and finally **per-frame performance measurement** with the `F`-key perf HUD. Each layer fed the next: heuristic findings drove the v2.0 UI fixes, playtest feedback drove the tutorial and settlement card, and perf measurement validated that the v2.0 refactor didn't regress frame-rate.
+
+#### Heuristic evaluation (Week 7)
+
+We ran a Nielsen heuristic walkthrough on the v1.3 build (lead: Zhang Xun). Each issue was scored on **Frequency / Impact / Persistence** (0-4 each) and rolled up to **severity = (F + I + P) / 3**. The walkthrough surfaced nine actionable issues; six are at severity ≥ 3.5, three of them at the maximum 4.0. Source: [`workshop/week07/Heuristic_Evaluation_Report.md`](workshop/week07/Heuristic_Evaluation_Report.md).
+
+| Interface | Issue (paraphrased) | Heuristic(s) violated | Severity | v2.1 status |
+|---|---|---|---:|---|
+| Home Page UI | No onboarding / tutorial / instructions for new players | H10 *Help & docs*, H6 *Recognition*, H1 *Visibility* | **4.0** | ✅ Five-step Level-1 tutorial (`tutorial.js`) shipped |
+| Base Health System | Enemies vanish on hit; HP deduction has no visual or numerical feedback | H1 *Visibility*, H5 *Error prevention* | **4.0** | ✅ HUD shows live `baseHp / baseHpMax` with damage flash |
+| Flying Enemy Balance | Air units move too fast for reaction | H5 *Error prevention*, H7 *Flexibility* | **4.0** | ✅ Speeds re-tuned in `data/waves.js`; SCATTER tower added for AA |
+| Tower System Design | No AoE tower limits strategic diversity | H7, H2 *Real-world match* | **3.67** | ✅ NOVA (piercing AoE) and CANNON (manual blast) added |
+| Enemy Spawn System | Each path spawned only one fixed enemy type | H7, H2 | **3.67** | ✅ Wave-config now mixes types per spawn list |
+| Air Path System | Air-route mechanics unclear; movement-speed logic differs without explanation | H2, H1 | **3.67** | 🟡 Tooltip prose + i18n labels added; mechanics still implicit |
+| Anti-Air Tower Mechanism | AA balance felt off | H7, H4 *Consistency* | **3.33** | ✅ Split into SCATTER + GHOST with separate cost / role tiers |
+| Upgrade System | Maximum upgrade level not clearly indicated | H1, H6 | **3.33** | ✅ Tower-upgrade panel shows current / max tier explicitly |
+| Tower Selection Interface | First two towers were functionally redundant | H8 *Aesthetic & minimalist*, H4 | **3.0** | ✅ v2.0 dropped the redundant tower; eight distinct variants ship |
+
+**Eight of nine issues closed** by the time v2.1 shipped; the remaining one (Air Path System) is partially mitigated by tooltip prose and the i18n labels but the underlying mechanic is still better experienced than read about. The heuristic walkthrough was, hour-for-hour, the most actionable feedback we got: it predates the playtest rounds below and shaped what those sessions could even probe.
 
 #### Qualitative — playtest observations
 
