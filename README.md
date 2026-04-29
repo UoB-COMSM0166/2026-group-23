@@ -72,7 +72,7 @@ A secondary novelty is that **no art assets were drawn**: every monster, tower, 
 
 ### Ideation
 
-Week 2 was an open ideation week — each team member brought one concept (a painting app, a rhythm game, a tower defence, a Plinko-style physics toy, a typing trainer, and a puzzle-platformer). We ran a dot-vote over three criteria: *fits a 10-week schedule*, *exposes everyone to non-trivial programming*, and *would be fun to demo*. Tower defence won on criteria 1 and 2 but lost on criterion 3 because it felt "done-to-death"; the Plinko prototype lost because it was a one-minute toy with no progression. The proposal that broke the tie was to fuse the two: use the Plinko as the *economy layer* of a tower defence so the player is always interacting, even between waves. We built two paper prototypes in Week 3 — one a classic grid TD to pin down placement feel, the other a Plinko board to pin down drop speed and gate density — and the combined experience felt promising enough to commit to.
+Week 2 was an open ideation week — each team member brought one concept (a painting app, a rhythm game, a tower defence, a Plinko-style physics toy, a typing trainer, and a puzzle-platformer). We ran a dot-vote over three criteria: *fits a 10-week schedule*, *exposes everyone to non-trivial programming*, and *would be fun to demo*. Tower defence won on criteria 1 and 2 but lost on criterion 3 because it felt "done-to-death"; the Plinko prototype lost because it was a one-minute toy with no progression. The proposal that broke the tie was to fuse the two: use the Plinko as the *economy layer* of a tower defence so the player is always interacting, even between waves. We built two paper prototypes in week 3 — one a classic grid TD to pin down placement feel, the other a Plinko board to pin down drop speed and gate density — and the combined experience felt promising enough to commit to.
 
 ### Stakeholders
 
@@ -140,7 +140,7 @@ The MoSCoW list scopes *what* we want; the epic table below scopes *how it ships
 | **Wave & monster system** | 5 levels × 6–10 waves with bosses | Spawn schedule per level; 10 enemy types; 3 multi-phase bosses; wave-clear bonus credits |
 | **HUD & flow** | Live HUD + screens | Coin/HP/wave update every frame; build menu, tower panel, end panel, level map, difficulty select |
 | **First-run experience** | Onboarding + bilingual UI | 5-step Level-1 tutorial; BALLS → COINS settlement card; EN / 中文 toggle persisted in `localStorage` |
-| **Performance** | Stable frame rate under load | 60 FPS for ordinary play; ≥ 50 FPS in worst-case (Level 5 + Boss-3 Berserk + ≥ 5-cannon volley) |
+| **Performance** | Stable frame rate under load | 60 FPS for ordinary play; ≥ 50 FPS in worst-case (Level 5 + Boss 3 Berserk + ≥ 5-cannon volley) |
 
 ---
 
@@ -279,7 +279,7 @@ We treated three UX surfaces as design problems with explicit alternatives, not 
 
 **Internationalisation (EN / 中文).** The UI is bilingual with a runtime toggle on the launch screen, persisted in `localStorage['qd_lang']`. We chose runtime `t(key)` lookup over a build-time string-replace pre-processor because (a) p5.js has no build step — a pre-processor would have broken the zero-tooling promise; (b) players can switch language on the fly without a reload; (c) translations live in one file (`i18n.js`) so any team member can contribute in parallel. Stylised codes (`RAPID`, `LASER`, `SECTOR ALPHA`) stay in English by design — matching how other sci-fi games treat codes vs prose.
 
-**Level-map description cards.** In v1.4 the level description sat in a fixed sidebar panel; in v2.0 we anchored it next to each level node with a connecting line. This removes the *"which level is this describing?"* ambiguity when a player hovers between adjacent nodes — a heuristic-eval finding (issue #3 in *Evaluation › Heuristic*).
+**Level-map description cards.** In v1.4 the level description sat in a fixed sidebar panel; in v2.0 we anchored it next to each level node with a connecting line. This removes the *"which level is this describing?"* ambiguity when a player hovers between adjacent nodes — a refactor-time UX improvement that fell out of the v2.0 sprint rather than the heuristic eval.
 
 ### Audio architecture
 
@@ -294,7 +294,7 @@ Each level introduces one new mechanic and tightens one constraint, so players m
 | 1 Sector Alpha | Core loop (mini-game → build → defend) | — (training wheels: ¥2000, 6 waves) |
 | 2 Nebula Rift | Dual lanes + first aerial enemies | Starting credits drop to ¥1800 |
 | 3 Iron Citadel | Armoured Tank + first Boss (Fission Core) | Path branches; AA towers become essential |
-| 4 Void Maze | Speed enemies (Diving Lizard at ~3.3× base) | Tight corner geometry — the path that motivated *Implementation › Challenge 3* |
+| 4 Void Maze | Speed enemies (Mech Spider with 3.5× dash bursts) | Tight corner geometry — the path that motivated *Implementation › Challenge 3* |
 | 5 Omega Gate | All three bosses can co-exist in late waves | ¥1200 start; 10 waves; failure resets the level |
 
 `data/waves.js` follows this shape: each level's first wave teaches its new mechanic in isolation; final waves combine that mechanic with everything previously introduced. Balance values live alongside in `data/levels.js` and are covered by the `node:test` shape invariants (e.g. *startCoins is strictly decreasing across levels*).
@@ -371,7 +371,7 @@ The trade-off is per-frame cost proportional to monster speed, but the perf HUD 
 
 ## Evaluation
 
-Three layers, each in a different project phase: a Week-7 **heuristic walkthrough** (expert review), Weeks 8-9 **playtest rounds** (think-aloud + interview), and final **per-frame performance measurement** via the `F`-key perf HUD. Each fed the next — heuristic findings drove v2.0 UI fixes, playtest feedback drove the tutorial, perf measurement validated the refactor.
+Three layers, each in a different project phase: a week-7 **heuristic walkthrough** (expert review), weeks 8-9 **playtest rounds** (think-aloud + interview), and final **per-frame performance measurement** via the `F`-key perf HUD. Each fed the next — heuristic findings drove v2.0 UI fixes, playtest feedback drove the tutorial, perf measurement validated the refactor.
 
 ### Heuristic evaluation (Week 7)
 
@@ -567,7 +567,7 @@ Over ten weeks we built, refactored, and shipped **Quantum Drop**: five playable
 
 **Pay down technical debt before it compounds.** The v1.4 god-files were a known problem for two weeks before we acted — we kept patching around them because the refactor felt expensive. By the time it became unavoidable, parallel work was already serialised on merge conflicts. Next time we would schedule a "refactor sprint" the moment a single file crosses ~800 lines or blocks two concurrent PRs.
 
-**Constraints often liberate.** The zero-build, no-sprite-sheet, shared-global-scope stack looked limiting in Week 2 and turned out to be a quiet superpower. No build meant zero toolchain-debugging time; no sprites meant our aesthetic couldn't fracture across six contributors; shared globals meant `index.html`'s load-order became a trivially legible dependency graph.
+**Constraints often liberate.** The zero-build, no-sprite-sheet, shared-global-scope stack looked limiting in week 2 and turned out to be a quiet superpower. No build meant zero toolchain-debugging time; no sprites meant our aesthetic couldn't fracture across six contributors; shared globals meant `index.html`'s load-order became a trivially legible dependency graph.
 
 ### Challenges
 
@@ -615,7 +615,7 @@ Specifically:
 - **Launch-screen background image** (`docs/Game_v2.1/assert/mrrockyd0710_sci-fi_tower_defense_world_map_top-down_futuristic_<uuid>.png`) — generated with **Midjourney** as a static menu backdrop. It does not affect gameplay and is not used for any in-game entity.
 - **Audio assets** (6 BGM tracks + 5 SFX in `assert/audio/`) — sourced from royalty-free libraries; per-track attribution is on the v2.2 to-do list (called out in *Sustainability › Future actions*).
 - **Documentation** (this README, `REPORT.md`, `DESIGN.md`) — drafted by team members and refined with **Claude (Anthropic)** for English fluency, structure, and table layout. The Mermaid diagrams were drafted with AI help and verified against the actual source code (`gamePhase` / `minigameState` literal strings, `TOWER_DEFS` keys, etc.).
-- **Presentation deck** (`video/Quantum_Drop_Group23.pptx`) and **speaker scripts** (`video/Quantum_Drop_Speaker_Scripts.md`) — AI-assisted: the team supplied the structure, content, and engineering details; Claude helped with slide layout choices and prose tightening for read-aloud pacing.
+- **Presentation deck** (`video/Quantum_Drop_Group23.pptx`) and **speaker scripts** (`video/Quantum_Drop_Speaker_Scripts.pdf`) — AI-assisted: the team supplied the structure, content, and engineering details; Claude helped with slide layout choices and prose tightening for read-aloud pacing.
 - **Playtests, evaluation findings, and the contribution statement above** — all human-authored. The two playtest rounds were run face-to-face by team members; no AI-generated participant data appears anywhere in this repo.
 
 ---
@@ -633,7 +633,7 @@ Specifically:
 | [@Che-L](https://github.com/Che-L) | Liu Bowen | jt25343@bristol.ac.uk | Map layout & tower placement — cell logic, placement | HUD/tooltip/wave-preview caches, `pathCellSet` |
 | [@bruce5800](https://github.com/bruce5800) | Li Zhuolun | nu25406@bristol.ac.uk | UI & state integration — `ui/`, `screens/`, `state.js` | v2.0 refactor coordination, tutorial, i18n, test harness |
 
-Roles settled in Week 5 (`workshop/week05/LabourDivision.md`) and stayed stable through the rest of the project. We avoided "everybody does a bit of everything" because with six people it produces chaos; instead each module had a single clear owner and at least one reviewer.
+Roles settled in week 5 (`workshop/week05/LabourDivision.md`) and stayed stable through the rest of the project. We avoided "everybody does a bit of everything" because with six people it produces chaos; instead each module had a single clear owner and at least one reviewer.
 
 ---
 
