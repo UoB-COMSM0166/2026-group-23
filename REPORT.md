@@ -4,7 +4,7 @@
 
 **Quantum Drop** is a 2-D browser game that fuses the slow, strategic layer of a **tower-defence** with the fast, tactile feel of a **ball-drop minigame**. It is written entirely in [p5.js](https://p5js.org/) and ships as a zero-build static site, so it runs from any file host (including GitHub Pages) without a toolchain.
 
-The player works their way through five themed sectors — *Sector Alpha*, *Nebula Rift*, *Iron Citadel*, *Void Maze* and *Omega Gate* — each with a unique map, a unique monster roster and increasingly sparse starting coins (¥2000 → ¥1200). Eight tower variants (*Rapid*, *Laser*, *Nova*, *Chain*, *Magnet*, *Ghost*, *Scatter*, *Cannon*), three tiers of upgrades each, and ten enemy types (including three multi-phase bosses) give the combat layer meaningful depth.
+The player works their way through five themed sectors — *Sector Alpha*, *Nebula Rift*, *Iron Citadel*, *Void Maze* and *Omega Gate* — each with its own map, monster roster, and a tightening starting budget (in-game credits, prefixed `¥`, fall from `¥2000` at Level 1 to `¥1200` at Level 5). Eight tower variants (*Rapid*, *Laser*, *Nova*, *Chain*, *Magnet*, *Ghost*, *Scatter*, *Cannon*), three upgrade tiers each, and ten enemy types (including three multi-phase bosses) give the combat layer meaningful depth.
 
 The **twist** is in the economy. Most tower-defence games make the player wait passively between waves while resources accumulate on a timer; we replace that dead time with a Plinko-style minigame where the player aims a launcher, watches balls fall through a lattice of `+N`, `−N` and `×N` gates, and the final ball count becomes the coin budget for the next wave. This has two design effects we wanted: the player is *always* engaged (no idle seconds), and the luck–skill mix of the minigame becomes a narrative hook — a great run genuinely changes your tower composition for the wave that follows.
 
@@ -26,7 +26,7 @@ We enumerated five stakeholder roles (`workshop/week04/stakeholderslist.md`):
 4. **Test engineers** — need deterministic, testable units and reproducible bugs.
 5. **Experience optimisers** — watch over readability, onboarding and accessibility.
 
-The five roles deliberately overlap with team members' own skills, which made "who cares about this" easy to answer in reviews.
+Each role deliberately overlapped with a team member's own skills, so "who cares about this?" had an obvious answer in every review.
 
 #### Use cases & user stories
 
@@ -39,7 +39,12 @@ The canonical stories (Week 4) are:
 - *As a game designer, I want the minigame payouts to be balanced, so the tower layer stays challenging.*
   **Acceptance:** on average performance, coin income is sufficient to buy one or two towers per wave but not enough to brute-force the map.
 
-From these three seed stories we derived eighteen secondary ones — e.g. *"as a first-time player I want an onboarding hint so I know what the build menu is"* (became the five-step Level-1 tutorial), *"as a returning player I want my language and tutorial-seen flag preserved"* (became `localStorage` persistence), *"as a developer I want one-click access to all five levels"* (became the `DEV: ALL LEVELS` shortcut on the launch screen), and *"as a player on a small laptop I don't want the canvas to overflow the viewport"* (became responsive CSS scaling via `windowResized()`).
+From these three seed stories we derived eighteen secondary ones, each tied to a concrete deliverable. Four representative examples:
+
+- *"As a first-time player I want an onboarding hint so I know what the build menu is."* → the five-step Level-1 tutorial.
+- *"As a returning player I want my language and tutorial-seen flag preserved."* → `localStorage` persistence (`qd_lang`, `qd_tutorial_l1_done`).
+- *"As a developer I want one-click access to all five levels."* → the `DEV: ALL LEVELS` shortcut on the launch screen.
+- *"As a player on a small laptop I don't want the canvas to overflow the viewport."* → responsive CSS scaling via `windowResized()`.
 
 #### Use-case diagram (informal)
 
@@ -48,7 +53,7 @@ flowchart TD
     Player(["Player"])
     Mini["<b>Ball-Drop Economy</b><br><i>pre-wave earnings</i>"]
     Map["<b>Tower-Defence Map</b><br><i>per-wave combat</i>"]
-    Phase["<b>Game-phase state machine</b><br>launch → difficulty → levelSelect → playing → end<br><i>playing = minigame · build · combat</i>"]
+    Phase["<b>Game-phase state machine</b><br>launch → difficulty → levelmap → playing → endpanel<br><i>playing = minigame · build · combat</i>"]
 
     Player -- "plays mini-game" --> Mini
     Player -- "places / upgrades towers" --> Map
@@ -70,7 +75,7 @@ Everything in *Must* and *Should* shipped; every *Could* except per-level star r
 
 #### System architecture
 
-The game runs as a single p5.js sketch. All source files live in one global scope and are loaded in a fixed order by `index.html`, which is the single source of truth for dependency order. The codebase is laid out by *concern*, not by *file type*:
+The shipping version is **v2.1** (sound, perf HUD, responsive canvas, 48 unit tests on top of v2.0's structural refactor). The game runs as a single p5.js sketch — all source files live in one global scope and are loaded in a fixed order by `index.html`, which is the single source of truth for dependency order. The codebase is laid out by *concern*, not by *file type*:
 
 ```
 docs/Game_v2.1/
@@ -94,31 +99,33 @@ At runtime the game is a **phase state machine** driven from `sketch.js::draw()`
 ```mermaid
 stateDiagram-v2
     direction TB
-    state "end" as gameEnd
+    state "playing" as mgPlay
 
     [*] --> launch
     launch --> difficulty
-    difficulty --> levelSelect
-    levelSelect --> playing
+    difficulty --> levelmap
+    levelmap --> playing
 
     state playing {
         [*] --> minigame
         state minigame {
             [*] --> idle
             idle --> aiming
-            aiming --> shooting : click locks aim
-            shooting --> result : all balls settled
+            aiming --> mgPlay : click locks aim
+            mgPlay --> result : all balls settled
         }
         minigame --> build : result adds coins
         build --> combat : countdown ends
         combat --> minigame : wave clear
     }
 
-    playing --> gameEnd : all waves clear (victory)
-    playing --> gameEnd : base HP ≤ 0 (defeat)
-    gameEnd --> levelSelect : retry / next level
-    gameEnd --> [*]
+    playing --> endpanel : all waves clear (victory)
+    playing --> endpanel : base HP ≤ 0 (defeat)
+    endpanel --> levelmap : retry / next level
+    endpanel --> [*]
 ```
+
+> *State names match the literal string values of `gamePhase` (`'launch'`, `'difficulty'`, `'levelmap'`, `'playing'`, `'endpanel'`) and `minigameState` (`'idle'`, `'aiming'`, `'playing'`, `'result'`). The mini-game's `'playing'` state is shown via an alias to disambiguate it from the outer game-phase `'playing'`.*
 
 #### Class diagram (central cluster)
 
@@ -193,7 +200,7 @@ classDiagram
 
 ### Implementation
 
-We focus this section on the **two biggest technical challenges**: the minigame physics + gate lattice, and the v1.4 → v2.0 refactor of three god-files into concern-oriented modules.
+We focus this section on the **two biggest technical challenges**: the minigame physics + gate lattice, and the v1.4 → v2.0 refactor of three god-files into concern-oriented modules. Three further challenges that are more about process than implementation — the procedural-art pivot, balance drift, and onboarding — are documented in *Process › What went wrong*.
 
 #### Challenge 1 — Ball-drop minigame (`minigame.js`, 847 lines)
 
@@ -228,7 +235,7 @@ Merge conflicts on these three files had started to block parallel work for an e
 - **Split by concern, not by alphabet.** `monsters/` became `core.js + mobs/{snake,spider,…}.js + bosses/{fission,phantom,antmech,…}.js + manager.js`. `ui/` became `hud + pause + wave-ui + build-menu + tower-panel + placement`.
 - **Towers by prototype extension.** We tried subclassing first but abandoned it after 20 minutes — every call site would have needed a factory. Switching to `Tower.prototype._updateRapid = function(){…}` meant each of the eight variants became one short file, injected on load, with zero caller changes.
 
-Verification was manual: before-and-after playthroughs of all five levels at both difficulties, checking the same towers kill the same monsters at the same wave timing. The refactor shipped as v2.0 with identical gameplay — we only found two behaviour deltas, both bugs that existed in v1.4 and got fixed for free in the process.
+Verification was manual: before-and-after playthroughs of all five levels at both difficulties, checking the same towers kill the same monsters at the same wave timing. The refactor shipped as v2.0 with identical gameplay — the only two observed behaviour deltas were latent v1.4 bugs (a tower-targeting edge case and a boss-HP lookup mismatch) that the cleaner module boundaries surfaced, and we fixed both as part of the migration.
 
 The payoff became visible in week 9: three of us landed sound, the perf HUD, and responsive CSS *in parallel* with zero merge conflicts because the files they touched no longer overlapped.
 
@@ -277,9 +284,9 @@ Because the game uses no build step, most of the source depends on p5 or browser
 | `tests/data-levels.test.js`       | `LEVEL_INFO` ↔ `LEVEL_NODES` consistency, startCoins monotonicity     |
 | `tests/map-core.test.js`          | `pathToPixels`, `isCellBuildable` (bounds/HUD/path/occupancy/levels)  |
 
-Tests run in ~80 ms via `npm test` (Node ≥ 18, **no `npm install` needed**). The suite is built on a `vm.createContext` sandbox that fakes p5 math helpers and `localStorage`, concatenates the target sources, then publishes top-level `const`/`let` onto `globalThis` — so the browser game and the test runner read the *same unchanged files*. This gave us a regression fence on every data-table edit (a typo in `WAVE_CONFIGS` would have silently broken only the affected level; now the test suite catches the shape first).
+Tests run in ~80 ms via `npm test` (Node ≥ 18, **no `npm install` needed**). The harness is a `vm.createContext` sandbox that stubs out p5 math helpers and `localStorage`. It concatenates the target source files into the sandbox, then promotes top-level `const`/`let` onto `globalThis` — so the browser game and the test runner read the *same unchanged files*, with no preprocessing step in the middle. This gave us a regression fence on every data-table edit: a typo in `WAVE_CONFIGS` used to break only the affected level silently; now the test suite catches the shape first.
 
-Manual testing remained the backbone for animation, audio, and visual regression — neither of which is worth the cost of snapshot-testing for a ten-week project.
+Manual testing remained the backbone for animation, audio, and visual regression — none of which is worth the cost of snapshot-testing for a ten-week project.
 
 ### Process
 
@@ -303,13 +310,13 @@ We avoided "everybody does a bit of everything" because with six people it produ
 - **GitHub** for hosting, with GitHub Pages auto-deploying the `docs/` folder so every merged PR produced a playable build at a URL anyone could share.
 - **Weekly workshop (Wednesdays)** for synchronous planning, demo and blocker discussion.
 - **Async chat** (WeChat) for day-to-day coordination across time-zone overlaps.
-- **draw.io** for class and sequence diagrams (`workshop/week05/*.xml`).
+- **draw.io** for early class and sequence diagrams (`workshop/week05/*.xml`); the up-to-date diagrams in this report are Mermaid blocks living next to the prose.
 - **VS Code + Live Server** as the shared development environment — chosen because it has zero setup for a fresh contributor.
 - **p5.js web editor** for one-off experiments (the Plinko paper prototype was first a p5 sketch in the online editor).
 
 #### Workflow
 
-We used trunk-based development with short-lived feature branches: `feature/tower-cannon`, `feature/i18n`, `fix/wave5-boss-spawn`, and so on. PRs needed one reviewer; anything that touched `state.js`, `data/*` or `sketch.js` needed the module owner as reviewer. Merges to `main` triggered GitHub Pages redeploy; we treated a broken build on `main` as an "everyone stops, someone reverts" incident. That happened twice (both script-load-order regressions after a file split) and the revert-first rule paid off both times.
+We used trunk-based development with short-lived feature branches (`feature/tower-cannon`, `feature/i18n`, `fix/wave5-boss-spawn`, …). PRs needed one reviewer; anything touching `state.js`, `data/*` or `sketch.js` needed the module owner specifically. Merges to `main` triggered the GitHub Pages redeploy, so we treated a broken build on `main` as an *"everyone stops, someone reverts"* incident. That happened twice during the term — both were script-load-order regressions after a file split — and the revert-first rule kept main shareable within minutes both times.
 
 #### What went wrong (and what we changed)
 
@@ -343,7 +350,13 @@ The third lesson was **constraints often liberate**. The zero-build, no-sprite-s
 
 #### Challenges
 
-Scope control was the hardest non-technical challenge — everyone wanted to add their favourite mechanic. We answered with MoSCoW and a strict "nothing new after week 8" rule. Merge conflicts were the hardest technical challenge until the refactor; performance was the easiest, because the combination of object pooling, text caching, and an eager path-cell set kept us at vsync for the entire combat layer.
+Three challenges stand out in retrospect — one for each of the three project axes (scope, code, comprehension):
+
+- **Scope control** was the hardest *non-technical* challenge. Everyone wanted to add their favourite mechanic, and saying no to a teammate is uncomfortable. We answered with the MoSCoW list and a strict "nothing new after week 8" rule. Both held; the *Won't (this term)* items became the basis of the future-work list rather than late-stage scope creep.
+- **Merge conflicts on the god-files** were the hardest *technical* challenge until the refactor — for two weeks they serialised parallel work and burned a workshop on triage. The v1.4 → v2.0 refactor (Implementation §2) made them stop almost overnight.
+- **Player comprehension** was the hardest *design* challenge: the mechanical systems were correct in v1.4 but unreadable to a first-time player. The fix was narrative rather than mechanical (tutorial, settlement card, plain-English tooltips), and only became visible after the round-1 playtest forced us to look at the game through fresh eyes.
+
+Performance, by contrast, was the *easiest* challenge: object pooling, text caching, and an eager `pathCellSet` kept us at vsync for the entire combat layer with very little late-stage tuning needed.
 
 #### Future work — immediate next steps for the current game
 
