@@ -99,7 +99,7 @@ Roles settled in week 5 (`workshop/week05/LabourDivision.md`) and stayed stable 
 
 > **Older builds** are still served from GitHub Pages: [v0.3](https://uob-comsm0166.github.io/2026-group-23/Game_v0.3/) · [v1.4](https://uob-comsm0166.github.io/2026-group-23/Game_v1.4/) · [v2.1 (latest)](https://uob-comsm0166.github.io/2026-group-23/Game_v2.1/). Detailed source-tree of `docs/Game_v2.1/`, the script-load-order rule, and the testable globals all live in **[Appendix A · Build & Test](#a-build--test-developers)**.
 >
-> **Other materials.** [`video/我的影片.mp4`](video/我的影片.mp4) · [`video/Quantum_Drop_Group23.pptx`](video/Quantum_Drop_Group23.pptx) · [`video/Quantum_Drop_Speaker_Scripts.pdf`](video/Quantum_Drop_Speaker_Scripts.pdf)
+> **Other materials.** [`video/Group_23_video.mp4`](video/Group_23_video.mp4) · [`video/Quantum_Drop_Group23.pptx`](video/Quantum_Drop_Group23.pptx) · [`video/Quantum_Drop_Speaker_Scripts.pdf`](video/Quantum_Drop_Speaker_Scripts.pdf)
 
 <br>
 
