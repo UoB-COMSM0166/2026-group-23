@@ -6,7 +6,7 @@
 *COMSM0166 — Software Engineering Discipline & Practice · Group 23 · 2025-26*
 
 [![Play](https://img.shields.io/badge/▶-Play_v2.1-F96167?style=for-the-badge)](https://uob-comsm0166.github.io/2026-group-23/Game_v2.1/)
-[![Demo video](https://img.shields.io/badge/🎬-Demo_video-1C7293?style=for-the-badge)](video/我的影片.mp4)
+[![Demo video](https://img.shields.io/badge/🎬-Demo_video-1C7293?style=for-the-badge)](video/Group_23_video.mp4)
 [![Slides](https://img.shields.io/badge/📊-Slides-21295C?style=for-the-badge)](video/Quantum_Drop_Group23.pptx)
 [![p5.js](https://img.shields.io/badge/p5.js-zero_build-F9C74F?style=for-the-badge)](https://p5js.org/)
 
