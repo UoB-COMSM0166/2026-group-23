@@ -31,7 +31,7 @@
 <br>
 
 [![Play Game](https://img.shields.io/badge/▶_Play_v2.1-7c3aed?style=for-the-badge)](https://uob-comsm0166.github.io/2026-group-23/Game_v2.1/)
-[![Watch Video](https://img.shields.io/badge/🎬_Demo_video-ef4444?style=for-the-badge)](video/我的影片.mp4)
+[![Watch Video](https://img.shields.io/badge/🎬_Demo_video-ef4444?style=for-the-badge)](video/Group_23_video.mp4)
 [![Slides](https://img.shields.io/badge/📊_Slides-1e293b?style=for-the-badge)](video/Quantum_Drop_Group23.pptx)
 [![Design](https://img.shields.io/badge/📘_Design_doc-06b6d4?style=for-the-badge)](DESIGN.md)
 
