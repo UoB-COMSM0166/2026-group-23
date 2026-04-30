@@ -437,9 +437,9 @@ sequenceDiagram
 
     Player->>SK: mousePressed (during minigame)
     SK->>MG: aim locked at mouseX
-    MG->>MG: spawn balls; gates resolve +N / −N / ×N
-    MG->>MG: balls settle → finalCount
-    MG-->>Player: "BALLS → COINS" settlement card
+    MG->>MG: spawn balls, gates resolve +N / -N / xN
+    MG->>MG: balls settle, finalCount
+    MG-->>Player: "BALLS to COINS" settlement card
     MG->>ST: coins += finalCount
 
     ST->>WV: enter Build Phase (5s countdown)
@@ -448,7 +448,7 @@ sequenceDiagram
     TM->>ST: coins -= TOWER_DEFS.rapid.cost
     TM->>TM: instantiate Tower at (gx, gy)
 
-    WV->>WV: countdown ends → Combat phase
+    WV->>WV: countdown ends, Combat phase
     WV->>MM: spawnWave(currentWaveSpec)
 
     loop every frame (60 Hz)
@@ -456,12 +456,12 @@ sequenceDiagram
         TM->>MM: damageAt(x, y, dmg, antiAir)
         alt monster reaches base
             MM->>ST: baseHp -= damage
-        else monster.hp ≤ 0
+        else monster.hp == 0
             MM->>ST: coins += killReward
         end
     end
 
-    WV-->>Player: wave clear → next wave's minigame
+    WV-->>Player: wave clear, next wave's minigame
 ```
 
 > *Two messages are worth flagging. Step 5 — the `BALLS → COINS` settlement card — was added after Round-1 playtests showed 3 of 4 testers didn't realise the ball count *was* the coin payout (§5.2). The `loop every frame (60 Hz)` block is where the §4.3 sub-step integration loop lives: the inner `moveAlongPath(dt)` actually iterates over micro-steps, not a single delta, to stop fast enemies from tunnelling through corners.*
