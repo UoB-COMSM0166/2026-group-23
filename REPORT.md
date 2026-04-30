@@ -243,7 +243,7 @@ Each level introduces one new mechanic and tightens one constraint, so players m
 
 We focus this section on the **three biggest technical challenges**: the minigame physics + gate lattice, the v1.4 → v2.0 refactor of three god-files into concern-oriented modules, and the multi-lane pathfinding integration that prevents fast enemies from tunnelling through path bends. Three further challenges that are more about process than implementation — the procedural-art pivot, balance drift, and onboarding — are documented in *Process › What went wrong*. A fourth, the canvas-based pseudo-3D mission-select rendering, is written up in [`workshop/week08/TECHNICAL_CHALLENGES.md`](workshop/week08/TECHNICAL_CHALLENGES.md) for the curious.
 
-#### Challenge 1 — Ball-drop minigame (`minigame.js`, 847 lines)
+#### Challenge 1 — Ball-drop minigame (`minigame.js`, 1439 lines)
 
 The minigame has to feel physical and fair while producing a designer-tunable coin payout. It is a small state machine (`idle → aiming → playing → result`) with four coupled subsystems:
 

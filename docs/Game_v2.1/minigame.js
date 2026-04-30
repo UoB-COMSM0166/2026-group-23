@@ -142,7 +142,7 @@ function startMinigame() {
   _mgStars = null;   // 重新按实际尺寸生成星场
   aimX = MG.x + MG.w / 2;
 
-  generateGates();
+  generateMinigameGates();
 }
 
 function endMinigame() {
@@ -155,21 +155,21 @@ function updateMinigame() {
 
   // 瞄准阶段也要更新门的滑动位置，让玩家发射前就能看到门在动
   if (minigameState === 'aiming') {
-    updateMgGates();
+    updateMinigameGates();
     return;
   }
 
   if (minigameState === 'playing') {
-    shootBalls();
+    emitMinigameBalls();
 
     // 把待生成球加入（安全，不在迭代中修改）
     for (const b of spawnQueue) mgBalls.push(b);
     spawnQueue = [];
 
-    updateMgBalls();
-    updateMgGates();
-    updateMgParticles();
-    checkSettlement();
+    updateMinigameBalls();
+    updateMinigameGates();
+    updateMinigameParticles();
+    checkMinigameSettlement();
   }
 
   if (minigameState === 'result') {
@@ -180,16 +180,16 @@ function updateMinigame() {
 
 function drawMinigame() {
   if (minigameState === 'idle') return;
-  drawMgBackground();
-  drawMgGates();
-  drawMgBalls();
-  drawMgParticles();
-  drawMgHUD();
+  drawMinigameBackground();
+  drawMinigameGates();
+  drawMinigameBalls();
+  drawMinigameParticles();
+  drawMinigameHUD();
   drawMgHelpBtn();
   if (!_mgHelpSeen) drawMgHelpGuide();
   if (_mgHelpOpen)  drawMgHelpPanel();
-  if (minigameState === 'aiming') drawAimUI();
-  if (minigameState === 'result') drawResultUI();
+  if (minigameState === 'aiming') drawMinigameAimUI();
+  if (minigameState === 'result') drawMinigameResultUI();
 }
 
 // 鼠标点击
@@ -268,7 +268,7 @@ const SUB_POOL_HARD = [
 const MUL_POOL = MUL_POOL_NORMAL;
 const SUB_POOL = SUB_POOL_EASY;
 
-function pickMul() {
+function pickMulGateDef() {
   const pool = (typeof gameDifficulty !== 'undefined' && gameDifficulty === 'easy')
     ? MUL_POOL_EASY : MUL_POOL_NORMAL;
   const total = pool.reduce((s, m) => s + m.weight, 0);
@@ -277,7 +277,7 @@ function pickMul() {
   return pool[0];
 }
 
-function pickSub() {
+function pickSubGateDef() {
   const pool = (typeof gameDifficulty !== 'undefined' && gameDifficulty === 'difficult')
     ? SUB_POOL_HARD : SUB_POOL_EASY;
   return random(pool);
@@ -377,7 +377,7 @@ function _calcMinigameScore(landed) {
   return _calcScoreClassicJackpot(landed, profile);
 }
 
-function generateGates(_rerollTry = 0) {
+function generateMinigameGates(_rerollTry = 0) {
   mgGates = [];
   const profile = _getMinigameProfile();
   const rows    = profile.rows;
@@ -426,11 +426,11 @@ function generateGates(_rerollTry = 0) {
 
       let def;
       if (placeMul) {
-        const m = pickMul();
+        const m = pickMulGateDef();
         def = { type:'mul', value: m.value, label: m.label, col: [...m.col] };
         mulCount++;
       } else {
-        const s = pickSub();
+        const s = pickSubGateDef();
         def = { type:'sub', value: s.value, label: s.label, col: [...s.col] };
       }
 
@@ -507,7 +507,7 @@ function generateGates(_rerollTry = 0) {
     const candidates = mgGates.filter(g => g.row >= lowerRow && g.type !== 'bounce');
     if (candidates.length > 0) {
       const g = random(candidates);
-      const m = pickMul();
+      const m = pickMulGateDef();
       g.type = 'mul';
       g.value = m.value;
       g.label = m.label;
@@ -621,7 +621,7 @@ function generateGates(_rerollTry = 0) {
       const inProtectedLane = abs(g.x - guaranteedMulGate.x) < laneHalfWidth;
       const isBlocker = (g.type === 'sub' || g.type === 'bounce' || g.type === 'bonusball');
       if (isAboveGuaranteed && inProtectedLane && isBlocker && random() < 0.8) {
-        const m = pickMul();
+        const m = pickMulGateDef();
         g.type = 'mul';
         g.value = m.value;
         g.label = m.label;
@@ -638,7 +638,7 @@ function generateGates(_rerollTry = 0) {
     ? MG_GATE_LAYOUT_RULES.minAcceptScoreHard
     : MG_GATE_LAYOUT_RULES.minAcceptScoreEasy;
   if (layoutScore < minAcceptScore && _rerollTry < MG_GATE_LAYOUT_RULES.maxRerolls) {
-    generateGates(_rerollTry + 1);
+    generateMinigameGates(_rerollTry + 1);
   }
 }
 
@@ -671,7 +671,7 @@ function _scoreGateLayoutForReroll(gates) {
 // ============================================================
 //  发射小球
 // ============================================================
-function shootBalls() {
+function emitMinigameBalls() {
   if (shootDone) return;
   shootTimer++;
   // 每 4 帧发射 1 个，模拟连发
@@ -695,7 +695,7 @@ function shootBalls() {
 // ============================================================
 //  物理更新
 // ============================================================
-function updateMgBalls() {
+function updateMinigameBalls() {
   const wallL  = MG.x + 20;
   const wallR  = MG.x + MG.w - 20;
   const floorY = MG.y + MG.h - 20;
@@ -723,7 +723,7 @@ function updateMgBalls() {
       b.alive   = false;
       b.settled = true;
       landedBalls++;
-      spawnMgPart(b.x, floorY, color(0, 200, 255), 3);
+      spawnMinigameParticles(b.x, floorY, color(0, 200, 255), 3);
     }
   }
 }
@@ -733,7 +733,7 @@ function updateMgBalls() {
 //  × 门：每个球穿过时独立分裂（原球消失 → 生成 N 个子球扇形散射）
 //  - 门：一次性，消灭 N 个在场球
 // ============================================================
-function updateMgGates() {
+function updateMinigameGates() {
   for (const g of mgGates) {
     if (g.flashTimer > 0) g.flashTimer--;
 
@@ -816,7 +816,7 @@ function triggerGate(g, ball) {
     ball.vx = sin(ang) * spd * random(1.1, 1.6);
     ball.vy = -abs(cos(ang)) * spd * random(1.0, 1.4);  // 向上弹
 
-    spawnMgPart(g.x, g.y, color(...g.col), 10);
+    spawnMinigameParticles(g.x, g.y, color(...g.col), 10);
     return;
   }
 
@@ -848,7 +848,7 @@ function triggerGate(g, ball) {
         _bouncedGates: ball._bouncedGates ? new Set(ball._bouncedGates) : new Set(),
       });
     }
-    spawnMgPart(g.x, g.y, color(...g.col), 16);
+    spawnMinigameParticles(g.x, g.y, color(...g.col), 16);
 
   } else if (g.type === 'bonusball') {
     // 奖励球门：一次性触发，仅下一局 +10，之后恢复原值
@@ -856,7 +856,7 @@ function triggerGate(g, ball) {
     g.triggered  = true;
     g.flashTimer = 55;
     _bonusBallPending += g.value;   // 存入待用池，下局 startMinigame 时消费
-    spawnMgPart(g.x, g.y, color(...g.col), 20);
+    spawnMinigameParticles(g.x, g.y, color(...g.col), 20);
 
   } else {
     // - 门：一次性，消灭 N 个活跃球
@@ -870,18 +870,18 @@ function triggerGate(g, ball) {
       .sort((a, b) => dist(a.x, a.y, g.x, g.y) - dist(b.x, b.y, g.x, g.y));
     for (const b of alive) {
       if (killed >= g.value) break;
-      spawnMgPart(b.x, b.y, color(...g.col), 8);
+      spawnMinigameParticles(b.x, b.y, color(...g.col), 8);
       b.alive = false;
       killed++;
     }
-    spawnMgPart(g.x, g.y, color(...g.col), 12);
+    spawnMinigameParticles(g.x, g.y, color(...g.col), 12);
   }
 }
 
 // ============================================================
 //  结算检测
 // ============================================================
-function checkSettlement() {
+function checkMinigameSettlement() {
   if (!shootDone) return;
   if (spawnQueue.length > 0) return;
   const alive = mgBalls.filter(b => b.alive).length;
@@ -896,7 +896,7 @@ function checkSettlement() {
 //  绘制：背景（科幻量子空间风格）
 // ============================================================
 let _mgStars = null;
-function _initMgStars() {
+function initMinigameStars() {
   _mgStars = [];
   for (let i = 0; i < 110; i++) {
     _mgStars.push({
@@ -908,8 +908,8 @@ function _initMgStars() {
   }
 }
 
-function drawMgBackground() {
-  if (!_mgStars || _mgStars.length === 0) _initMgStars();
+function drawMinigameBackground() {
+  if (!_mgStars || _mgStars.length === 0) initMinigameStars();
   push();
   // 深空底色渐变：上深蓝 -> 下深紫
   noStroke();
@@ -959,7 +959,7 @@ function drawMgBackground() {
 // ============================================================
 //  绘制：门
 // ============================================================
-function drawMgGates() {
+function drawMinigameGates() {
   textFont('monospace');
 
   for (const g of mgGates) {
@@ -1143,7 +1143,7 @@ function drawMgGates() {
 // ============================================================
 //  绘制：小球
 // ============================================================
-function drawMgBalls() {
+function drawMinigameBalls() {
   for (const b of mgBalls) {
     if (!b.alive) continue;
     noStroke();
@@ -1159,7 +1159,7 @@ function drawMgBalls() {
 // ============================================================
 //  绘制：HUD 顶条
 // ============================================================
-function drawMgHUD() {
+function drawMinigameHUD() {
   noStroke(); fill(3, 7, 20, 220);
   rect(MG.x, MG.y, MG.w, 46);
   stroke(0, 140, 220, 80); strokeWeight(1);
@@ -1187,7 +1187,7 @@ function drawMgHUD() {
 // ============================================================
 //  绘制：瞄准 UI
 // ============================================================
-function drawAimUI() {
+function drawMinigameAimUI() {
   // 竖线瞄准线
   stroke(0, 200, 255, 55); strokeWeight(1.5);
   drawingContext.setLineDash([5, 9]);
@@ -1216,7 +1216,7 @@ function drawAimUI() {
 // ============================================================
 //  绘制：结算面板
 // ============================================================
-function drawResultUI() {
+function drawMinigameResultUI() {
   const t  = resultTimer / RESULT_SHOW;
   const cx = MG.x + MG.w / 2;
   const cy = MG.y + MG.h / 2;
@@ -1250,7 +1250,7 @@ function drawResultUI() {
 // ============================================================
 //  粒子系统
 // ============================================================
-function spawnMgPart(x, y, col, n) {
+function spawnMinigameParticles(x, y, col, n) {
   for (let i = 0; i < n; i++) {
     const a = random(TWO_PI), s = random(1.2, 4.5);
     mgParticles.push({
@@ -1260,7 +1260,7 @@ function spawnMgPart(x, y, col, n) {
   }
 }
 
-function updateMgParticles() {
+function updateMinigameParticles() {
   mgParticles = mgParticles.filter(p => p.life > 0);
   for (const p of mgParticles) {
     p.x  += p.vx; p.y += p.vy;
@@ -1269,7 +1269,7 @@ function updateMgParticles() {
   }
 }
 
-function drawMgParticles() {
+function drawMinigameParticles() {
   for (const p of mgParticles) {
     noStroke();
     fill(red(p.col), green(p.col), blue(p.col), p.life * 215);
