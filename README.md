@@ -19,7 +19,7 @@
 ## Quick links
 
 - **Live build (v2.1)** — <https://uob-comsm0166.github.io/2026-group-23/Game_v2.1/>
-- **Demo video** — [`video/我的影片.mp4`](video/我的影片.mp4)
+- **Demo video** — [`video/Group_23_video.mp4`](video/Group_23_video.mp4)
 - **Presentation deck** — [`video/Quantum_Drop_Group23.pptx`](video/Quantum_Drop_Group23.pptx)
 - **Speaker scripts** — [`video/Quantum_Drop_Speaker_Scripts.pdf`](video/Quantum_Drop_Speaker_Scripts.pdf)
 - **Older builds** — [v0.3](https://uob-comsm0166.github.io/2026-group-23/Game_v0.3/) · [v1.4](https://uob-comsm0166.github.io/2026-group-23/Game_v1.4/) · [v2.1 (latest)](https://uob-comsm0166.github.io/2026-group-23/Game_v2.1/)
