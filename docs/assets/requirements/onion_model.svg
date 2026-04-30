@@ -1,0 +1,82 @@
+<svg viewBox="0 0 900 760" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+  <!-- Dark canvas matches visual-identity.md (Void Black) -->
+  <rect width="900" height="760" fill="#0F172A" />
+
+  <!-- ─── Title ─── -->
+  <text x="450" y="38" font-size="22" font-weight="700" fill="#E0E7FF" text-anchor="middle" letter-spacing="3">STAKEHOLDER · ONION MODEL</text>
+  <text x="450" y="58" font-size="11" fill="#94A3B8" text-anchor="middle" letter-spacing="1">Quantum Drop · Group 23 · 2025-26</text>
+
+  <!-- ─── Concentric rings (outermost first so inner rings paint on top) ─── -->
+  <!-- Ring 3: Wider environment -->
+  <circle cx="450" cy="400" r="310" fill="#1E293B" fill-opacity="0.40" stroke="#A78BFA" stroke-width="1.5" stroke-dasharray="6 4" />
+  <!-- Ring 2: Containing organization -->
+  <circle cx="450" cy="400" r="225" fill="#1E293B" fill-opacity="0.65" stroke="#67E8F9" stroke-width="1.5" stroke-dasharray="6 4" />
+  <!-- Ring 1: System / Operational -->
+  <circle cx="450" cy="400" r="145" fill="#334155" fill-opacity="0.85" stroke="#10B981" stroke-width="1.5" stroke-dasharray="6 4" />
+  <!-- Core: Product -->
+  <circle cx="450" cy="400" r="68" fill="#7C3AED" stroke="#F59E0B" stroke-width="2.5" />
+
+  <!-- ─── Ring labels (top of each ring band) ─── -->
+  <text x="450" y="105" font-size="12" font-weight="700" fill="#A78BFA" text-anchor="middle" letter-spacing="2">WIDER ENVIRONMENT</text>
+  <text x="450" y="190" font-size="12" font-weight="700" fill="#67E8F9" text-anchor="middle" letter-spacing="2">CONTAINING ORG</text>
+  <text x="450" y="270" font-size="12" font-weight="700" fill="#10B981" text-anchor="middle" letter-spacing="2">SYSTEM</text>
+
+  <!-- ─── Core (Product) ─── -->
+  <text x="450" y="396" font-size="16" font-weight="700" fill="#FFFFFF" text-anchor="middle">Quantum</text>
+  <text x="450" y="416" font-size="16" font-weight="700" fill="#FFFFFF" text-anchor="middle">Drop</text>
+
+  <!-- ─── Ring 1 stakeholders — five expert roles, 72° apart, radius 106 ─── -->
+  <!-- 0°  — top -->
+  <text x="450" y="298" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">Tower-defence</text>
+  <text x="450" y="312" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">players</text>
+  <!-- 72° — upper-right -->
+  <text x="551" y="361" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">p5.js</text>
+  <text x="551" y="375" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">developers</text>
+  <!-- 144° — lower-right -->
+  <text x="512" y="479" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">Test</text>
+  <text x="512" y="493" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">engineers</text>
+  <!-- 216° — lower-left -->
+  <text x="388" y="479" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">Art / visual</text>
+  <text x="388" y="493" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">designers</text>
+  <!-- 288° — upper-left -->
+  <text x="349" y="361" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">Experience</text>
+  <text x="349" y="375" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">optimisers</text>
+
+  <!-- ─── Ring 2 stakeholders — three items, 120° apart, radius 185 ─── -->
+  <!-- 0° — top (between core and ring 3 label) -->
+  <text x="450" y="210" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">COMSM0166</text>
+  <text x="450" y="224" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">staff / markers</text>
+  <!-- 120° — lower-right -->
+  <text x="615" y="487" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">Cohort peers</text>
+  <text x="615" y="501" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">(other course teams)</text>
+  <!-- 240° — lower-left -->
+  <text x="285" y="487" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">8 external</text>
+  <text x="285" y="501" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">playtesters (×2)</text>
+
+  <!-- ─── Ring 3 stakeholders — four items at corners, radius 267 ─── -->
+  <!-- 45° — upper-right -->
+  <text x="639" y="208" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">p5.js</text>
+  <text x="639" y="222" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">community</text>
+  <!-- 135° — lower-right -->
+  <text x="639" y="586" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">Wider TD-genre</text>
+  <text x="639" y="600" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">fans (forks / play)</text>
+  <!-- 225° — lower-left -->
+  <text x="261" y="586" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">Future Bristol</text>
+  <text x="261" y="600" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">students (forks)</text>
+  <!-- 315° — upper-left -->
+  <text x="261" y="208" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">Open-source</text>
+  <text x="261" y="222" font-size="11" font-weight="600" fill="#E0E7FF" text-anchor="middle">community (MIT)</text>
+
+  <!-- ─── Legend at bottom ─── -->
+  <g transform="translate(60, 712)" font-size="10">
+    <circle cx="0" cy="0" r="5" fill="#7C3AED" stroke="#F59E0B" stroke-width="1.5" />
+    <text x="11" y="3" fill="#94A3B8">Product</text>
+    <circle cx="80" cy="0" r="5" fill="#334155" stroke="#10B981" stroke-width="1.5" />
+    <text x="91" y="3" fill="#94A3B8">System (operational)</text>
+    <circle cx="225" cy="0" r="5" fill="#1E293B" stroke="#67E8F9" stroke-width="1.5" />
+    <text x="236" y="3" fill="#94A3B8">Containing organization</text>
+    <circle cx="395" cy="0" r="5" fill="#1E293B" stroke="#A78BFA" stroke-width="1.5" />
+    <text x="406" y="3" fill="#94A3B8">Wider environment</text>
+  </g>
+  <text x="450" y="744" text-anchor="middle" font-size="10" fill="#64748B" font-style="italic">Source: workshop/week04/stakeholderslist.md · Onion-model framework adapted from Alexander &amp; Robertson (2004)</text>
+</svg>

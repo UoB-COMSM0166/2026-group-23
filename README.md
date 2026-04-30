@@ -16,7 +16,7 @@
 
 <br>
 
-<img src="docs/screenshots/launch-hero.jpg" width="860" style="border-radius: 16px; border: 3px solid #7C3AED;" alt="Quantum Drop — launch hero" />
+<img src="docs/screenshots/launch-hero.gif" width="860" style="border-radius: 16px; border: 3px solid #7C3AED;" alt="Quantum Drop — launch hero" />
 
 <br><br>
 
@@ -43,18 +43,89 @@
 
 <br>
 
-<a name="quick-links"></a>
-<h2 align="center">Quick Links</h2>
+<a name="group-members"></a>
+<h2 align="center">Group Members</h2>
 
 <div align="center">
 
-| Resource | Path |
-|:---|:---|
-| **Live build (v2.1)** | <https://uob-comsm0166.github.io/2026-group-23/Game_v2.1/> |
-| **Demo video** | [`video/我的影片.mp4`](video/我的影片.mp4) |
-| **Presentation deck** | [`video/Quantum_Drop_Group23.pptx`](video/Quantum_Drop_Group23.pptx) |
-| **Speaker scripts** | [`video/Quantum_Drop_Speaker_Scripts.pdf`](video/Quantum_Drop_Speaker_Scripts.pdf) |
-| **Older builds** | [v0.3](https://uob-comsm0166.github.io/2026-group-23/Game_v0.3/) · [v1.4](https://uob-comsm0166.github.io/2026-group-23/Game_v1.4/) · [v2.1 (latest)](https://uob-comsm0166.github.io/2026-group-23/Game_v2.1/) |
+| GitHub | Name | Email | Primary role | Cross-cutting |
+|:---:|:---:|:---:|:---|:---|
+| [@ycy-code](https://github.com/ycy-code) | Yu Chengyin | si25962@bristol.ac.uk | Mini-game physics — ball motion, collisions, settlement | Audio integration, launch / end screen polish |
+| [@zhuqihao7-tech](https://github.com/zhuqihao7-tech) | Zhu Qihao | iy25847@bristol.ac.uk | Mini-game gate layout — random generation, payout math | Level economy tuning (`data/levels.js`) |
+| [@ZhangZhenyu718](https://github.com/ZhangZhenyu718) | Zhang Zhenyu | pv25243@bristol.ac.uk | Tower combat — attack, skills, projectile management | Performance profiling (perf HUD, CANNON optimisation) |
+| [@zhangxun88](https://github.com/zhangxun88) | Zhang Xun | hg25695@bristol.ac.uk | Monsters & path system — spawn, movement, wave control | Boss AI, wave-data balancing |
+| [@Che-L](https://github.com/Che-L) | Liu Bowen | jt25343@bristol.ac.uk | Map layout & tower placement — cell logic, placement | HUD/tooltip/wave-preview caches, `pathCellSet` |
+| [@bruce5800](https://github.com/bruce5800) | Li Zhuolun | nu25406@bristol.ac.uk | UI & state integration — `ui/`, `screens/`, `state.js` | v2.0 refactor coordination, tutorial, i18n, test harness |
+
+</div>
+
+<br>
+
+<p align="center">
+  <img src="docs/screenshots/微信图片_20260430212205_445_39.png" width="80%" style="border-radius: 12px; border: 2px solid #6D28D9;" alt="Group 23" />
+  <br>
+  <sub><i>Group 23 — six contributors, one shared canvas, zero hand-drawn sprites.</i></sub>
+</p>
+
+Roles settled in week 5 (`workshop/week05/LabourDivision.md`) and stayed stable through the rest of the project. We avoided "everybody does a bit of everything" because with six people it produces chaos; instead each module had a single clear owner and at least one reviewer.
+
+<br>
+
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="repository-structure"></a>
+<h2 align="center">Repository Structure</h2>
+
+```text
+2026-group-23/
+├── README.md                ← You are here — the project report
+├── REPORT.md                ← Mirror of this README's report section
+├── DESIGN.md                ← Companion document on key design decisions
+├── LICENSE                  ← MIT
+├── docs/
+│   ├── Game_v0.3/           ← Legacy build
+│   ├── Game_v1.3/           ← Legacy build
+│   ├── Game_v1.4/           ← Legacy build (pre-refactor)
+│   ├── Game_v2.1/           ← Current shipping build (entry: index.html)
+│   ├── screenshots/         ← Screenshots and gifs used in this README
+│   └── visual-identity.md   ← Single source of truth for colours / badges / Mermaid theme
+├── tests/                   ← 48 node:test cases (zero-install)
+├── video/                   ← Demo video, slides, speaker scripts
+├── workshop/                ← Weekly artefacts (week01 … week10)
+└── ArtAsset/                ← Shared art assets (e.g. the README divider banner)
+```
+
+> **Older builds** are still served from GitHub Pages: [v0.3](https://uob-comsm0166.github.io/2026-group-23/Game_v0.3/) · [v1.4](https://uob-comsm0166.github.io/2026-group-23/Game_v1.4/) · [v2.1 (latest)](https://uob-comsm0166.github.io/2026-group-23/Game_v2.1/). Detailed source-tree of `docs/Game_v2.1/`, the script-load-order rule, and the testable globals all live in **[Appendix A · Build & Test](#a-build--test-developers)**.
+>
+> **Other materials.** [`video/我的影片.mp4`](video/我的影片.mp4) · [`video/Quantum_Drop_Group23.pptx`](video/Quantum_Drop_Group23.pptx) · [`video/Quantum_Drop_Speaker_Scripts.pdf`](video/Quantum_Drop_Speaker_Scripts.pdf)
+
+<br>
+
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="table-of-contents"></a>
+<h2 align="center">Table of Contents</h2>
+
+<div align="center">
+
+| # | Section | Description |
+|:---:|:---|:---|
+| **01** | [Introduction](#1-introduction) | What Quantum Drop is, what it's based on, what makes it novel |
+| **02** | [Requirements](#2-requirements) | Ideation, stakeholders, user stories, MoSCoW, epics |
+| **03** | [Design](#3-design) | Architecture, state machine, class diagram, UX, audio |
+| **04** | [Implementation](#4-implementation) | Three biggest technical challenges |
+| **05** | [Evaluation](#5-evaluation) | Heuristic walkthrough, playtests, perf, unit tests |
+| **06** | [Process](#6-process) | Tools, cadence, what went wrong, what worked |
+| **07** | [Sustainability, Ethics & Accessibility](#7-sustainability-ethics--accessibility) | SusAF — environmental, individual, technical, ethics |
+| **08** | [Conclusion](#8-conclusion) | Lessons learnt, challenges, future work |
+| **09** | [Contribution Statement](#9-contribution-statement) | Per-person commit-trail across the term |
+| **10** | [AI Usage Statement](#10-ai-usage-statement) | Where AI tools were and weren't used |
+| **A** | [Build & Test](#a-build--test-developers) | Run the game, run the unit tests, source tree, APIs |
+| **B** | [Acknowledgements](#b-acknowledgements) | Course staff, playtesters, license |
 
 </div>
 
@@ -64,8 +135,22 @@
 
 <br>
 
-<a name="screenshots"></a>
-<h2 align="center">Screenshots</h2>
+<a name="1-introduction"></a>
+<h2 align="center">1. Introduction</h2>
+
+### 1.1 Concept
+
+**Quantum Drop** is a 2-D browser game that fuses the slow, strategic layer of a **tower-defence** with the fast, tactile feel of a **ball-drop minigame**. It is written entirely in [p5.js](https://p5js.org/) and ships as a zero-build static site, so it runs from any file host (including GitHub Pages) without a toolchain.
+
+The player works their way through five themed sectors — *Sector Alpha*, *Nebula Rift*, *Iron Citadel*, *Void Maze* and *Omega Gate* — each with its own map, monster roster, and a tightening starting budget (in-game credits, prefixed `¥`, fall from `¥2000` at Level 1 to `¥1200` at Level 5). Eight tower variants (*Rapid*, *Laser*, *Nova*, *Chain*, *Magnet*, *Ghost*, *Scatter*, *Cannon*), three upgrade tiers each, and ten enemy types (including three multi-phase bosses) give the combat layer meaningful depth.
+
+### 1.2 What makes it novel
+
+The **twist** is in the economy. Most tower-defence games make the player wait passively between waves while resources accumulate on a timer; we replace that dead time with a Plinko-style minigame where the player aims a launcher, watches balls fall through a lattice of `+N`, `−N` and `×N` gates, and the final ball count becomes the coin budget for the next wave. This has two design effects we wanted: the player is *always* engaged (no idle seconds), and the luck–skill mix of the minigame becomes a narrative hook — a great run genuinely changes your tower composition for the wave that follows.
+
+A secondary novelty is that **no art assets were drawn**: every monster, tower, projectile, particle and background is generated procedurally in JS, which enforces a unified cyberpunk aesthetic across six contributors and keeps all visuals in the same git diff as the logic.
+
+### 1.3 The game at a glance
 
 <div align="center">
 
@@ -79,72 +164,124 @@
 
 </div>
 
+**Game flow**
+
+```
+Launch Screen
+  → Difficulty Select  [EASY / DIFFICULT]
+    → Level Map        [Choose Level 1–5]
+      → Gameplay
+          Ball-drop Minigame → Build Phase → Combat → Next Wave...
+      → End Panel  [Victory / Defeat]
+          → RETRY / STAGES / NEXT LEVEL
+```
+
+**Levels**
+
+| Level | Name | Theme | Waves | Starting credits | Notes |
+|---|---|---|---:|---:|---|
+| 1 | SECTOR ALPHA | Grassland | 6 | ¥2000 | Beginner — simple paths, infantry-focused |
+| 2 | NEBULA RIFT | Ice Nebula | 7 | ¥1800 | Dual-lane, aerial enemies introduced |
+| 3 | IRON CITADEL | Inferno | 8 | ¥1600 | Complex terrain, armoured enemies, first Boss |
+| 4 | VOID MAZE | Void | 9 | ¥1400 | Winding paths, high-speed enemy waves |
+| 5 | OMEGA GATE | Scorched Ruins | 10 | ¥1200 | Final level — elite forces + all three Bosses |
+
+> EASY: starting credits ×1.3, base HP = 30. DIFFICULT: credits as listed, base HP = 20.
+
+**Towers**
+
+| Tower | Label | Cost | Description | Max Level |
+|---|---|---:|---|---:|
+| Rapid Fire | `RAPID` | ¥110 | High-frequency single target; ignores Robot shield; 20-charge super-gun mode | Lv3 |
+| Laser Cutter | `LASER` | ¥180 | Charges then fires at multiple targets simultaneously (Lv1 → Lv3: 1 → 3 targets) | Lv3 |
+| Nova Cannon | `NOVA` | ¥200 | Piercing shot through all ground enemies; area explosion on impact | Lv3 |
+| Chain Arc | `CHAIN` | ¥160 | Chain lightning (Lv1 → Lv3: 1 → 3 jumps); ignores Tank barrier | Lv3 |
+| Magnet Tower | `MAGNET` | ¥130 | No damage; continuously slows nearby enemies (up to 80 % at Lv3) | Lv3 |
+| Ghost Missile | `GHOST` | ¥190 | Homing missiles (Lv1 → Lv3: 1 → 3); near-full-map range | Lv3 |
+| Scatter Cannon | `SCATTER` | ¥150 | Shotgun spread targeting aerial units only (Lv1 → Lv3: 3 → 7 pellets) | Lv3 |
+| Rail Cannon | `CANNON` | ¥220 | Manual-aim rail cannon; massive single-shot damage with long reload | Lv3 |
+
+> Each tower upgrades up to **3 times**. Demolishing refunds **80 %** of the original build cost.
+
+**Enemies**
+
+| Enemy | Lane | Special ability |
+|---|---|---|
+| Mech Snake | Main | Group heal every 900 frames |
+| Mech Spider | Edge | Periodic dash (3.5× speed for 20 frames) |
+| Armoured Tank | Main | Barrier shield — only Chain Arc can pierce |
+| Robot | Main | Shield triggers at 60 % HP — Rapid Fire ignores it |
+| Mech Phoenix | Air | Jamming pulse — disables all towers for 90 frames |
+| Ghost Bird | Air | High-speed flyer — only anti-air towers can target |
+| Steel Carrier | Main | Massive HP, very slow |
+| Boss① Fission Core | Main | Overload burst; splits into 4 Mech Snakes at 50 % HP |
+| Boss② Phantom Protocol | Main | Quantum dodge every 3 hits; EMP disables towers; spawns 2 clones at 30 % HP |
+| Boss③ Ant-Mech | Main | Alternates Giant (−85 % dmg taken) ↔ Tiny (×2.2 dmg taken); Berserk at 50 % HP |
+
+**Ball-drop mini-game**
+
+Triggered automatically before each wave:
+
+1. **Aim phase** — move the mouse to choose a launch X, then click to confirm.
+2. **Drop phase** — balls fall under gravity through gates that modify their count:
+   - `+N` gate adds N balls
+   - `−N` gate removes N balls
+   - `×N` gate multiplies the count by N
+3. **Settlement** — the final ball count is converted into coins for the upcoming wave.
+
 <br>
 
 <img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
 
 <br>
 
-<h1 align="center">Project Report</h1>
+<a name="2-requirements"></a>
+<h2 align="center">2. Requirements</h2>
 
-<br>
+### 2.1 Ideation
 
-<a name="table-of-contents"></a>
-<h2 align="center">Table of Contents</h2>
+Week 2 was an open ideation week — each team member brought one concept (a painting app, a rhythm game, a tower defence, a Plinko-style physics toy, a typing trainer, and a puzzle-platformer). We ran a dot-vote over three criteria: *fits a 10-week schedule*, *exposes everyone to non-trivial programming*, and *would be fun to demo*. Each criterion scored **0 – 5** (higher = better); Round-1 results:
 
 <div align="center">
 
-| # | Section | Description |
-|:---:|:---:|:---|
-| 01 | [Introduction](#introduction) | What Quantum Drop is and what makes it novel |
-| 02 | [Requirements](#requirements) | Ideation, stakeholders, user stories, MoSCoW, epics |
-| 03 | [Design](#design) | Architecture, state machine, class diagram, UX, audio |
-| 04 | [Implementation](#implementation) | Three biggest technical challenges |
-| 05 | [Evaluation](#evaluation) | Heuristic walkthrough, playtests, perf, unit tests |
-| 06 | [Process](#process) | Tools, cadence, what went wrong, what worked |
-| 07 | [Sustainability](#sustainability-ethics--accessibility) | SusAF — environmental, individual, technical, ethics |
-| 08 | [Conclusion](#conclusion) | Lessons learnt, challenges, future work |
-| 09 | [Contribution Statement](#contribution-statement) | Per-person commit-trail across the term |
-| 10 | [AI Usage Statement](#ai-usage-statement) | Where AI tools were and weren't used |
-| 11 | [Team](#team) | Org chart — one owner per module |
-| 12 | [Build & Test](#build--test-developers) | Run the game and the unit tests locally |
-| 13 | [Reference Appendix](#reference-appendix) | Game flow, levels, towers, enemies, mini-game, source tree |
+| Concept | Schedule (0–5) | Engineering depth (0–5) | Demo appeal (0–5) | **Total** |
+|:---|:---:|:---:|:---:|:---:|
+| Tower defence † | 5 | 5 | 1 | **11** |
+| Rhythm game † | 3 | 4 | 4 | **11** |
+| Plinko physics toy | 5 | 2 | 2 | 9 |
+| Puzzle-platformer | 2 | 4 | 3 | 9 |
+| Painting app | 4 | 2 | 2 | 8 |
+| Typing trainer | 5 | 1 | 1 | 7 |
+
+*Table 1 — Round-1 dot-vote scoring. † = tied at the top. Neither leader dominated all three criteria, so neither won outright.*
 
 </div>
 
-<br>
+Tower defence won on criteria 1 and 2 but lost on criterion 3 because it felt "done-to-death"; the Plinko prototype lost because it was a one-minute toy with no progression. The proposal that broke the tie was to fuse the two: use the Plinko as the *economy layer* of a tower defence so the player is always interacting, even between waves. Re-scored under the same rubric, the fusion lifted the weakest criterion of each parent without dropping the others:
 
-<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+<div align="center">
 
-<br>
+| Concept | Schedule | Engineering depth | Demo appeal | **Total** |
+|:---|:---:|:---:|:---:|:---:|
+| **Quantum Drop** (Tower Defence × Plinko) ★ | **5** | **5** | **4** | **14** |
 
-<a name="introduction"></a>
-<h2 align="center">Introduction</h2>
+*Table 2 — The fusion proposal. ★ = selected. Demo appeal lifts from TD's `1` to `4` because the inter-wave Plinko removes the "wait passively for resources" anti-pattern; engineering depth stays at `5` because the fusion adds a real-time physics + gate-lattice layer on top of TD without removing any of TD's combat work.*
 
-**Quantum Drop** is a 2-D browser game that fuses the slow, strategic layer of a **tower-defence** with the fast, tactile feel of a **ball-drop minigame**. It is written entirely in [p5.js](https://p5js.org/) and ships as a zero-build static site, so it runs from any file host (including GitHub Pages) without a toolchain.
+</div>
 
-The player works their way through five themed sectors — *Sector Alpha*, *Nebula Rift*, *Iron Citadel*, *Void Maze* and *Omega Gate* — each with its own map, monster roster, and a tightening starting budget (in-game credits, prefixed `¥`, fall from `¥2000` at Level 1 to `¥1200` at Level 5). Eight tower variants (*Rapid*, *Laser*, *Nova*, *Chain*, *Magnet*, *Ghost*, *Scatter*, *Cannon*), three upgrade tiers each, and ten enemy types (including three multi-phase bosses) give the combat layer meaningful depth.
+We built two paper prototypes in week 3 — one a classic grid TD to pin down placement feel, the other a Plinko board to pin down drop speed and gate density — and the combined experience felt promising enough to commit to.
 
-The **twist** is in the economy. Most tower-defence games make the player wait passively between waves while resources accumulate on a timer; we replace that dead time with a Plinko-style minigame where the player aims a launcher, watches balls fall through a lattice of `+N`, `−N` and `×N` gates, and the final ball count becomes the coin budget for the next wave. This has two design effects we wanted: the player is *always* engaged (no idle seconds), and the luck–skill mix of the minigame becomes a narrative hook — a great run genuinely changes your tower composition for the wave that follows.
+### 2.2 Stakeholders
 
-A secondary novelty is that **no art assets were drawn**: every monster, tower, projectile, particle and background is generated procedurally in JS, which enforces a unified cyberpunk aesthetic across six contributors and keeps all visuals in the same git diff as the logic.
+We mapped Quantum Drop's stakeholders onto an Alexander-style **onion model**, then derived our internal team roles from the innermost (operational) ring.
 
-<br>
+<p align="center">
+  <img src="docs/assets/requirements/onion_model.svg" width="720" alt="Stakeholder Onion Model — Quantum Drop" />
+  <br>
+  <sub><i>Concentric rings: <b>Product</b> (the game itself) · <b>System</b> (operational stakeholders — the five roles each represented by a team member) · <b>Containing organization</b> (COMSM0166 staff, eight external playtesters, peer teams) · <b>Wider environment</b> (open-source community, p5.js community, future Bristol students, the wider TD-genre audience).</i></sub>
+</p>
 
-<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
-
-<br>
-
-<a name="requirements"></a>
-<h2 align="center">Requirements</h2>
-
-### Ideation
-
-Week 2 was an open ideation week — each team member brought one concept (a painting app, a rhythm game, a tower defence, a Plinko-style physics toy, a typing trainer, and a puzzle-platformer). We ran a dot-vote over three criteria: *fits a 10-week schedule*, *exposes everyone to non-trivial programming*, and *would be fun to demo*. Tower defence won on criteria 1 and 2 but lost on criterion 3 because it felt "done-to-death"; the Plinko prototype lost because it was a one-minute toy with no progression. The proposal that broke the tie was to fuse the two: use the Plinko as the *economy layer* of a tower defence so the player is always interacting, even between waves. We built two paper prototypes in week 3 — one a classic grid TD to pin down placement feel, the other a Plinko board to pin down drop speed and gate density — and the combined experience felt promising enough to commit to.
-
-### Stakeholders
-
-We enumerated five stakeholder roles (`workshop/week04/stakeholderslist.md`):
+The **five operational roles** in the inner ring (`workshop/week04/stakeholderslist.md`) are the ones the team had to actively service week to week:
 
 1. **Tower-defence players** — the primary audience; expect clean build menus, visible range indicators and a fair difficulty curve.
 2. **p5.js developers (ourselves)** — care about modular files, predictable load order and low iteration cost.
@@ -152,9 +289,9 @@ We enumerated five stakeholder roles (`workshop/week04/stakeholderslist.md`):
 4. **Test engineers** — need deterministic, testable units and reproducible bugs.
 5. **Experience optimisers** — watch over readability, onboarding and accessibility.
 
-Each role deliberately overlapped with a team member's own skills, so "who cares about this?" had an obvious answer in every review.
+Each role deliberately overlapped with a team member's own skills, so "who cares about this?" had an obvious answer in every review. The outer rings — **course staff / playtesters / cohort peers** in the containing-organization ring, and the **open-source ecosystem** in the wider environment — fed back into the project less frequently but shaped large decisions: the heuristic walkthrough (see §5.1) was a containing-organization touchpoint, the MIT licence and zero-build deploy were wider-environment commitments.
 
-### Use cases & user stories
+### 2.3 Use cases & user stories
 
 The canonical stories (Week 4) are:
 
@@ -172,7 +309,7 @@ From these three seed stories we derived eighteen secondary ones, each tied to a
 - *"As a developer I want one-click access to all five levels."* → the `DEV: ALL LEVELS` shortcut on the launch screen.
 - *"As a player on a small laptop I don't want the canvas to overflow the viewport."* → responsive CSS scaling via `windowResized()`.
 
-### Use-case diagram (informal)
+### 2.4 Use-case diagram (informal)
 
 ```mermaid
 flowchart TD
@@ -188,7 +325,7 @@ flowchart TD
     Map -. "reports base HP / wave" .-> Phase
 ```
 
-### Requirement prioritisation (MoSCoW)
+### 2.5 Requirement prioritisation (MoSCoW)
 
 - **Must** — 5 playable levels; aim + drop + settlement minigame loop; at least four tower types; three enemy archetypes; win/lose conditions.
 - **Should** — boss encounters; tower upgrade tiers; first-run tutorial; English/中文 toggle; pause menu.
@@ -197,7 +334,7 @@ flowchart TD
 
 Everything in *Must* and *Should* shipped; every *Could* except per-level star rating also shipped (sound, perf HUD toggled by `F`, responsive CSS scaling, and 48 `node:test` cases). *Won't* items are listed as future work.
 
-### Development epics
+### 2.6 Development epics
 
 The MoSCoW list scopes *what* we want; the epic table below scopes *how it ships* — each epic is the unit of work behind one or more user stories, with concrete acceptance criteria the team could verify without a marker present.
 
@@ -216,10 +353,10 @@ The MoSCoW list scopes *what* we want; the epic table below scopes *how it ships
 
 <br>
 
-<a name="design"></a>
-<h2 align="center">Design</h2>
+<a name="3-design"></a>
+<h2 align="center">3. Design</h2>
 
-### System architecture
+### 3.1 System architecture
 
 The shipping version is **v2.1** (sound, perf HUD, responsive canvas, 48 unit tests on top of v2.0's structural refactor). The game runs as a single p5.js sketch — all source files live in one global scope and are loaded in a fixed order by `index.html`, which is the single source of truth for dependency order. The codebase is laid out by *concern*, not by *file type*:
 
@@ -239,6 +376,8 @@ docs/Game_v2.1/
 ├── waves.js            # wave state machine
 └── tutorial.js         # first-run overlay
 ```
+
+### 3.2 State machine
 
 At runtime the game is a **phase state machine** driven from `sketch.js::draw()`:
 
@@ -279,7 +418,55 @@ stateDiagram-v2
   <sub><i>Mission-select carousel — the canvas-based pseudo-3D level chooser. Hover-tilted level nodes anchor each description card with a connecting line, removing the "which level is this describing?" ambiguity that the v1.4 sidebar had.</i></sub>
 </p>
 
-### Class diagram (central cluster)
+### 3.3 Sequence diagram (one wave cycle)
+
+The state machine in §3.2 captures *which states* the game can be in; this sequence diagram captures *what happens during one wave* — from the moment the player locks aim in the minigame to the moment the wave clears and the next minigame begins. It traces every cross-module call on the hot path, and is the single most useful diagram when onboarding a new contributor.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Player
+    participant SK as sketch.js
+    participant MG as minigame.js
+    participant ST as state.js
+    participant TM as TowerManager
+    participant WV as waves.js
+    participant MM as MonsterManager
+
+    Note over Player,MM: One full wave cycle — minigame → build → combat → wave clear
+
+    Player->>SK: mousePressed (during minigame)
+    SK->>MG: aim locked at mouseX
+    MG->>MG: spawn balls; gates resolve +N / −N / ×N
+    MG->>MG: balls settle → finalCount
+    MG-->>Player: "BALLS → COINS" settlement card
+    MG->>ST: coins += finalCount
+
+    ST->>WV: enter Build Phase (5s countdown)
+    Player->>SK: click empty cell (build menu)
+    SK->>TM: requestBuild(gx, gy, 'rapid')
+    TM->>ST: coins -= TOWER_DEFS.rapid.cost
+    TM->>TM: instantiate Tower at (gx, gy)
+
+    WV->>WV: countdown ends → Combat phase
+    WV->>MM: spawnWave(currentWaveSpec)
+
+    loop every frame (60 Hz)
+        MM->>MM: monster.moveAlongPath(dt)
+        TM->>MM: damageAt(x, y, dmg, antiAir)
+        alt monster reaches base
+            MM->>ST: baseHp -= damage
+        else monster.hp ≤ 0
+            MM->>ST: coins += killReward
+        end
+    end
+
+    WV-->>Player: wave clear → next wave's minigame
+```
+
+> *Two messages are worth flagging. Step 5 — the `BALLS → COINS` settlement card — was added after Round-1 playtests showed 3 of 4 testers didn't realise the ball count *was* the coin payout (§5.2). The `loop every frame (60 Hz)` block is where the §4.3 sub-step integration loop lives: the inner `moveAlongPath(dt)` actually iterates over micro-steps, not a single delta, to stop fast enemies from tunnelling through corners.*
+
+### 3.4 Class diagram (central cluster)
 
 ```mermaid
 classDiagram
@@ -338,7 +525,7 @@ classDiagram
     TowerVariants ..> Tower : injected onto prototype
 ```
 
-### Key design decisions (full rationale in [`DESIGN.md`](DESIGN.md))
+### 3.5 Key design decisions (full rationale in [`DESIGN.md`](DESIGN.md))
 
 1. **Prototype extension instead of subclassing.** Every call site already used `new Tower(gx, gy, 'rapid')`; subclassing would have forced a factory-rewrite of every caller. Instead, each variant (`towers/variants/rapid.js` …) attaches to `Tower.prototype`, so the eight files split behaviour without touching callers. Trade-off: no `instanceof RapidTower` checks — but `tower.type === 'rapid'` is already the dispatch key.
 
@@ -350,7 +537,7 @@ classDiagram
 
 5. **Programmatic visuals.** No sprite sheets. Every entity is drawn from primitives + trigonometry so the aesthetic stays coherent across six contributors.
 
-### User-experience design
+### 3.6 User-experience design
 
 We treated three UX surfaces as design problems with explicit alternatives, not implementation tasks.
 
@@ -360,11 +547,11 @@ We treated three UX surfaces as design problems with explicit alternatives, not 
 
 **Level-map description cards.** In v1.4 the level description sat in a fixed sidebar panel; in v2.0 we anchored it next to each level node with a connecting line. This removes the *"which level is this describing?"* ambiguity when a player hovers between adjacent nodes — a refactor-time UX improvement that fell out of the v2.0 sprint rather than the heuristic eval.
 
-### Audio architecture
+### 3.7 Audio architecture
 
 `audio.js` wraps native `HTMLAudioElement` rather than `p5.sound` — the sound library was an unnecessary dependency given six BGM tracks and five SFX with no spatial mixing or DSP needs. The mute toggle persists in `localStorage['qd_muted']`; the launch BGM doubles as a *user-gesture gate* (browsers block auto-play until the player clicks the language button or DEV ALL LEVELS), which happens to satisfy autoplay-policy compliance for free.
 
-### Per-level pacing
+### 3.8 Per-level pacing
 
 Each level introduces one new mechanic and tightens one constraint, so players meet new ideas in isolation before having to combine them:
 
@@ -384,12 +571,12 @@ Each level introduces one new mechanic and tightens one constraint, so players m
 
 <br>
 
-<a name="implementation"></a>
-<h2 align="center">Implementation</h2>
+<a name="4-implementation"></a>
+<h2 align="center">4. Implementation</h2>
 
 We focus this section on the **three biggest technical challenges**: the minigame physics + gate lattice, the v1.4 → v2.0 refactor of three god-files into concern-oriented modules, and the multi-lane pathfinding integration that prevents fast enemies from tunnelling through path bends. Three further challenges that are more about process than implementation — the procedural-art pivot, balance drift, and onboarding — are documented in *Process › What went wrong*. A fourth, the canvas-based pseudo-3D mission-select rendering, is written up in [`workshop/week08/TECHNICAL_CHALLENGES.md`](workshop/week08/TECHNICAL_CHALLENGES.md) for the curious.
 
-### Challenge 1 — Ball-drop minigame (`minigame.js`, 847 lines)
+### 4.1 Challenge 1 — Ball-drop minigame (`minigame.js`, 847 lines)
 
 <p align="center">
   <img src="docs/screenshots/minigame.gif" width="720" style="border-radius: 12px; border: 2px solid #6D28D9;" alt="Ball-drop minigame in motion" />
@@ -406,7 +593,7 @@ The minigame has to feel physical and fair while producing a designer-tunable co
 
 The hard part was **balancing** without killing variance. We tune `shootTotal`, gate density, and gate-value distribution per level in `data/levels.js` so payouts land within ~±25 % of the design target — wide enough to reward a great aim, narrow enough that the tower economy stays tuned.
 
-### Challenge 2 — The v1.4 → v2.0 refactor
+### 4.2 Challenge 2 — The v1.4 → v2.0 refactor
 
 By the end of v1.4, three files had grown into god-classes:
 
@@ -427,7 +614,7 @@ Merge conflicts on these three files had started to block parallel work for an e
 
 Verification was manual: before-and-after playthroughs of all five levels at both difficulties. v2.0 shipped with identical gameplay — the only two observed deltas were latent v1.4 bugs (a tower-targeting edge case and a boss-HP lookup mismatch) that the cleaner module boundaries surfaced and we fixed in flight. The payoff was visible by week 9: three of us landed sound, the perf HUD, and responsive CSS *in parallel* with zero merge conflicts.
 
-### Challenge 3 — Multi-lane pathfinding without waypoint tunnelling
+### 4.3 Challenge 3 — Multi-lane pathfinding without waypoint tunnelling
 
 Quantum Drop runs up to three simultaneous enemy paths (main / edge / air), with up to ten monsters of different types active at once and Magnet-tower slow effects modifying their speed mid-run. Each monster stores its position as a continuous **progress value** (0.0 → 1.0) along a pre-computed array of pixel waypoints; every frame, the engine must:
 
@@ -463,12 +650,12 @@ The trade-off is per-frame cost proportional to monster speed, but the perf HUD 
 
 <br>
 
-<a name="evaluation"></a>
-<h2 align="center">Evaluation</h2>
+<a name="5-evaluation"></a>
+<h2 align="center">5. Evaluation</h2>
 
 Three layers, each in a different project phase: a week-7 **heuristic walkthrough** (expert review), weeks 8-9 **playtest rounds** (think-aloud + interview), and final **per-frame performance measurement** via the `F`-key perf HUD. Each fed the next — heuristic findings drove v2.0 UI fixes, playtest feedback drove the tutorial, perf measurement validated the refactor.
 
-### Heuristic evaluation (Week 7)
+### 5.1 Heuristic evaluation (Week 7)
 
 We ran a Nielsen heuristic walkthrough on the v1.3 build (lead: Zhang Xun). Each issue was scored on **Frequency / Impact / Persistence** (0-4 each) and rolled up to **severity = (F + I + P) / 3**. The walkthrough surfaced nine actionable issues; six are at severity ≥ 3.5, three of them at the maximum 4.0. Source: [`workshop/week07/Heuristic_Evaluation_Report.md`](workshop/week07/Heuristic_Evaluation_Report.md).
 
@@ -486,7 +673,7 @@ We ran a Nielsen heuristic walkthrough on the v1.3 build (lead: Zhang Xun). Each
 
 **Eight of nine issues closed** by v2.1; the remaining one (Air Path System) is partially mitigated by tooltips + i18n labels but the underlying mechanic is still better experienced than read about. Hour-for-hour, the most actionable feedback we got — it predates the playtest rounds below and shaped what those sessions could probe.
 
-### Qualitative — playtest observations
+### 5.2 Qualitative — playtest observations
 
 Two playtest rounds with four external testers each (eight unique participants, none on the course). Round 1 used v1.4 before the tutorial landed; round 2 used v2.1 with the tutorial, sound, and responsive canvas. Each tester played Level 1 unprompted, observed silently, then a short semi-structured interview (five questions, 3–5 minutes).
 
@@ -498,7 +685,7 @@ Two playtest rounds with four external testers each (eight unique participants, 
 
 The takeaway: *the mechanical systems were right in v1.4; what was wrong was that the player couldn't read the causal chain between them.* Most late-stage work was information design rather than new features.
 
-### Quantitative — performance measurement
+### 5.3 Quantitative — performance measurement
 
 After the perf HUD landed (`ui/perf-hud.js`, toggle with `F`), we measured frame rate under three scripted stress scenarios on a 2020 M1 MacBook Air (Chrome 131, no throttling):
 
@@ -517,7 +704,7 @@ After the perf HUD landed (`ui/perf-hud.js`, toggle with `F`), we measured frame
 
 We stay at vsync for ordinary play and drop to ~54 FPS only during the final boss's Berserk phase — a three-second window. Three optimisations carried the load: **object pooling** (no splicing in the hot loop), an **HUD text cache** keyed on `(coins, hp, wave, frame/30, currentLang)` — the hottest path before caching — and a build-once **`pathCellSet`** in `map-core.js` that turned per-frame path containment from a nested loop into O(1) lookup. v1.4 and v2.1 produced statistically indistinguishable FPS, confirming the refactor didn't regress performance.
 
-### Code testing
+### 5.4 Code testing
 
 Because the game uses no build step, most of the source depends on p5 or browser globals. We nonetheless built a **`node:test` suite of 48 unit tests** covering the testable pure layers:
 
@@ -529,7 +716,7 @@ Because the game uses no build step, most of the source depends on p5 or browser
 | `tests/data-levels.test.js`       | `LEVEL_INFO` ↔ `LEVEL_NODES` consistency, startCoins monotonicity     |
 | `tests/map-core.test.js`          | `pathToPixels`, `isCellBuildable` (bounds/HUD/path/occupancy/levels)  |
 
-Tests run in ~80 ms via `npm test` (Node ≥ 18, **no `npm install` needed**). The harness is a `vm.createContext` sandbox that stubs p5 math helpers and `localStorage`, runs the target source files in script-tag order, and promotes top-level bindings onto `globalThis` — so the browser game and the test runner read the *same unchanged files*. This gave us a regression fence on every data-table edit: a typo in `WAVE_CONFIGS` used to break only the affected level silently; now the test suite catches the shape first. (Implementation walkthrough in [Build & test › How it works](#run-the-unit-tests).) Manual testing remained the backbone for animation, audio, and visual regression — none worth snapshot-testing for a ten-week project.
+Tests run in ~80 ms via `npm test` (Node ≥ 18, **no `npm install` needed**). The harness is a `vm.createContext` sandbox that stubs p5 math helpers and `localStorage`, runs the target source files in script-tag order, and promotes top-level bindings onto `globalThis` — so the browser game and the test runner read the *same unchanged files*. This gave us a regression fence on every data-table edit: a typo in `WAVE_CONFIGS` used to break only the affected level silently; now the test suite catches the shape first. (Implementation walkthrough in [Appendix A · Run the unit tests](#a2-run-the-unit-tests).) Manual testing remained the backbone for animation, audio, and visual regression — none worth snapshot-testing for a ten-week project.
 
 <br>
 
@@ -537,10 +724,10 @@ Tests run in ~80 ms via `npm test` (Node ≥ 18, **no `npm install` needed**). T
 
 <br>
 
-<a name="process"></a>
-<h2 align="center">Process</h2>
+<a name="6-process"></a>
+<h2 align="center">6. Process</h2>
 
-### Tools & cadence
+### 6.1 Tools & cadence
 
 - **GitHub** for hosting, with GitHub Pages auto-deploying the `docs/` folder so every merged PR produced a playable build at a URL anyone could share.
 - **Weekly workshop (Wednesdays)** for synchronous planning, demo and blocker discussion.
@@ -549,11 +736,11 @@ Tests run in ~80 ms via `npm test` (Node ≥ 18, **no `npm install` needed**). T
 - **VS Code + Live Server** as the shared development environment — chosen because it has zero setup for a fresh contributor.
 - **p5.js web editor** for one-off experiments (the Plinko paper prototype was first a p5 sketch in the online editor).
 
-### Workflow
+### 6.2 Workflow
 
 We used trunk-based development with short-lived feature branches (`feature/tower-cannon`, `feature/i18n`, `fix/wave5-boss-spawn`, …). PRs needed one reviewer; anything touching `state.js`, `data/*` or `sketch.js` needed the module owner specifically. Merges to `main` triggered the GitHub Pages redeploy, so we treated a broken build on `main` as an *"everyone stops, someone reverts"* incident. That happened twice during the term — both were script-load-order regressions after a file split — and the revert-first rule kept main shareable within minutes both times.
 
-### Workshop cadence
+### 6.3 Workshop cadence
 
 The Wednesday workshop ran ~90 minutes in four blocks:
 
@@ -564,7 +751,7 @@ The Wednesday workshop ran ~90 minutes in four blocks:
 
 The cadence was deliberately under-engineered: no Jira, no story points, no formal stand-ups. With six people and a ten-week timeline, a written sprint plan in `workshop/weekN/sprint.md` plus a Pages-preview demo loop did more for momentum than any heavier process would have.
 
-### What went wrong (and what we changed)
+### 6.4 What went wrong (and what we changed)
 
 - **Art pipeline stalled early.** Our initial plan relied on hand-drawn sprites; two weeks in, the sprites didn't match across contributors and hadn't been finalised. We pivoted to fully procedural visuals (polar coordinates, particle systems, glow passes) — ugly for a week, then rapidly unified because everyone shared the same drawing primitives. This cost us ~1.5 weeks but removed an asset-versioning problem that would have dogged us to the end.
 
@@ -574,7 +761,7 @@ The cadence was deliberately under-engineered: no Jira, no story points, no form
 
 - **Underestimating onboarding.** Round-1 playtesters didn't understand the economy loop. We added a five-step Level-1 tutorial, tooltip prose, and the `BALLS → COINS` settlement card. The fix was narrative, not mechanical.
 
-### What worked
+### 6.5 What worked
 
 - **One owner per module.** Zero "who was supposed to do this?" moments.
 - **Zero-build tech stack.** New contributors were productive within an hour.
@@ -588,8 +775,8 @@ The cadence was deliberately under-engineered: no Jira, no story points, no form
 
 <br>
 
-<a name="sustainability-ethics--accessibility"></a>
-<h2 align="center">Sustainability, Ethics &amp; Accessibility</h2>
+<a name="7-sustainability-ethics--accessibility"></a>
+<h2 align="center">7. Sustainability, Ethics &amp; Accessibility</h2>
 
 We applied the **Sustainability Awareness Framework (SusAF)** to Quantum Drop after the v2.0 refactor: by then the architecture was stable enough that we could ask "what trade-offs are we *actually* shipping?" rather than projecting onto a moving target. The dimensions below cover the build as it stands in v2.1 — what holds up, where we cut corners, and what a v2.2 would prioritise.
 
@@ -614,7 +801,7 @@ radar-beta
 
 Quantum Drop is a single-player **zero-build static site** with no backend, no accounts, no telemetry, and no per-user data leaving the browser. State lives in four `localStorage` keys (`qd_lang`, `qd_muted`, `qd_perf`, `qd_tutorial_l1_done`) plus the highest unlocked level. The dimensions below cover **Environmental** (rubric requirement) plus **Individual** and **Technical** — chosen because they map to gameplay accessibility and to the v1.4 → v2.0 refactor — with separate **Ethics** notes scored alongside.
 
-### Environmental
+### 7.1 Environmental
 
 The dominant cost is asset weight, not compute:
 
@@ -630,7 +817,7 @@ Because every entity is drawn from primitives — no sprites — the visual laye
 
 *Gap:* the 25 MB BGM payload on first load is more than the rest of the build combined — levels 2–5 currently preload eagerly. Lazy-loading them alongside their map data would cut first-load to ~10 MB without changing UX, and tops the v2.2 list.
 
-### Individual (player wellbeing & accessibility)
+### 7.2 Individual (player wellbeing & accessibility)
 
 - **Pause menu** (`ui/pause.js`) interrupts at any frame and restores phase + frame counter — important for distraction-prone settings.
 - **Difficulty toggle** (Easy / Difficult) widens the accommodated skill range (Easy: 1.3× starting credits, 30 base HP; Difficult: 20 base HP).
@@ -639,7 +826,7 @@ Because every entity is drawn from primitives — no sprites — the visual laye
 
 *Gap:* no dedicated accessibility settings UI. Colour-blind palettes for tower range rings, a high-contrast theme, dyslexia-friendly fonts, and keyboard-only input are all on the v2.2 list — none ship in v2.1. This is the largest sustainability deficit the radar flags.
 
-### Technical
+### 7.3 Technical
 
 The v1.4 → v2.0 refactor *was* the technical-sustainability deliverable:
 
@@ -651,7 +838,7 @@ The v1.4 → v2.0 refactor *was* the technical-sustainability deliverable:
 
 *Gap:* tuning numbers are centralised but spread across three `data/` files; a unified balance dashboard would help maintainers. Visual regression remains manual.
 
-### Ethics
+### 7.4 Ethics
 
 - **Zero analytics, zero telemetry, zero tracking.** We grepped for `gtag`, `ga(`, Sentry, Mixpanel, Amplitude, Matomo and found nothing. The browser network tab during a full playthrough shows only static asset fetches.
 - **No PII collected.** No name, no email, no account. Highest-unlocked-level is the only progression record, stored locally.
@@ -660,7 +847,7 @@ The v1.4 → v2.0 refactor *was* the technical-sustainability deliverable:
 
 *Gap:* no in-game text explaining what `localStorage` keys are written, no "Delete save data" button — both 30-minute fixes deferred to v2.2.
 
-### Future actions
+### 7.5 Future actions
 
 By ROI: **lazy-load BGM** for levels 2–5 (~15 MB saved), **accessibility settings panel**, **in-game privacy text + delete-save button**, **mobile / touch layout**, **per-track audio attribution**.
 
@@ -672,12 +859,12 @@ Quantum Drop's strongest sustainability wins come from saying *no* to things we 
 
 <br>
 
-<a name="conclusion"></a>
-<h2 align="center">Conclusion</h2>
+<a name="8-conclusion"></a>
+<h2 align="center">8. Conclusion</h2>
 
 Over ten weeks we built, refactored, and shipped **Quantum Drop**: five playable levels, eight tower variants, ten enemy types (three bosses), a full ball-drop economy minigame, a first-run tutorial, bilingual UI (English + 中文), sound, a responsive canvas, a performance HUD, and a 48-case automated test suite. The game runs as a zero-build static site and is live on GitHub Pages.
 
-### Lessons learnt
+### 8.1 Lessons learnt
 
 **Prefer information design to new features.** By v1.4 the mechanical systems were sound; players just couldn't read the causal chain between the minigame and the economy. Two weeks of tutorial, tooltip, and settlement-visual work moved player comprehension more than any new feature could have in the same time. Playtesting with strangers was an order of magnitude more useful than playtesting within the team.
 
@@ -685,11 +872,11 @@ Over ten weeks we built, refactored, and shipped **Quantum Drop**: five playable
 
 **Constraints often liberate.** The zero-build, no-sprite-sheet, shared-global-scope stack looked limiting in week 2 and turned out to be a quiet superpower. No build meant zero toolchain-debugging time; no sprites meant our aesthetic couldn't fracture across six contributors; shared globals meant `index.html`'s load-order became a trivially legible dependency graph.
 
-### Challenges
+### 8.2 Challenges
 
 Three challenges stand out in retrospect — one per project axis: **scope** (everyone wanted their favourite mechanic; MoSCoW + a "nothing new after week 8" rule held), **code** (god-file merge conflicts, which the v1.4 → v2.0 refactor made stop overnight), and **comprehension** (mechanically correct ≠ readable to a first-time player — fixed narratively, not mechanically). Performance, by contrast, was easy: object pooling, text caching, and the path-cell set kept us at vsync.
 
-### Future work — immediate next steps for the current game
+### 8.3 Future work — immediate next steps for the current game
 
 1. **Per-level star rating and best-time persistence** (localStorage key reserved; UI not yet built).
 2. **Scripted tutorial interactions** — have the onboarding actually force a first build instead of describing one.
@@ -697,7 +884,7 @@ Three challenges stand out in retrospect — one per project axis: **scope** (ev
 4. **Mobile touch support** — `mouseX/mouseY` already works for taps; the bottleneck is the build menu sizing on narrow screens.
 5. **Automated visual regression** — currently a manual check per level; a simple canvas-hash test per fixed frame would catch most rendering regressions cheaply.
 
-### Future work — if we had a sequel
+### 8.4 Future work — if we had a sequel
 
 Three directions: **persistent meta-progression** (a roguelite unlock layer over level-select, so a defeat still contributes to a long-horizon goal); **authored minigame boards** paired to a wave's threat profile (curated rather than procedural gates, for tighter mechanical storytelling); and **co-op** (two players sharing an economy but owning separate halves of the map). The engineering risk is bounded — the design risk (how do two players trade off economy vs defence?) is the harder research question.
 
@@ -709,8 +896,8 @@ Quantum Drop proved that a six-person team, a ten-week timeline, and p5.js can p
 
 <br>
 
-<a name="contribution-statement"></a>
-<h2 align="center">Contribution Statement</h2>
+<a name="9-contribution-statement"></a>
+<h2 align="center">9. Contribution Statement</h2>
 
 <div align="center">
 
@@ -725,7 +912,7 @@ Quantum Drop proved that a six-person team, a ten-week timeline, and p5.js can p
 
 </div>
 
-This per-person breakdown supplements the [Team](#team) table further down — *Team* is the org chart (one owner per module); this *Contribution Statement* is each member's personal commit-trail across the term.
+This per-person breakdown supplements the [Group Members](#group-members) table at the top of the README — *Group Members* is the org chart (one owner per module); this *Contribution Statement* is each member's personal commit-trail across the term.
 
 <br>
 
@@ -733,8 +920,8 @@ This per-person breakdown supplements the [Team](#team) table further down — *
 
 <br>
 
-<a name="ai-usage-statement"></a>
-<h2 align="center">AI Usage Statement</h2>
+<a name="10-ai-usage-statement"></a>
+<h2 align="center">10. AI Usage Statement</h2>
 
 We disclose AI tool usage in line with University of Bristol guidance. **Game runtime code was written by team members; no AI code generation was used inside `docs/Game_v2.1/`.**
 
@@ -754,40 +941,12 @@ Specifically:
 
 <br>
 
-<a name="team"></a>
-<h2 align="center">Team</h2>
+<a name="a-build--test-developers"></a>
+<h2 align="center">Appendix A · Build &amp; Test (developers)</h2>
 
-<p align="center">
-  <img src="workshop/week01/微信图片_20260129151517_145.jpg" width="80%" style="border-radius: 12px; border: 2px solid #6D28D9;" alt="Group 23" />
-  <br>
-  <sub><i>Group 23 — six contributors, one shared canvas, zero hand-drawn sprites.</i></sub>
-</p>
+<a name="a1-run-the-game-locally"></a>
 
-<div align="center">
-
-| GitHub | Name | Email | Primary role | Secondary / cross-cutting |
-|---|---|---|---|---|
-| [@ycy-code](https://github.com/ycy-code) | Yu Chengyin | si25962@bristol.ac.uk | Mini-game physics — ball motion, collisions, settlement | Audio integration, launch / end screen polish |
-| [@zhuqihao7-tech](https://github.com/zhuqihao7-tech) | Zhu Qihao | iy25847@bristol.ac.uk | Mini-game gate layout — random generation, payout math | Level economy tuning (`data/levels.js`) |
-| [@ZhangZhenyu718](https://github.com/ZhangZhenyu718) | Zhang Zhenyu | pv25243@bristol.ac.uk | Tower combat — attack, skills, projectile management | Performance profiling (perf HUD, CANNON optimisation) |
-| [@zhangxun88](https://github.com/zhangxun88) | Zhang Xun | hg25695@bristol.ac.uk | Monsters & path system — spawn, movement, wave control | Boss AI, wave-data balancing |
-| [@Che-L](https://github.com/Che-L) | Liu Bowen | jt25343@bristol.ac.uk | Map layout & tower placement — cell logic, placement | HUD/tooltip/wave-preview caches, `pathCellSet` |
-| [@bruce5800](https://github.com/bruce5800) | Li Zhuolun | nu25406@bristol.ac.uk | UI & state integration — `ui/`, `screens/`, `state.js` | v2.0 refactor coordination, tutorial, i18n, test harness |
-
-</div>
-
-Roles settled in week 5 (`workshop/week05/LabourDivision.md`) and stayed stable through the rest of the project. We avoided "everybody does a bit of everything" because with six people it produces chaos; instead each module had a single clear owner and at least one reviewer.
-
-<br>
-
-<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
-
-<br>
-
-<a name="build--test-developers"></a>
-<h2 align="center">Build &amp; Test (developers)</h2>
-
-### Run the game locally
+### A.1 Run the game locally
 
 Requirements:
 - [Visual Studio Code](https://code.visualstudio.com/)
@@ -805,7 +964,9 @@ Requirements:
 > 💡 **Perf HUD.** Press `F` in-game for a live FPS / entity-count overlay.
 > 💡 **Codex.** Open `codex.html` (right-click → *Open with Live Server*) for a grid preview of every monster + tower with switchable path shapes.
 
-### Run the unit tests
+<a name="a2-run-the-unit-tests"></a>
+
+### A.2 Run the unit tests
 
 The **game** is zero-build, but we ship 48 `node:test` cases for the pure-data configs and pure-logic helpers — no `npm install` needed.
 
@@ -820,81 +981,9 @@ node --test tests/*.test.js
 
 How it works in one paragraph: `tests/helpers/load.js` builds a `vm.createContext` sandbox that stubs p5 math helpers and `localStorage`, runs the requested source files into the sandbox in script-tag order, then promotes their top-level `const`/`let` bindings onto `globalThis`. Tests reach them via `ctx.TOWER_DEFS`, `ctx.t(…)`, `ctx.isCellBuildable(…)` — the browser game and the test runner read the **same unchanged files**.
 
-<br>
+<a name="a3-source-tree-reference"></a>
 
-<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
-
-<br>
-
-<a name="reference-appendix"></a>
-<h2 align="center">Reference Appendix</h2>
-
-### Game flow
-
-```
-Launch Screen
-  → Difficulty Select  [EASY / DIFFICULT]
-    → Level Map        [Choose Level 1–5]
-      → Gameplay
-          Ball-drop Minigame → Build Phase → Combat → Next Wave...
-      → End Panel  [Victory / Defeat]
-          → RETRY / STAGES / NEXT LEVEL
-```
-
-### Levels
-
-| Level | Name | Theme | Waves | Starting credits | Notes |
-|---|---|---|---:|---:|---|
-| 1 | SECTOR ALPHA | Grassland | 6 | ¥2000 | Beginner — simple paths, infantry-focused |
-| 2 | NEBULA RIFT | Ice Nebula | 7 | ¥1800 | Dual-lane, aerial enemies introduced |
-| 3 | IRON CITADEL | Inferno | 8 | ¥1600 | Complex terrain, armoured enemies, first Boss |
-| 4 | VOID MAZE | Void | 9 | ¥1400 | Winding paths, high-speed enemy waves |
-| 5 | OMEGA GATE | Scorched Ruins | 10 | ¥1200 | Final level — elite forces + all three Bosses |
-
-> EASY: starting credits ×1.3, base HP = 30. DIFFICULT: credits as listed, base HP = 20.
-
-### Towers
-
-| Tower | Label | Cost | Description | Max Level |
-|---|---|---:|---|---:|
-| Rapid Fire | `RAPID` | ¥110 | High-frequency single target; ignores Robot shield; 20-charge super-gun mode | Lv3 |
-| Laser Cutter | `LASER` | ¥180 | Charges then fires at multiple targets simultaneously (Lv1 → Lv3: 1 → 3 targets) | Lv3 |
-| Nova Cannon | `NOVA` | ¥200 | Piercing shot through all ground enemies; area explosion on impact | Lv3 |
-| Chain Arc | `CHAIN` | ¥160 | Chain lightning (Lv1 → Lv3: 1 → 3 jumps); ignores Tank barrier | Lv3 |
-| Magnet Tower | `MAGNET` | ¥130 | No damage; continuously slows nearby enemies (up to 80 % at Lv3) | Lv3 |
-| Ghost Missile | `GHOST` | ¥190 | Homing missiles (Lv1 → Lv3: 1 → 3); near-full-map range | Lv3 |
-| Scatter Cannon | `SCATTER` | ¥150 | Shotgun spread targeting aerial units only (Lv1 → Lv3: 3 → 7 pellets) | Lv3 |
-| Rail Cannon | `CANNON` | ¥220 | Manual-aim rail cannon; massive single-shot damage with long reload | Lv3 |
-
-> Each tower upgrades up to **3 times**. Demolishing refunds **80 %** of the original build cost.
-
-### Enemies
-
-| Enemy | Lane | Special ability |
-|---|---|---|
-| Mech Snake | Main | Group heal every 900 frames |
-| Mech Spider | Edge | Periodic dash (3.5× speed for 20 frames) |
-| Armoured Tank | Main | Barrier shield — only Chain Arc can pierce |
-| Robot | Main | Shield triggers at 60 % HP — Rapid Fire ignores it |
-| Mech Phoenix | Air | Jamming pulse — disables all towers for 90 frames |
-| Ghost Bird | Air | High-speed flyer — only anti-air towers can target |
-| Steel Carrier | Main | Massive HP, very slow |
-| Boss① Fission Core | Main | Overload burst; splits into 4 Mech Snakes at 50 % HP |
-| Boss② Phantom Protocol | Main | Quantum dodge every 3 hits; EMP disables towers; spawns 2 clones at 30 % HP |
-| Boss③ Ant-Mech | Main | Alternates Giant (−85 % dmg taken) ↔ Tiny (×2.2 dmg taken); Berserk at 50 % HP |
-
-### Ball-drop mini-game
-
-Triggered automatically before each wave:
-
-1. **Aim phase** — move the mouse to choose a launch X, then click to confirm.
-2. **Drop phase** — balls fall under gravity through gates that modify their count:
-   - `+N` gate adds N balls
-   - `−N` gate removes N balls
-   - `×N` gate multiplies the count by N
-3. **Settlement** — the final ball count is converted into coins for the upcoming wave.
-
-### Source-tree reference
+### A.3 Source-tree reference
 
 ```
 2026-group-23/
@@ -926,7 +1015,9 @@ Triggered automatically before each wave:
 
 > **Important:** The script load order in `docs/Game_v2.1/index.html` must not be changed — later files depend on earlier ones.
 
-### Key APIs
+<a name="a4-key-apis"></a>
+
+### A.4 Key APIs
 
 ```js
 // Coins
@@ -951,7 +1042,9 @@ initGame();                // initialise based on currentLevel + gameDifficulty
 jammedUntilFrame = frameCount + duration;  // disable all towers for `duration` frames
 ```
 
-### Globals (`state.js`)
+<a name="a5-globals-state-js"></a>
+
+### A.5 Globals (`state.js`)
 
 | Variable | Description | Default |
 |---|---|---|
@@ -974,8 +1067,8 @@ jammedUntilFrame = frameCount + duration;  // disable all towers for `duration` 
 
 <br>
 
-<a name="acknowledgements"></a>
-<h2 align="center">Acknowledgements</h2>
+<a name="b-acknowledgements"></a>
+<h2 align="center">Appendix B · Acknowledgements</h2>
 
 <div align="center">
 
