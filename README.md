@@ -1,62 +1,125 @@
 <div align="center">
 
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
 # Quantum Drop
 
-**A 2-D browser game that fuses tower-defence with a Plinko-style ball-drop economy.**
-*COMSM0166 — Software Engineering Discipline & Practice · Group 23 · 2025-26*
+<p>
+  <img src="https://img.shields.io/badge/Language-JavaScript-7c3aed?style=for-the-badge&logo=javascript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Engine-p5.js-06b6d4?style=for-the-badge&logo=p5dotjs&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tests-48_passing-10b981?style=for-the-badge&logo=node.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/Deploy-GitHub_Pages-1e293b?style=for-the-badge&logo=github&logoColor=white" />
+  <img src="https://img.shields.io/badge/License-MIT-94a3b8?style=for-the-badge" />
+</p>
 
-[![Play](https://img.shields.io/badge/▶-Play_v2.1-F96167?style=for-the-badge)](https://uob-comsm0166.github.io/2026-group-23/Game_v2.1/)
-[![Demo video](https://img.shields.io/badge/🎬-Demo_video-1C7293?style=for-the-badge)](video/我的影片.mp4)
-[![Slides](https://img.shields.io/badge/📊-Slides-21295C?style=for-the-badge)](video/Quantum_Drop_Group23.pptx)
-[![p5.js](https://img.shields.io/badge/p5.js-zero_build-F9C74F?style=for-the-badge)](https://p5js.org/)
+<br>
 
-[![Game Screenshot](docs/screenshots/launch-screen.jpg)](https://uob-comsm0166.github.io/2026-group-23/Game_v2.1/)
+<img src="docs/screenshots/launch-hero.jpg" width="860" style="border-radius: 16px; border: 3px solid #7C3AED;" alt="Quantum Drop — launch hero" />
+
+<br><br>
+
+<img src="docs/screenshots/level-combat.gif" width="780" style="border-radius: 12px; border: 2px solid #6D28D9;" alt="Quantum Drop — live combat preview" />
+
+<br><br>
+
+> *"A 2-D browser game that fuses tower-defence with a Plinko-style ball-drop economy."*
+>
+> *COMSM0166 — Software Engineering Discipline & Practice · Group 23 · 2025-26*
+
+<br>
+
+[![Play Game](https://img.shields.io/badge/▶_Play_v2.1-7c3aed?style=for-the-badge)](https://uob-comsm0166.github.io/2026-group-23/Game_v2.1/)
+[![Watch Video](https://img.shields.io/badge/🎬_Demo_video-ef4444?style=for-the-badge)](video/我的影片.mp4)
+[![Slides](https://img.shields.io/badge/📊_Slides-1e293b?style=for-the-badge)](video/Quantum_Drop_Group23.pptx)
+[![Design](https://img.shields.io/badge/📘_Design_doc-06b6d4?style=for-the-badge)](DESIGN.md)
+
+<br>
+
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
 
 </div>
 
----
+<br>
 
-## Quick links
+<a name="quick-links"></a>
+<h2 align="center">Quick Links</h2>
 
-- **Live build (v2.1)** — <https://uob-comsm0166.github.io/2026-group-23/Game_v2.1/>
-- **Demo video** — [`video/我的影片.mp4`](video/我的影片.mp4)
-- **Presentation deck** — [`video/Quantum_Drop_Group23.pptx`](video/Quantum_Drop_Group23.pptx)
-- **Speaker scripts** — [`video/Quantum_Drop_Speaker_Scripts.pdf`](video/Quantum_Drop_Speaker_Scripts.pdf)
-- **Older builds** — [v0.3](https://uob-comsm0166.github.io/2026-group-23/Game_v0.3/) · [v1.4](https://uob-comsm0166.github.io/2026-group-23/Game_v1.4/) · [v2.1 (latest)](https://uob-comsm0166.github.io/2026-group-23/Game_v2.1/)
+<div align="center">
 
-## Screenshots
+| Resource | Path |
+|:---|:---|
+| **Live build (v2.1)** | <https://uob-comsm0166.github.io/2026-group-23/Game_v2.1/> |
+| **Demo video** | [`video/我的影片.mp4`](video/我的影片.mp4) |
+| **Presentation deck** | [`video/Quantum_Drop_Group23.pptx`](video/Quantum_Drop_Group23.pptx) |
+| **Speaker scripts** | [`video/Quantum_Drop_Speaker_Scripts.pdf`](video/Quantum_Drop_Speaker_Scripts.pdf) |
+| **Older builds** | [v0.3](https://uob-comsm0166.github.io/2026-group-23/Game_v0.3/) · [v1.4](https://uob-comsm0166.github.io/2026-group-23/Game_v1.4/) · [v2.1 (latest)](https://uob-comsm0166.github.io/2026-group-23/Game_v2.1/) |
+
+</div>
+
+<br>
+
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="screenshots"></a>
+<h2 align="center">Screenshots</h2>
+
+<div align="center">
 
 | Launch screen | Mission select | Mini-game (mid-salvo) |
 |:---:|:---:|:---:|
-| ![Launch](docs/screenshots/launch-screen.jpg) | ![Map](docs/screenshots/level-map.jpg) | ![Mini-game](docs/screenshots/minigame2.jpg) |
+| <img src="docs/screenshots/launch-screen.jpg" width="260" style="border-radius: 12px; border: 2px solid #6D28D9;" alt="Launch" /> | <img src="docs/screenshots/level-map.jpg" width="260" style="border-radius: 12px; border: 2px solid #6D28D9;" alt="Map" /> | <img src="docs/screenshots/minigame2.jpg" width="260" style="border-radius: 12px; border: 2px solid #6D28D9;" alt="Mini-game" /> |
 
 | Sector Alpha | Nebula Rift | Iron Citadel | Void Maze | Omega Gate |
 |:---:|:---:|:---:|:---:|:---:|
-| ![Lv1](docs/screenshots/level1-thumb.jpg) | ![Lv2](docs/screenshots/level2-thumb.jpg) | ![Lv3](docs/screenshots/level3-thumb.jpg) | ![Lv4](docs/screenshots/level4-thumb.jpg) | ![Lv5](docs/screenshots/level5-thumb.jpg) |
+| <img src="docs/screenshots/level1-thumb.jpg" width="140" style="border-radius: 8px; border: 2px solid #6D28D9;" alt="Lv1" /> | <img src="docs/screenshots/level2-thumb.jpg" width="140" style="border-radius: 8px; border: 2px solid #6D28D9;" alt="Lv2" /> | <img src="docs/screenshots/level3-thumb.jpg" width="140" style="border-radius: 8px; border: 2px solid #6D28D9;" alt="Lv3" /> | <img src="docs/screenshots/level4-thumb.jpg" width="140" style="border-radius: 8px; border: 2px solid #6D28D9;" alt="Lv4" /> | <img src="docs/screenshots/level5-thumb.jpg" width="140" style="border-radius: 8px; border: 2px solid #6D28D9;" alt="Lv5" /> |
 
----
+</div>
 
-# Project Report
+<br>
 
-## Table of contents
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
 
-1. [Introduction](#introduction)
-2. [Requirements](#requirements)
-3. [Design](#design)
-4. [Implementation](#implementation)
-5. [Evaluation](#evaluation)
-6. [Process](#process)
-7. [Sustainability, Ethics & Accessibility](#sustainability-ethics--accessibility)
-8. [Conclusion](#conclusion)
-9. [Contribution Statement](#contribution-statement)
-10. [AI Usage Statement](#ai-usage-statement)
-11. [Team](#team)
-12. [Build & test (developers)](#build--test-developers)
-13. [Reference appendix](#reference-appendix)
+<br>
 
----
+<h1 align="center">Project Report</h1>
 
-## Introduction
+<br>
+
+<a name="table-of-contents"></a>
+<h2 align="center">Table of Contents</h2>
+
+<div align="center">
+
+| # | Section | Description |
+|:---:|:---:|:---|
+| 01 | [Introduction](#introduction) | What Quantum Drop is and what makes it novel |
+| 02 | [Requirements](#requirements) | Ideation, stakeholders, user stories, MoSCoW, epics |
+| 03 | [Design](#design) | Architecture, state machine, class diagram, UX, audio |
+| 04 | [Implementation](#implementation) | Three biggest technical challenges |
+| 05 | [Evaluation](#evaluation) | Heuristic walkthrough, playtests, perf, unit tests |
+| 06 | [Process](#process) | Tools, cadence, what went wrong, what worked |
+| 07 | [Sustainability](#sustainability-ethics--accessibility) | SusAF — environmental, individual, technical, ethics |
+| 08 | [Conclusion](#conclusion) | Lessons learnt, challenges, future work |
+| 09 | [Contribution Statement](#contribution-statement) | Per-person commit-trail across the term |
+| 10 | [AI Usage Statement](#ai-usage-statement) | Where AI tools were and weren't used |
+| 11 | [Team](#team) | Org chart — one owner per module |
+| 12 | [Build & Test](#build--test-developers) | Run the game and the unit tests locally |
+| 13 | [Reference Appendix](#reference-appendix) | Game flow, levels, towers, enemies, mini-game, source tree |
+
+</div>
+
+<br>
+
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="introduction"></a>
+<h2 align="center">Introduction</h2>
 
 **Quantum Drop** is a 2-D browser game that fuses the slow, strategic layer of a **tower-defence** with the fast, tactile feel of a **ball-drop minigame**. It is written entirely in [p5.js](https://p5js.org/) and ships as a zero-build static site, so it runs from any file host (including GitHub Pages) without a toolchain.
 
@@ -66,9 +129,14 @@ The **twist** is in the economy. Most tower-defence games make the player wait p
 
 A secondary novelty is that **no art assets were drawn**: every monster, tower, projectile, particle and background is generated procedurally in JS, which enforces a unified cyberpunk aesthetic across six contributors and keeps all visuals in the same git diff as the logic.
 
----
+<br>
 
-## Requirements
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="requirements"></a>
+<h2 align="center">Requirements</h2>
 
 ### Ideation
 
@@ -142,9 +210,14 @@ The MoSCoW list scopes *what* we want; the epic table below scopes *how it ships
 | **First-run experience** | Onboarding + bilingual UI | 5-step Level-1 tutorial; BALLS → COINS settlement card; EN / 中文 toggle persisted in `localStorage` |
 | **Performance** | Stable frame rate under load | 60 FPS for ordinary play; ≥ 50 FPS in worst-case (Level 5 + Boss 3 Berserk + ≥ 5-cannon volley) |
 
----
+<br>
 
-## Design
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="design"></a>
+<h2 align="center">Design</h2>
 
 ### System architecture
 
@@ -199,6 +272,12 @@ stateDiagram-v2
 ```
 
 > *State names match the literal string values of `gamePhase` (`'launch'`, `'difficulty'`, `'levelmap'`, `'playing'`, `'endpanel'`) and `minigameState` (`'idle'`, `'aiming'`, `'playing'`, `'result'`). The mini-game's `'playing'` state is shown via an alias to disambiguate it from the outer game-phase `'playing'`.*
+
+<p align="center">
+  <img src="docs/screenshots/mission-select.gif" width="780" style="border-radius: 12px; border: 2px solid #6D28D9;" alt="Pseudo-3D mission-select carousel" />
+  <br>
+  <sub><i>Mission-select carousel — the canvas-based pseudo-3D level chooser. Hover-tilted level nodes anchor each description card with a connecting line, removing the "which level is this describing?" ambiguity that the v1.4 sidebar had.</i></sub>
+</p>
 
 ### Class diagram (central cluster)
 
@@ -299,13 +378,24 @@ Each level introduces one new mechanic and tightens one constraint, so players m
 
 `data/waves.js` follows this shape: each level's first wave teaches its new mechanic in isolation; final waves combine that mechanic with everything previously introduced. Balance values live alongside in `data/levels.js` and are covered by the `node:test` shape invariants (e.g. *startCoins is strictly decreasing across levels*).
 
----
+<br>
 
-## Implementation
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="implementation"></a>
+<h2 align="center">Implementation</h2>
 
 We focus this section on the **three biggest technical challenges**: the minigame physics + gate lattice, the v1.4 → v2.0 refactor of three god-files into concern-oriented modules, and the multi-lane pathfinding integration that prevents fast enemies from tunnelling through path bends. Three further challenges that are more about process than implementation — the procedural-art pivot, balance drift, and onboarding — are documented in *Process › What went wrong*. A fourth, the canvas-based pseudo-3D mission-select rendering, is written up in [`workshop/week08/TECHNICAL_CHALLENGES.md`](workshop/week08/TECHNICAL_CHALLENGES.md) for the curious.
 
 ### Challenge 1 — Ball-drop minigame (`minigame.js`, 847 lines)
+
+<p align="center">
+  <img src="docs/screenshots/minigame.gif" width="720" style="border-radius: 12px; border: 2px solid #6D28D9;" alt="Ball-drop minigame in motion" />
+  <br>
+  <sub><i>Aim → drop → settle. Each ball runs the four-state machine described below; gate hits feed a `spawnQueue` that's drained at the end of the frame so the iteration order is never mutated mid-flight.</i></sub>
+</p>
 
 The minigame has to feel physical and fair while producing a designer-tunable coin payout. It is a small state machine (`idle → aiming → playing → result`) with four coupled subsystems:
 
@@ -367,9 +457,14 @@ moveAlongPath(dt) {
 
 The trade-off is per-frame cost proportional to monster speed, but the perf HUD confirmed it was within budget: 20+ simultaneous high-speed enemies on Level 4 stayed at 60 fps. Tunnelling artefacts disappeared, and the fix also closed a latent bug where the base occasionally took *less* damage than expected when a fast enemy overshot the endpoint within the same tick.
 
----
+<br>
 
-## Evaluation
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="evaluation"></a>
+<h2 align="center">Evaluation</h2>
 
 Three layers, each in a different project phase: a week-7 **heuristic walkthrough** (expert review), weeks 8-9 **playtest rounds** (think-aloud + interview), and final **per-frame performance measurement** via the `F`-key perf HUD. Each fed the next — heuristic findings drove v2.0 UI fixes, playtest feedback drove the tutorial, perf measurement validated the refactor.
 
@@ -414,6 +509,12 @@ After the perf HUD landed (`ui/perf-hud.js`, toggle with `F`), we measured frame
 | Level 5 final wave (worst case)          |                 45 |            16 |         ~60 |      58.7 |        22.1 ms |
 | Level 5 final wave + Boss3 Berserk       |                 45 |            16 |         ~85 |      54.2 |        28.6 ms |
 
+<p align="center">
+  <img src="docs/screenshots/level5-boss-finale.gif" width="780" style="border-radius: 12px; border: 2px solid #6D28D9;" alt="Level 5 final-wave Boss 3 Berserk — captured at 54.2 FPS" />
+  <br>
+  <sub><i>Level 5 final wave + Boss 3 Berserk — the worst-case row in the table above. The clip is the actual on-screen scene used for the perf measurement: 45 monsters, 16 towers, ~85 projectiles, sustained 54.2 FPS with p95 frame time 28.6 ms.</i></sub>
+</p>
+
 We stay at vsync for ordinary play and drop to ~54 FPS only during the final boss's Berserk phase — a three-second window. Three optimisations carried the load: **object pooling** (no splicing in the hot loop), an **HUD text cache** keyed on `(coins, hp, wave, frame/30, currentLang)` — the hottest path before caching — and a build-once **`pathCellSet`** in `map-core.js` that turned per-frame path containment from a nested loop into O(1) lookup. v1.4 and v2.1 produced statistically indistinguishable FPS, confirming the refactor didn't regress performance.
 
 ### Code testing
@@ -430,9 +531,14 @@ Because the game uses no build step, most of the source depends on p5 or browser
 
 Tests run in ~80 ms via `npm test` (Node ≥ 18, **no `npm install` needed**). The harness is a `vm.createContext` sandbox that stubs p5 math helpers and `localStorage`, runs the target source files in script-tag order, and promotes top-level bindings onto `globalThis` — so the browser game and the test runner read the *same unchanged files*. This gave us a regression fence on every data-table edit: a typo in `WAVE_CONFIGS` used to break only the affected level silently; now the test suite catches the shape first. (Implementation walkthrough in [Build & test › How it works](#run-the-unit-tests).) Manual testing remained the backbone for animation, audio, and visual regression — none worth snapshot-testing for a ten-week project.
 
----
+<br>
 
-## Process
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="process"></a>
+<h2 align="center">Process</h2>
 
 ### Tools & cadence
 
@@ -476,9 +582,14 @@ The cadence was deliberately under-engineered: no Jira, no story points, no form
 - **Live Pages preview per merge.** We could share a URL with a playtester within minutes of a merge.
 - **Honest retros.** We kept a short retro every workshop ("one thing going well, one thing blocked"). That's how we caught the art-pipeline problem early enough to pivot.
 
----
+<br>
 
-## Sustainability, Ethics & Accessibility
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="sustainability-ethics--accessibility"></a>
+<h2 align="center">Sustainability, Ethics &amp; Accessibility</h2>
 
 We applied the **Sustainability Awareness Framework (SusAF)** to Quantum Drop after the v2.0 refactor: by then the architecture was stable enough that we could ask "what trade-offs are we *actually* shipping?" rather than projecting onto a moving target. The dimensions below cover the build as it stands in v2.1 — what holds up, where we cut corners, and what a v2.2 would prioritise.
 
@@ -555,9 +666,14 @@ By ROI: **lazy-load BGM** for levels 2–5 (~15 MB saved), **accessibility setti
 
 Quantum Drop's strongest sustainability wins come from saying *no* to things we never built — no accounts, no servers, no analytics, no asset pipeline. The remaining work is mostly explicit accommodation (accessibility) and honest disclosure (privacy text), not undoing structural choices.
 
----
+<br>
 
-## Conclusion
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="conclusion"></a>
+<h2 align="center">Conclusion</h2>
 
 Over ten weeks we built, refactored, and shipped **Quantum Drop**: five playable levels, eight tower variants, ten enemy types (three bosses), a full ball-drop economy minigame, a first-run tutorial, bilingual UI (English + 中文), sound, a responsive canvas, a performance HUD, and a 48-case automated test suite. The game runs as a zero-build static site and is live on GitHub Pages.
 
@@ -587,9 +703,16 @@ Three directions: **persistent meta-progression** (a roguelite unlock layer over
 
 Quantum Drop proved that a six-person team, a ten-week timeline, and p5.js can produce a game that is both technically coherent and fun to demo. Every member touched every stage of the stack — from data tables, through physics, through visual polish, through testing — which was the real point of the module.
 
----
+<br>
 
-## Contribution Statement
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="contribution-statement"></a>
+<h2 align="center">Contribution Statement</h2>
+
+<div align="center">
 
 | Contributor | Contribution |
 |---|---|
@@ -600,11 +723,18 @@ Quantum Drop proved that a six-person team, a ten-week timeline, and p5.js can p
 | **Liu Bowen** | Owns the map / placement layer (`map/`, `ui/placement.js`) — per-level path geometry, cell-buildability rules, and the `pathCellSet` build-once cache. Wrote the four cache layers that kept Level-5 at vsync (HUD-text, tower-tooltip, wave-preview, path-cell). Co-led the v2.0 file-tree migration with Li Zhuolun; specifically split `monsters.js` into `monsters/` and verified gameplay parity across all five levels at both difficulties. |
 | **Li Zhuolun** | Coordinated the v1.4 → v2.0 refactor sprint and acted as integration lead. Personally migrated the UI layer (split `ui.js` into `hud / pause / wave-ui / build-menu / tower-panel / placement / index`), centralised mutable state into `state.js`, authored the first-run tutorial (`tutorial.js`), scaffolded the i18n table (`i18n.js`, EN / 中文), and built the `node:test` harness with the `vm.createContext` sandbox (48 tests, zero install). Authored this report and the presentation deck. |
 
+</div>
+
 This per-person breakdown supplements the [Team](#team) table further down — *Team* is the org chart (one owner per module); this *Contribution Statement* is each member's personal commit-trail across the term.
 
----
+<br>
 
-## AI Usage Statement
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="ai-usage-statement"></a>
+<h2 align="center">AI Usage Statement</h2>
 
 We disclose AI tool usage in line with University of Bristol guidance. **Game runtime code was written by team members; no AI code generation was used inside `docs/Game_v2.1/`.**
 
@@ -618,11 +748,22 @@ Specifically:
 - **Presentation deck** (`video/Quantum_Drop_Group23.pptx`) and **speaker scripts** (`video/Quantum_Drop_Speaker_Scripts.pdf`) — AI-assisted: the team supplied the structure, content, and engineering details; Claude helped with slide layout choices and prose tightening for read-aloud pacing.
 - **Playtests, evaluation findings, and the contribution statement above** — all human-authored. The two playtest rounds were run face-to-face by team members; no AI-generated participant data appears anywhere in this repo.
 
----
+<br>
 
-## Team
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
 
-![Group 23](workshop/week01/微信图片_20260129151517_145.jpg)
+<br>
+
+<a name="team"></a>
+<h2 align="center">Team</h2>
+
+<p align="center">
+  <img src="workshop/week01/微信图片_20260129151517_145.jpg" width="80%" style="border-radius: 12px; border: 2px solid #6D28D9;" alt="Group 23" />
+  <br>
+  <sub><i>Group 23 — six contributors, one shared canvas, zero hand-drawn sprites.</i></sub>
+</p>
+
+<div align="center">
 
 | GitHub | Name | Email | Primary role | Secondary / cross-cutting |
 |---|---|---|---|---|
@@ -633,11 +774,18 @@ Specifically:
 | [@Che-L](https://github.com/Che-L) | Liu Bowen | jt25343@bristol.ac.uk | Map layout & tower placement — cell logic, placement | HUD/tooltip/wave-preview caches, `pathCellSet` |
 | [@bruce5800](https://github.com/bruce5800) | Li Zhuolun | nu25406@bristol.ac.uk | UI & state integration — `ui/`, `screens/`, `state.js` | v2.0 refactor coordination, tutorial, i18n, test harness |
 
+</div>
+
 Roles settled in week 5 (`workshop/week05/LabourDivision.md`) and stayed stable through the rest of the project. We avoided "everybody does a bit of everything" because with six people it produces chaos; instead each module had a single clear owner and at least one reviewer.
 
----
+<br>
 
-## Build & test (developers)
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="build--test-developers"></a>
+<h2 align="center">Build &amp; Test (developers)</h2>
 
 ### Run the game locally
 
@@ -672,9 +820,14 @@ node --test tests/*.test.js
 
 How it works in one paragraph: `tests/helpers/load.js` builds a `vm.createContext` sandbox that stubs p5 math helpers and `localStorage`, runs the requested source files into the sandbox in script-tag order, then promotes their top-level `const`/`let` bindings onto `globalThis`. Tests reach them via `ctx.TOWER_DEFS`, `ctx.t(…)`, `ctx.isCellBuildable(…)` — the browser game and the test runner read the **same unchanged files**.
 
----
+<br>
 
-## Reference appendix
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="reference-appendix"></a>
+<h2 align="center">Reference Appendix</h2>
 
 ### Game flow
 
@@ -815,10 +968,37 @@ jammedUntilFrame = frameCount + duration;  // disable all towers for `duration` 
 | `jammedUntilFrame` | Frame at which jam ends | `0` |
 | `tutorialActive` / `tutorialStep` | First-run Level-1 tutorial state | `false` / `0` |
 
----
+<br>
 
-## Acknowledgements
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<br>
+
+<a name="acknowledgements"></a>
+<h2 align="center">Acknowledgements</h2>
+
+<div align="center">
 
 Built for **COMSM0166 — Software Engineering Discipline & Practice** at the University of Bristol, 2025-26. Thanks to the course staff for the brief and the eight playtesters who shaped the late-stage work.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+</div>
+
+<br>
+
+<img src="ArtAsset/ReadMe/divider.png" width="100%" alt="" />
+
+<div align="center">
+
+<br>
+
+<img src="https://img.shields.io/badge/Made%20at-University%20of%20Bristol-a78bfa?style=flat-square&labelColor=7c3aed" alt="Made at Bristol" />
+&nbsp;
+<img src="https://img.shields.io/badge/COMSM0166%202025--26-Group%2023-a78bfa?style=flat-square&labelColor=7c3aed" alt="Group 23" />
+&nbsp;
+<img src="https://img.shields.io/badge/Engine-p5.js-a78bfa?style=flat-square&labelColor=06b6d4" alt="p5.js" />
+
+<br><br>
+
+</div>
