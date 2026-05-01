@@ -1,35 +1,35 @@
 // ============================================================
 //  screens/level-map.js
-//  关卡选择地图
-//  迁移自：sketch.js（原 drawLevelMap / handleLevelMapClick）
-//  依赖全局：gamePhase, gameDifficulty, currentLevel, unlockedLevel,
+//  Level select map
+//  Migrated from sketch.js (was drawLevelMap / handleLevelMapClick)
+//  Global dependencies: gamePhase, gameDifficulty, currentLevel, unlockedLevel,
 //            levelResults, launchParticles, levelMapAnim,
 //            LEVEL_INFO, LEVEL_NODES, WAVE_CONFIGS, _gameEndFired
 // ============================================================
 
-// 当前帧鼠标悬停的关卡编号（0 = 无）
+// Level number currently hovered this frame (0 = none)
 let levelHovered = 0;
 
-// LEVEL_INFO / LEVEL_NODES 已抽离到 data/levels.js
+// LEVEL_INFO / LEVEL_NODES have been moved to data/levels.js
 
 // ============================================================
-//  悬浮信息卡位置计算
-//  根据节点坐标把卡片放在节点旁边：
-//    - 节点在左半屏 → 卡片在节点右侧
-//    - 节点在右半屏 → 卡片在节点左侧
-//    - 垂直居中于节点，并裁剪到画布内
+//  Hover info card position calculation
+//  Place the card next to the node based on its coordinates:
+//    - Node on the left half -> card on the right of the node
+//    - Node on the right half -> card on the left of the node
+//    - Vertically centered on the node and clipped to the canvas
 // ============================================================
 const LEVEL_CARD_W = 200;
 const LEVEL_CARD_H = 185;
-const LEVEL_CARD_GAP = 58;   // 节点中心到卡片的横向距离
+const LEVEL_CARD_GAP = 58;   // Horizontal distance from the node center to the card
 
 function _levelCardRect(lv) {
   const nd = LEVEL_NODES[lv - 1];
   const nx = nd.x * width, ny = nd.y * (height - 100) + 70;
   const pw = LEVEL_CARD_W, ph = LEVEL_CARD_H;
-  // 节点在左半屏则卡片右侧，否则放左侧
+  // Card on the right if the node is on the left half, otherwise on the left
   let px = (nx < width / 2) ? nx + LEVEL_CARD_GAP : nx - LEVEL_CARD_GAP - pw;
-  // 夹到画布内
+  // Clamp inside the canvas
   px = constrain(px, 8, width  - pw - 8);
   let py = constrain(ny - ph / 2, 62, height - ph - 8);
   return { px, py, pw, ph, nx, ny };
@@ -39,7 +39,7 @@ function drawLevelMap() {
   levelMapAnim++;
   background(3, 6, 18);
 
-  // ── 星空粒子 ──
+  // -- Star particles --
   noStroke();
   for (const p of launchParticles) {
     p.x += p.vx * 0.25; p.y += p.vy * 0.25;
@@ -48,12 +48,12 @@ function drawLevelMap() {
     ellipse(p.x, p.y, p.size * 0.65, p.size * 0.65);
   }
 
-  // ── 网格 ──
+  // -- Grid --
   stroke(0, 75, 135, 8); strokeWeight(1);
   for (let x = 0; x < width; x += 60) line(x, 0, x, height);
   for (let y = 0; y < height; y += 60) line(0, y, width, y);
 
-  // ── 标题 ──
+  // -- Title --
   textFont('monospace'); textAlign(CENTER, CENTER);
   const pulse = sin(levelMapAnim * 0.05) * 0.2 + 0.8;
   noStroke(); fill(0, 200, 255, 220 * pulse); textSize(20);
@@ -61,7 +61,7 @@ function drawLevelMap() {
   fill(0, 140, 200, 150); textSize(9);
   text(t('levelmap.difficulty', gameDifficulty ? gameDifficulty.toUpperCase() : '---'), width / 2, 52);
 
-  // ── 关卡连线 ──
+  // -- Level connecting lines --
   for (let i = 0; i < LEVEL_NODES.length - 1; i++) {
     const a = LEVEL_NODES[i], b = LEVEL_NODES[i + 1];
     const ax = a.x * width, ay = a.y * (height - 100) + 70;
@@ -80,7 +80,7 @@ function drawLevelMap() {
     }
   }
 
-  // ── 关卡节点 ──
+  // -- Level nodes --
   levelHovered = 0;
   for (let i = 0; i < 5; i++) {
     const lv   = i + 1;
@@ -135,13 +135,13 @@ function drawLevelMap() {
     }
   }
 
-  // ── 悬浮信息卡（紧贴悬停节点旁）──
+  // -- Hover info card (right next to the hovered node) --
   if (levelHovered > 0) {
     const info    = LEVEL_INFO[levelHovered];
     const [r,g,b] = info.color;
     const { px, py: py2, pw, ph, nx, ny } = _levelCardRect(levelHovered);
 
-    // 从节点到卡片的连接线，视觉上提示"这段描述属于这个关卡"
+    // Connector line from the node to the card; visually shows 'this description belongs to this level'
     stroke(r, g, b, 110); strokeWeight(1);
     const cardCX = px + pw / 2, cardCY = py2 + ph / 2;
     const toRight = px > nx;
@@ -170,7 +170,7 @@ function drawLevelMap() {
     text(t('levelmap.start'), px + pw/2, btnY + 14);
   }
 
-  // ── 返回按钮 ──
+  // -- Back button --
   const bkH = mouseX < 92 && mouseY < 38;
   fill(bkH ? color(0, 45, 75, 220) : color(5, 10, 24, 200));
   stroke(0, 160, 215, bkH ? 200 : 95); strokeWeight(1); rect(6, 6, 82, 26, 4);
@@ -180,10 +180,10 @@ function drawLevelMap() {
 }
 
 function handleLevelMapClick(mx, my) {
-  // 返回
+  // Back
   if (mx < 92 && my < 38) { playSfx('click'); gamePhase = 'difficulty'; return; }
 
-  // 节点直接点击
+  // Direct click on the node
   for (let i = 0; i < 5; i++) {
     const lv = i + 1;
     if (lv > unlockedLevel) continue;
@@ -199,7 +199,7 @@ function handleLevelMapClick(mx, my) {
     }
   }
 
-  // 悬浮卡片「START MISSION」按钮
+  // Hover-card 'START MISSION' button
   if (levelHovered > 0) {
     const { px, py: py2, pw, ph } = _levelCardRect(levelHovered);
     const btnY = py2 + ph - 42;

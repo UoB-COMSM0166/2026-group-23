@@ -1,6 +1,6 @@
 // ============================================================
-//  towers/variants/nova.js — NOVA 穿透炮（直线穿透 + 落点爆炸）
-//  通过 Tower.prototype 注入；须在 towers/base.js 之后加载
+//  towers/variants/nova.js — NOVA Nova Cannon (line piercing + landing AoE)
+//  Injected via Tower.prototype; must load after towers/base.js
 // ============================================================
 
 Tower.prototype._updateNova = function() {
@@ -9,7 +9,7 @@ Tower.prototype._updateNova = function() {
   this.angle = Math.atan2(target.pos.y - this.py, target.pos.x - this.px);
   if (this.timer < this.fireRate) return;
   this.timer = 0; this.shootFlash = 10;
-  // 发射发散光波：3条朝目标方向 ±扇角的扩散光环
+  // Fire spread waves: 3 expanding halos at +/- fan angle of the target direction
   const spreadAngles = [-0.18, 0, 0.18];
   for (const da of spreadAngles) {
     projectiles.push(new Projectile(this.px, this.py, this.angle + da, this.projSpd, this.dmg, this.col, false, 'nova', this.level));

@@ -1,31 +1,31 @@
 // ============================================================
-//  state.js — 全局游戏/UI 状态的集中声明
+//  state.js — Centralised declaration of global game / UI state
 //
-//  把原本散落在 sketch.js / ui.js / waves.js 顶部的可变全局变量
-//  集中到这里，便于团队成员快速了解"游戏里到底有哪些状态"。
+//  Mutable globals previously scattered at the top of sketch.js / ui.js / waves.js
+//  are gathered here so the team can quickly see 'what state actually exists in the game'.
 //
-//  变量名保持不变，所有其它文件直接继续用原名读写，无需修改。
-//  index.html 会在所有业务脚本之前加载本文件，确保初始化顺序。
+//  Variable names are kept the same; every other file continues to read/write by the same names without changes.
+//  index.html loads this file before any business script to guarantee init order.
 //
-//  保留在原模块内的状态（因为是模块内部实现细节）：
+//  State that stays in its original module (since it is internal implementation detail):
 //    - map/map-core.js   : _floorCache / _decoCache / _pathFlowPts /
 //                          CURRENT_LEVEL_PATHS / pathCellSet
-//    - ui.js             : _hudHpFill / _hudBarFill / _wcDesc* 等 HUD 渲染缓存
+//    - ui.js             : _hudHpFill / _hudBarFill / _wcDesc* and other HUD render caches
 //    - towers.js         : towers / projectiles / jamRadius /
 //                          _chainArcs / _cannonBlasts / _mortarShells
 //    - monsters.js       : particles
-//    - minigame.js       : 整个小游戏的内部变量
-//    - screens/*         : 各界面的动画/悬浮临时变量
+//    - minigame.js       : the minigame's internal variables
+//    - screens/*         : per-screen animation / hover temporary variables
 // ============================================================
 
 
-// ── 游戏阶段 ──
+// -- Game phase --
 // 'launch' | 'difficulty' | 'levelmap' | 'playing' | 'endpanel'
 let gamePhase      = 'launch';
 let gameDifficulty = null;  // 'easy' | 'difficult'
 
 
-// ── 语言（默认 English，玩家可在启动页切换；写入 localStorage）──
+// -- Language (default English; toggleable on launch screen; written to localStorage) --
 let currentLang = (() => {
   try {
     const v = localStorage.getItem('qd_lang');
@@ -34,46 +34,46 @@ let currentLang = (() => {
 })();
 
 
-// ── 音频静音（默认开声；启动页右上角按钮切换；写入 localStorage）──
+// -- Audio mute (sound on by default; toggle with launch-screen top-right button; written to localStorage) --
 let audioMuted = (() => {
   try { return localStorage.getItem('qd_muted') === '1'; }
   catch (e) { return false; }
 })();
 
 
-// ── 性能 HUD（默认关闭，F 键切换；写入 localStorage）──
+// -- Perf HUD (off by default; F key toggles; written to localStorage) --
 let showPerfHud = (() => {
   try { return localStorage.getItem('qd_perf') === '1'; }
   catch (e) { return false; }
 })();
 
 
-// ── 关卡进度 ──
+// -- Level progression --
 let currentLevel   = 1;
 let unlockedLevel  = 1;
 let levelResults   = {};    // { 1: 'win'|'lose', ... }
 
 
-// ── 核心数值 ──
+// -- Core values --
 let coins     = 2000;
 let baseHp    = 50;
 let baseHpMax = 50;
 let waveNum   = 0;
 
 
-// ── 波次系统 ──
+// -- Wave system --
 let TOTAL_WAVES         = 6;
 let waveState           = 'waiting';
 let waveCountdownEnd    = 0;
-let waveCountdownActive = false;  // （原 waves.js）
+let waveCountdownActive = false;  // (originally in waves.js)
 
 
-// ── 干扰系统（Boss 技能）──
+// -- Disruption system (boss skill) --
 let jammedUntilFrame = 0;
 let jamPos           = { x: 0, y: 0 };
 
 
-// ── 路径 & 管理器 ──
+// -- Path & manager --
 let manager      = null;
 let MAIN_PATH_PX = null;
 let EDGE_PATH_PX = null;
@@ -81,50 +81,50 @@ let AIR_PATH_PX  = null;
 let homeTowers   = [];
 
 
-// ── 启动页辅助状态（screens/launch-screen.js 读写）──
+// -- Launch screen helper state (read/write by screens/launch-screen.js) --
 let launchAnim      = 0;
 let launchReady     = false;
 let launchParticles = [];
 
 
-// ── 关卡地图辅助状态（screens/level-map.js 读写）──
+// -- Level map helper state (read/write by screens/level-map.js) --
 let levelMapAnim = 0;
 
 
-// ── 结算面板辅助状态（screens/end-panel.js 读写）──
+// -- End panel helper state (read/write by screens/end-panel.js) --
 let endPanelAnim = 0;
 let _endPanelWon = false;
 
 
-// ── 游戏结束标志 ──
+// -- Game-over flag --
 let _gameEndFired = false;
 
 
-// ── 新手引导（仅第 1 关首次进入时弹出）──
+// -- Tutorial (only on first entry to level 1) --
 let tutorialActive = false;
 let tutorialStep   = 0;
 
 
 // ============================================================
-//  UI 状态（原 ui.js 顶部）
+//  UI state (originally at the top of ui.js)
 // ============================================================
 
-// ── 建造 / 选中 ──
+// -- Build / select --
 let selectedTowerType = null;
 let selectedTower     = null;
 let hoverTowerType    = null;
 let BUILD_BTN_Y;
 let clickEffects;
 
-// ── 暂停系统 ──
+// -- Pause system --
 let gamePaused       = false;
 let pauseConfirmMode = false;
 let _pauseBtnRect    = null;
 
-// ── 加农炮瞄准 ──
+// -- Cannon aiming --
 let _mortarAiming = false;
 let _mortarTower  = null;
 
-// ── 波次结束面板 ──
+// -- Wave end panel --
 let waveEndPanelVisible = false;
 let waveEndBtnRect      = null;

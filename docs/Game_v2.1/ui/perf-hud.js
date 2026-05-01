@@ -1,24 +1,24 @@
 // ============================================================
-//  ui/perf-hud.js — 性能诊断叠层（按 F 切换）
+//  ui/perf-hud.js — Performance overlay (toggle with F)
 //
-//  · showPerfHud === false 时函数开头立即 return，零开销
-//  · 每帧采样 deltaTime，维护 60 帧环形缓冲，从中算
-//    平均 FPS / 最大帧时间 / 最小 FPS
-//  · 在所有游戏阶段（菜单/战斗/结算）都绘制，方便对比
-//  · 计数数据取自已有的全局数组：manager.monsters / towers /
+//  . When showPerfHud === false, returns at the very top of the function (zero overhead)
+//  . Samples deltaTime each frame, maintains a 60-frame ring buffer, derives
+//    average FPS / max frame time / min FPS
+//  . Draws in every game phase (menu / combat / end), useful for comparison
+//  . Counts come from existing globals: manager.monsters / towers /
 //    projectiles / particles / _cannonBlasts / _mortarShells /
-//    _chainArcs —— 任一未定义则显示 "-"
+//    _chainArcs - any one being undefined shows '-'
 //
-//  依赖：state.js（showPerfHud）
+//  Dependencies: state.js (showPerfHud)
 // ============================================================
 
-// ── 采样环形缓冲 ──
-const PERF_SAMPLE_N = 60;          // 1 秒（60fps 下）
+// -- Sample ring buffer --
+const PERF_SAMPLE_N = 60;          // 1 second (at 60fps)
 const _perfDt = new Float32Array(PERF_SAMPLE_N);
 let _perfIdx = 0;
 let _perfFilled = 0;
 
-// ── 文案缓存（每 0.5s 刷一次文本，避免每帧 text 抖动）──
+// -- Text cache (refresh every 0.5s to avoid per-frame text jitter) --
 const _perfStr = { fps: '0', dt: '0.0', lo: '0', hi: '0.0', counts: '' };
 let _perfLastRefreshMs = 0;
 const PERF_REFRESH_MS = 500;
@@ -26,14 +26,14 @@ const PERF_REFRESH_MS = 500;
 function drawPerfHud() {
   if (!showPerfHud) return;
 
-  // 1. 采样当前帧
-  //    deltaTime 是 p5 提供的上一帧到本帧的毫秒数
+  // 1. Sample current frame
+  //    deltaTime is the milliseconds since the previous frame, provided by p5
   const dt = (typeof deltaTime === 'number' && deltaTime > 0) ? deltaTime : 16.67;
   _perfDt[_perfIdx] = dt;
   _perfIdx = (_perfIdx + 1) % PERF_SAMPLE_N;
   if (_perfFilled < PERF_SAMPLE_N) _perfFilled++;
 
-  // 2. 汇总（每 PERF_REFRESH_MS 毫秒刷一次）
+  // 2. Aggregate (refresh every PERF_REFRESH_MS milliseconds)
   const nowMs = (typeof millis === 'function') ? millis() : performance.now();
   if (nowMs - _perfLastRefreshMs >= PERF_REFRESH_MS) {
     _perfLastRefreshMs = nowMs;
@@ -51,7 +51,7 @@ function drawPerfHud() {
     _perfStr.hi  = maxDt.toFixed(1);
     _perfStr.lo  = minFps.toFixed(0);
 
-    // 计数（小心未定义的全局）
+    // Counts (be careful with undefined globals)
     const nm = (typeof manager !== 'undefined' && manager && manager.monsters) ? manager.monsters.length : '-';
     const nt = (typeof towers !== 'undefined') ? towers.length : '-';
     const np = (typeof projectiles !== 'undefined') ? projectiles.length : '-';
@@ -62,7 +62,7 @@ function drawPerfHud() {
     _perfStr.counts = `M:${nm}  T:${nt}  P:${np}  FX:${nx}  B:${nc}/${nMort}  ARC:${nArc}`;
   }
 
-  // 3. 绘制（左下角，紧凑两行）
+  // 3. Draw (bottom left, compact two lines)
   push();
   textFont('monospace');
   textAlign(LEFT, TOP);
@@ -75,7 +75,7 @@ function drawPerfHud() {
     _perfStr.counts,
     `phase:${gamePhase}${gamePaused ? '  ⏸' : ''}${tutorialActive ? '  T' : ''}`,
   ];
-  // 根据最长行估宽（monospace 11px 每字符约 6.6px）
+  // Estimate width from the longest line (monospace 11px ~ 6.6px per char)
   let maxLen = 0;
   for (const r of rows) if (r.length > maxLen) maxLen = r.length;
   const boxW = Math.ceil(maxLen * 6.6) + pad * 2;
@@ -89,7 +89,7 @@ function drawPerfHud() {
   stroke(0, 220, 180, 120); strokeWeight(1); noFill();
   rect(boxX, boxY, boxW, boxH, 3);
 
-  // FPS 颜色分档：≥55 绿 / ≥40 黄 / <40 红
+  // FPS color tier: >=55 green / >=40 yellow / <40 red
   const fpsNum = parseFloat(_perfStr.fps);
   const fpsCol = fpsNum >= 55 ? [0, 255, 160]
                 : fpsNum >= 40 ? [255, 220, 80]
@@ -105,11 +105,11 @@ function drawPerfHud() {
   resetTextAlign();
 }
 
-// ── 切换（由 sketch.js keyPressed 调用）──
+// -- Toggle (called from sketch.js keyPressed) --
 function togglePerfHud() {
   showPerfHud = !showPerfHud;
   try { localStorage.setItem('qd_perf', showPerfHud ? '1' : '0'); } catch (e) {}
-  // 清空环形缓冲，重新采样，避免旧 pause 期间的异常 dt 污染新读数
+  // Clear the ring buffer and resample, so abnormal dt during the previous pause does not pollute new readings
   _perfIdx = 0;
   _perfFilled = 0;
   _perfLastRefreshMs = 0;

@@ -1,6 +1,6 @@
 // ============================================================
-//  monsters/manager.js — MonsterManager 怪物生成与统一更新
-//  依赖：各具体怪物类（须先于本文件加载）
+//  monsters/manager.js — MonsterManager spawn logic and unified update
+//  Dependencies: each concrete monster class (must load before this file)
 // ============================================================
 
 class MonsterManager {
@@ -12,7 +12,7 @@ class MonsterManager {
   }
 
   spawn(type) {
-    // 蛇/蜘蛛/机器人/坦克随机走主路或边路
+    // Snake / spider / robot / tank randomly take the main or side path
     const groundPath = () => (random()<0.5 ? MAIN_PATH_PX : EDGE_PATH_PX);
     let m = null;
     if (type==='snake')      m = new MechSnake(groundPath());
@@ -28,16 +28,16 @@ class MonsterManager {
     else if (type==='carrier') m = new BossCarrier(AIR_PATH_PX);
     if (!m) return null;
 
-    // ── 波次成长系数 ──
-    // 普通怪：每波 HP×1.13，速度×1.04（Wave10 ≈ HP×3.0，速度×1.4）
-    // Boss：每波 HP×1.09（基数大，慢一点）
-    // 奖励同步上涨，后期打怪更值钱
+    // -- Wave growth coefficients --
+    // Normal mobs: HP x1.13 per wave, speed x1.04 per wave (Wave 10 ≈ HP x3.0, speed x1.4)
+    // Bosses: HP x1.09 per wave (large base, slower scaling)
+    // Rewards scale with stats so late-game kills are worth more
     const wave = (typeof waveNum !== 'undefined') ? max(1, waveNum) : 1;
     const n    = wave - 1;
     const isBoss = (m instanceof BossFission)||(m instanceof BossPhantom)||(m instanceof BossAntMech)||(m instanceof FissionCore)||(m instanceof BossCarrier);
 
     const hpMult  = isBoss ? pow(1.09, n) : pow(1.13, n);
-    const spdMult = isBoss ? 1            : min(pow(1.04, n), 1.45); // Boss不加速，普通怪限制上限
+    const spdMult = isBoss ? 1            : min(pow(1.04, n), 1.45); // Bosses do not gain speed; normal mobs are capped
     const rewMult = pow(1.10, n);
 
     const newHp = floor(m.hp * hpMult);
@@ -49,7 +49,7 @@ class MonsterManager {
     return m;
   }
 
-  // 怪物到达终点扣血量（设计：50HP，小怪漏20只死，Boss漏1只损失惨重）
+  // HP loss when a monster reaches the home (design: 50HP; small mobs lose 1 base when 20 leak, a single boss leak is devastating)
   _reachDmg(m) {
     if (m instanceof BossAntMech)  return 15;
     if (m instanceof BossFission || m instanceof BossPhantom) return 10;
@@ -59,22 +59,22 @@ class MonsterManager {
     return 2; // snake / spider
   }
 
-  // ignoreTankBarrier: 无视坦克护盾（链式电弧塔专属）
-  // ignoreRobotShield: 无视机器人护盾（快速塔专属，相当于 fromSide=true 且穿透护盾）
+  // ignoreTankBarrier: ignore tank shield (chain arc tower exclusive)
+  // ignoreRobotShield: ignore robot shield (rapid tower exclusive; equivalent to fromSide=true with shield piercing)
   damageAt(tx,ty,dmg,antiAir,fromSide,ignoreTankBarrier,ignoreRobotShield) {
     antiAir=antiAir||false; fromSide=fromSide||false;
     ignoreTankBarrier=ignoreTankBarrier||false; ignoreRobotShield=ignoreRobotShield||false;
     for (const m of this.monsters) {
       if (!m.alive||m.reached) continue;
-      if (m._dropping) continue; // 空投坠落中无敌
+      if (m._dropping) continue; // Invulnerable while in airdrop fall
       if (!ignoreTankBarrier && !m.isFlying && m._tankShielded > 0 && !(m instanceof MechTank)) continue;
-      // 幽灵飞鸟隐身期间免疫所有伤害
+      // Ghost Bird is immune to all damage while invisible
       if (m instanceof GhostBird && m.isGhost) continue;
       const isFlying = m instanceof MechPhoenix || m instanceof GhostBird || (m instanceof BossCarrier && !m.grounded);
       if (antiAir && !isFlying) continue;
       if (!antiAir && isFlying) continue;
       if (distAB(m.pos,{x:tx,y:ty})<=m.radius+5) {
-        // 母舰地面光环：覆盖范围内小怪免伤75%
+        // Carrier ground aura: small mobs in range get 75% damage reduction
         const actualDmg = (m._carrierAura && m._carrierAura >= frameCount) ? floor(dmg*0.25) : dmg;
         if (m instanceof MechRobot) {
           if (ignoreRobotShield) m.takeDamage(actualDmg, true, true);
@@ -89,7 +89,7 @@ class MonsterManager {
     ignoreTankBarrier=ignoreTankBarrier||false; ignoreRobotShield=ignoreRobotShield||false;
     for (const m of this.monsters) {
       if (!m.alive||m.reached) continue;
-      if (m._dropping) continue; // 空投坠落中无敌
+      if (m._dropping) continue; // Invulnerable while in airdrop fall
       if (!ignoreTankBarrier && !m.isFlying && m._tankShielded > 0 && !(m instanceof MechTank)) continue;
       if (m instanceof GhostBird && m.isGhost) continue;
       const isFlying = m instanceof MechPhoenix || m instanceof GhostBird || (m instanceof BossCarrier && !m.grounded);
@@ -112,7 +112,7 @@ class MonsterManager {
       const isFlying = m instanceof MechPhoenix || m instanceof GhostBird || m instanceof BossCarrier;
       if (antiAir && !isFlying) return false;
       if (!antiAir && isFlying) return false;
-      // 隐身的幽灵飞鸟对所有塔不可见（除非是对空且已解锁特殊逻辑）
+      // Invisible Ghost Birds are unseen by all towers (unless an AA tower with special unlocked logic)
       if (m instanceof GhostBird && m.isGhost) return false;
       return distAB(m.pos,{x:cx,y:cy})<=range;
     });
@@ -131,7 +131,7 @@ class MonsterManager {
     for (const m of this.monsters) {
       m.update();
 
-      // ── Home塔碰撞：怪物进入基地半径立即死亡并扣血 ──
+      // -- Home tower collision: monster dies and reduces HP when it reaches base radius --
       if (m.alive && typeof homeTowers !== 'undefined') {
         for (const ht of homeTowers) {
           if (distAB(m.pos, {x:ht.px, y:ht.py}) <= ht.radius + m.radius) {
@@ -145,7 +145,7 @@ class MonsterManager {
         }
       }
 
-      // ── 路径终点兜底 ──
+      // -- Path-end fallback --
       if (m.alive && m.reached) {
         const dmg = this._reachDmg(m);
         m.alive = false;

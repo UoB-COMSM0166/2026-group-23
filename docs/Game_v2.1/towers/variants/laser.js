@@ -1,6 +1,6 @@
 // ============================================================
-//  towers/variants/laser.js — LASER 激光切割者（多目标锁定蓄力）
-//  通过 Tower.prototype 注入；须在 towers/base.js 之后加载
+//  towers/variants/laser.js — LASER Laser Cutter (multi-target lock with charge)
+//  Injected via Tower.prototype; must load after towers/base.js
 // ============================================================
 
 Tower.prototype._updateLaser = function() {
@@ -33,7 +33,7 @@ Tower.prototype._drawLaser = function(r, g, b) {
   const ready  = charge >= 0.97;
   const flash  = this.shootFlash > 0;
 
-  // 射线：laserBeamEnds 存的是世界坐标，转为本地坐标
+  // Beams: laserBeamEnds stores world coordinates, convert to local
   for (const end of this.laserBeamEnds) {
     const ex   = end.x - this.px;
     const ey   = end.y - this.py;
@@ -62,7 +62,7 @@ Tower.prototype._drawLaser = function(r, g, b) {
     pop();
   }
 
-  // 塔身
+  // Tower body
   push(); rotate(this.angle);
   for (let i=0;i<lv;i++) {
     const s=10+i*5, rs=this.pulseTime*(0.8+i*0.4)*(1+charge*2.8);
@@ -72,19 +72,19 @@ Tower.prototype._drawLaser = function(r, g, b) {
     for (let k=0;k<4;k++){const a=k*HALF_PI;fill(r,g,b,110+charge*120);noStroke();ellipse(cos(a)*s,sin(a)*s,1.8+charge*1.4,1.8+charge*1.4);}
     pop();
   }
-  // 多管展开
+  // Multi-barrel deploy
   for (let ti=0;ti<lv;ti++){
     push(); rotate((ti-(lv-1)/2)*0.22);
     fill(10,24,18); stroke(r,g,b,155); strokeWeight(0.9);
     rectMode(CENTER); rect(9+lv*1.4,0,12+lv*2,3.5+lv*0.4,1);
     pop();
   }
-  // 核心球
+  // Core orb
   const cr=5.5+lv*1.1+charge*4, cg=floor(255*(1-charge*0.72));
   fill(r,cg,floor(b*(1-charge*0.85)),50+charge*115); noStroke(); ellipse(0,0,cr*2,cr*2);
   fill(ready?color(255,235,185,238):color(185,255,215,190+pulse*50)); ellipse(0,0,cr*0.6,cr*0.6);
   fill(255,255,255,205); ellipse(0,0,2.2,2.2);
-  // 蓄力条
+  // Charge bar
   if (this.laserBeamEnds.length > 0) {
     const bW=20+lv*4,bH=2.8,bx=-bW/2,by=15+lv*1.8;
     fill(8,24,16); stroke(r,g,b,75); strokeWeight(0.6);

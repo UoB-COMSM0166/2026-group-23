@@ -1,6 +1,6 @@
 // ============================================================
-//  monsters/mobs/spider.js — MechSpider 机械蜘蛛
-//  依赖：monsters/core.js (Monster)
+//  monsters/mobs/spider.js — MechSpider mechanical spider
+//  Dependencies: monsters/core.js (Monster)
 // ============================================================
 
 class MechSpider extends Monster {
@@ -8,16 +8,16 @@ class MechSpider extends Monster {
     super(path, 420, 1.8, 26);
     this.radius = 16; this.deathColor = color(110, 55, 8);
     this.legTime = 0; this.stopTimer = 0; this.stopped = false; this.pulse = 0;
-    // 出生超级冲刺
+    // Spawn super dash
     this.spawnDash = true;
-    this.spawnDashFrames = 40; // 出生冲刺持续40帧
+    this.spawnDashFrames = 40; // Spawn dash lasts 40 frames
     this.spawnDashInvincible = true;
-    // 常规冲刺
+    // Regular dash
     this.dashTimer = 0; this.dashing = false; this.dashFrames = 0;
     this.dashEffect = 0; this.baseSpd = 1.8;
   }
   takeDamage(dmg) {
-    if (this.spawnDash || this.dashing) return; // 冲刺期间无敌
+    if (this.spawnDash || this.dashing) return; // Invulnerable during dash
     this.hitFlash = 5;
     this.hp -= dmg;
     if (this.hp <= 0) {
@@ -28,7 +28,7 @@ class MechSpider extends Monster {
   move() {
     this.legTime += 0.16; this.stopTimer++; this.pulse += 0.07; this.dashTimer++;
 
-    // 出生超级冲刺阶段
+    // Spawn super-dash phase
     if (this.spawnDash) {
       this.spawnDashFrames--;
       if (this.spawnDashFrames <= 0) {
@@ -40,7 +40,7 @@ class MechSpider extends Monster {
       if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
         _spdMult = this._magnetFactor;
       } else { this._magnetFactor = 1.0; }
-      // 出生冲刺速度是基础速度的4倍
+      // Spawn dash speed is 4x base speed
       const r = moveAlongPath(this.pos, this.seg, this.path, this.baseSpd * 4.0 * _spdMult);
       this.pos = r.pos; this.seg = r.seg;
       this.progress = calcProgress(this.pos, this.seg, this.path);
@@ -48,7 +48,7 @@ class MechSpider extends Monster {
       return;
     }
 
-    // 常规冲刺
+    // Regular dash
     if (this.dashTimer >= 380 && !this.dashing) {
       this.dashing = true; this.dashFrames = 20; this.dashEffect = 25; this.dashTimer = 0;
     }
@@ -64,7 +64,7 @@ class MechSpider extends Monster {
       _spdMult = this._magnetFactor;
     } else { this._magnetFactor = 1.0; }
     if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
-    // 对空导弹减速
+    // AA missile slow
     if (this._airSlowed && this._airSlowed >= frameCount) _spdMult *= this._airSlowFactor || 0.5;
     const r = moveAlongPath(this.pos, this.seg, this.path, this.spd * _spdMult);
     this.pos = r.pos; this.seg = r.seg;
@@ -73,7 +73,7 @@ class MechSpider extends Monster {
   }
   draw() {
     push(); translate(this.pos.x, this.pos.y);
-    // 出生冲刺特效：拖尾残影
+    // Spawn dash effect: trailing afterimage
     if (this.spawnDash) {
       const t = this.spawnDashFrames / 40;
       noFill(); stroke(255, 140, 20, t * 220); strokeWeight(3);

@@ -1,13 +1,13 @@
 // ============================================================
-//  data/levels.js — 关卡元数据（纯数据）
-//  （从 screens/level-map.js 抽离）
+//  data/levels.js — Level metadata (pure data)
+//  (extracted from screens/level-map.js)
 //
-//  LEVEL_INFO  : 关卡名称 / 描述 / 威胁度 / 配色 / 初始金币 / 图标
-//  LEVEL_NODES : 关卡选择地图上各关卡节点的相对坐标（0~1）
+//  LEVEL_INFO  : level name / description / threat level / colors / starting coins / icon
+//  LEVEL_NODES : relative coordinates (0-1) of each level node on the level select map
 // ============================================================
 
-// 注意：subtitle / desc 已迁移到 i18n.js（key: level.<N>.subtitle / level.<N>.desc），
-// 本对象只保留与语言无关的数值/配色/图标。name 为英文代号（不翻译）。
+// Note: subtitle / desc have been moved to i18n.js (key: level.<N>.subtitle / level.<N>.desc);
+// only language-independent values / colors / icon are kept here. `name` is the English code (not translated).
 const LEVEL_INFO = {
   1:{ name:'SECTOR ALPHA',  threat:1, color:[0,220,140],  startCoins:2000, icon:'①' },
   2:{ name:'NEBULA RIFT',   threat:2, color:[0,180,255],  startCoins:1800, icon:'②' },

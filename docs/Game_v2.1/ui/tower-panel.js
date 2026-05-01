@@ -1,17 +1,17 @@
 // ============================================================
-//  ui/tower-panel.js — 选中塔后的升级/拆除浮层
-//  依赖 data/towers.js (TOWER_DEFS) 与 ui/common.js
+//  ui/tower-panel.js — Upgrade/sell overlay shown after selecting a tower
+//  Depends on data/towers.js (TOWER_DEFS) and ui/common.js
 // ============================================================
 
 // ============================================================
-//  塔升级面板
+//  Tower upgrade panel
 // ============================================================
 function drawTowerPanel() {
   if (!selectedTower) return;
 
-  // 使用 tw 作为塔对象别名，避免遮蔽全局 i18n 的 t()
+  // Use tw as the tower-object alias to avoid shadowing the global i18n t()
   const tw     = selectedTower;
-  // 加农炮说明更长，面板略放大并允许说明换行，缓解拥挤
+  // The cannon's description is longer; enlarge the panel and allow the description to wrap to reduce crowding
   const isCannon = tw.type === 'cannon';
   const panelW = isCannon ? 196 : 178;
   const panelH = isCannon ? 174 : 158;
@@ -25,14 +25,14 @@ function drawTowerPanel() {
   const [r,g,b] = tw.col;
   const isMaxed = tw.level >= 3;
 
-  // 标题行
+  // Title row
   fill(r, g, b, 220); noStroke(); textFont('monospace'); textSize(10);
   const towerName = t('tower.' + tw.type + '.name');
   text(towerName + '  Lv.' + tw.level + (isMaxed ? ' ★MAX' : ''), px + 8, py + 16);
   stroke(0, 140, 220, 100); strokeWeight(1);
   line(px + 6, py + 22, px + panelW - 6, py + 22);
 
-  // 基础属性
+  // Base attributes
   fill(180, 220, 255, 200); noStroke(); textSize(9);
   text(t('tower.panel.atk', tw.dmg),   px + 10, py + 36);
   text(t('tower.panel.rng', tw.range), px + 10, py + 50);
@@ -43,7 +43,7 @@ function drawTowerPanel() {
     text(t('tower.panel.spd', Math.round(60 / tw.fireRate * 10) / 10), px + 10, py + 64);
   }
 
-  // 特殊能力说明
+  // Special-ability description
   let specialY = py + 78;
   const specials = TOWER_SPECIALS[tw.type];
   if (specials) {
@@ -55,10 +55,10 @@ function drawTowerPanel() {
       specialY += lineCount * 11 + 3;
     }
   }
-  // 防止说明挤压到底部按钮区域
+  // Prevent the description from squeezing into the bottom button area
   const upgradeY = min(specialY, py + panelH - 64);
 
-  // 升级按钮
+  // Upgrade button
   if (!isMaxed) {
     const canUpg = coins >= tw.upgradeCost;
     fill(canUpg ? color(0, 150, 75, 200) : color(55, 55, 55, 180));
@@ -74,7 +74,7 @@ function drawTowerPanel() {
     tw._btnRect = null;
   }
 
-  // 拆除按钮
+  // Sell button
   const delBtnY = py + panelH - 34;
   fill(75, 18, 18, 200); stroke(195, 55, 55, 175); strokeWeight(1);
   rect(px + 8, delBtnY, panelW - 16, 22, 3);

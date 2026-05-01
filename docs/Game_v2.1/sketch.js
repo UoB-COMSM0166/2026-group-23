@@ -1,32 +1,32 @@
 // ============================================================
-//  sketch.js — p5 引擎骨架（仅 setup / draw / 事件路由）
+//  sketch.js — p5 engine skeleton (only setup / draw / event routing)
 //
-//  游戏阶段流转：
+//  Game phase flow:
 //    'launch' → 'difficulty' → 'levelmap' → 'playing' → 'endpanel'
 //
-//  各阶段渲染 / 点击逻辑已拆至：
+//  Per-phase rendering / click logic has been split into:
 //    screens/launch-screen.js
 //    screens/difficulty-select.js
 //    screens/level-map.js
 //    screens/end-panel.js
 // ============================================================
 
-// ── 布局常量 ──
+// -- Layout constants --
 const CELL_SIZE  = 70;
 const GRID_COLS  = 14;
 const GRID_ROWS  = 12;
 const HUD_HEIGHT = 46;
 
-// ── 波次常量 ──
+// -- Wave constants --
 const COUNTDOWN_FRAMES = 300;
 
-// 全局可变状态（gamePhase / coins / baseHp / manager / 路径 / 启动页与结算动画 等）
-// 已集中到 state.js 声明，本文件直接按原名读写即可。
+// Global mutable state (gamePhase / coins / baseHp / manager / paths / launch and end animations etc.)
+// is centralised in state.js; this file just reads/writes by the same names.
 
 // ============================================================
 //  p5 setup
 // ============================================================
-// 画布"设计分辨率"（内部始终 980×840），CSS 缩放到窗口大小
+// Canvas 'design resolution' (always 980x840 internally), CSS scales it to the window size
 const STAGE_W = GRID_COLS * CELL_SIZE;  // 980
 const STAGE_H = GRID_ROWS * CELL_SIZE;  // 840
 
@@ -35,7 +35,7 @@ function setup() {
   textFont('monospace');
   _fitCanvasToWindow();
 
-  // 初始化启动页粒子
+  // Initialize launch-page particles
   for (let i = 0; i < 90; i++) {
     launchParticles.push({
       x: random(width), y: random(height),
@@ -45,13 +45,13 @@ function setup() {
     });
   }
 
-  // 菜单 BGM（首次用户点击前浏览器会阻止自动播放，
-  // audio.js 会把这个名字排队，等 unlockAudio() 触发时再开始）
+  // Menu BGM (browser blocks autoplay before the first user click;
+  // audio.js will queue the name and start playing when unlockAudio() fires)
   setBgm('launch');
 }
 
 // ============================================================
-//  p5 draw — 阶段路由
+//  p5 draw - phase routing
 // ============================================================
 function draw() {
   switch (gamePhase) {
@@ -69,7 +69,7 @@ function draw() {
 
     case 'playing':
       drawBackground(); drawPaths();
-      // 暂停 / 新手引导 时跳过所有更新，只绘制静止画面
+      // While paused / in the tutorial, skip all updates and only draw the still frame
       const _frozen = gamePaused || tutorialActive;
       if (!_frozen) {
         updateWaveSystem();
@@ -79,14 +79,14 @@ function draw() {
         updateParticles();
         updateMinigame(); drawMinigame();
       } else {
-        // 冻结期间仍然绘制怪物和塔（静止），让画面不黑屏
+        // Continue drawing monsters and towers (frozen) so the screen does not go black
         for (const m of manager.monsters) m.draw();
         for (const ht of homeTowers) ht.draw();
-        drawTowersOnly(); // 只绘制不更新
+        drawTowersOnly(); // Draw only, do not update
       }
-      drawUI(); // drawUI 内部会调用 drawPauseMenu()
-      drawTutorial(); // 若激活则绘制引导覆盖层（始终盖在 UI 之上）
-      drawPerfHud();  // 始终最上层，菜单/暂停/引导都不遮挡
+      drawUI(); // drawUI internally calls drawPauseMenu()
+      drawTutorial(); // If the tutorial is active, draw its overlay (always on top of UI)
+      drawPerfHud();  // Always topmost; the menu / pause / tutorial do not block it
       if (!_frozen && waveState === 'complete' && manager.monsters.length === 0 && !_gameEndFired) {
         _gameEndFired = true;
         setTimeout(() => handleGameEnd(true), 1800);
@@ -96,21 +96,21 @@ function draw() {
 }
 
 // ============================================================
-//  p5 mousePressed — 阶段路由
+//  p5 mousePressed - phase routing
 // ============================================================
 function mousePressed() {
-  // 首次点击解锁浏览器自动播放限制；之后多次调用为 no-op
+  // First click unlocks browser autoplay; subsequent calls are no-ops
   unlockAudio();
   switch (gamePhase) {
     case 'launch':
-      // 静音切换按钮最高优先：点击后仅切换音频状态，不进入下一界面
+      // Mute toggle button has top priority: just toggles audio state without entering the next screen
       if (typeof handleLaunchMuteBtn === 'function' && handleLaunchMuteBtn(mouseX, mouseY)) return;
-      // 语言切换按钮次高优先：点击后仅切换语言，不进入下一界面
+      // Language toggle button has next priority: just switches language without entering the next screen
       if (handleLaunchLangBtn(mouseX, mouseY)) return;
-      // 图鉴入口（在新标签页打开，不进入下一界面）
+      // Codex entry (opens in a new tab; does not enter the next screen)
       if (launchReady && typeof handleLaunchCodexBtn === 'function'
           && handleLaunchCodexBtn(mouseX, mouseY)) return;
-      // 测试入口次优先检测
+      // Test entry has next-highest priority
       if (launchReady && handleLaunchTestBtn(mouseX, mouseY)) {
         activateTestMode();
         return;
@@ -123,11 +123,11 @@ function mousePressed() {
     case 'endpanel':   handleEndPanelClick(mouseX, mouseY);   return;
 
     case 'playing':
-      // 新手引导最优先：拦截所有其它点击
+      // Tutorial has top priority: intercepts all other clicks
       if (tutorialActive) { handleTutorialClick(mouseX, mouseY); return; }
-      // 暂停按钮与暂停菜单优先处理
+      // Pause button and pause menu are handled first
       if (handlePauseClick(mouseX, mouseY)) return;
-      // 暂停期间消费所有其他点击
+      // While paused, consume all other clicks
       if (gamePaused) return;
       if (typeof handleWaveEndClick === 'function' && handleWaveEndClick(mouseX, mouseY)) return;
       if (minigameState !== 'idle') { handleMinigameClick(mouseX, mouseY); return; }
@@ -142,10 +142,10 @@ function mouseMoved() {
 }
 
 // ============================================================
-//  屏幕自适应：保持内部 STAGE_W × STAGE_H 分辨率不变，
-//  用 CSS 把 canvas 等比缩放到当前窗口（letterbox / pillarbox）。
-//  mouseX / mouseY 是 p5 的画布坐标（自动反算），所以游戏里
-//  所有像素判定都不用改。
+//  Screen adaptation: keep the internal STAGE_W x STAGE_H resolution unchanged,
+//  use CSS to scale the canvas to fit the window (letterbox / pillarbox).
+//  mouseX / mouseY are p5 canvas coords (auto-converted), so all
+//  pixel-based hit tests in the game don't need changes.
 // ============================================================
 function windowResized() {
   _fitCanvasToWindow();
@@ -155,7 +155,7 @@ function _fitCanvasToWindow() {
   const cvs = (typeof canvas !== 'undefined' && canvas && canvas.canvas) ? canvas.canvas
             : document.querySelector('canvas');
   if (!cvs) return;
-  // 留 8px 边距，避免窗口贴边时把发光 box-shadow 切掉
+  // Leave an 8px margin so the glow box-shadow is not clipped when the window is at the edge
   const availW = Math.max(200, windowWidth  - 16);
   const availH = Math.max(200, windowHeight - 16);
   const s = Math.min(availW / STAGE_W, availH / STAGE_H);
@@ -163,30 +163,30 @@ function _fitCanvasToWindow() {
   cvs.style.height = Math.floor(STAGE_H * s) + 'px';
 }
 
-// 键盘事件：ESC 暂停；F 切换性能 HUD
+// Keyboard events: ESC pauses, F toggles the perf HUD
 function keyPressed() {
   if (keyCode === ESCAPE) {
     if (tutorialActive) return;
     handlePauseKey();
     return;
   }
-  // F：切换性能 HUD（任何阶段；引导期间也允许，方便演示时抓帧率）
+  // F: toggle perf HUD (any phase; allowed during the tutorial too, useful for grabbing fps in demos)
   if (key === 'f' || key === 'F') {
     togglePerfHud();
     return;
   }
 }
 
-// 暂停期间只绘制塔，不触发攻击逻辑
+// While paused, only draw towers; do not run attack logic
 function drawTowersOnly() {
   for (const t of towers) t.draw();
 }
 
 // ============================================================
-//  initGame — 按当前 currentLevel 初始化一局
+//  initGame - initialise a level run based on the current currentLevel
 // ============================================================
 function initGame() {
-  initMap(); // map.js：根据 currentLevel 选路径、建格子集合
+  initMap(); // map.js: pick the path and build the cell set based on currentLevel
 
   const lcfg = LEVEL_INFO[currentLevel];
   coins     = Math.floor(gameDifficulty === 'easy' ? lcfg.startCoins * 1.3 : lcfg.startCoins);
@@ -194,7 +194,7 @@ function initGame() {
   baseHp    = baseHpMax;
   TOTAL_WAVES = WAVE_CONFIGS[currentLevel].length;
 
-  // 终点基地
+  // Endpoint base
   homeTowers = [];
   if (MAIN_PATH_PX && MAIN_PATH_PX.length > 0) {
     const ep = MAIN_PATH_PX[MAIN_PATH_PX.length - 1];
@@ -219,17 +219,17 @@ function initGame() {
 
   initTowers();
   initUI();
-  // 先决定教程状态，再进入波次系统；
-  // 否则 beginAutoWave() 会在教程置位前启动小游戏，导致教程期看不到塔面板/建造栏。
-  startTutorialIfNeeded(); // 第 1 关首次进入时弹出新手引导
+  // Decide tutorial state first, then enter the wave system;
+  // otherwise beginAutoWave() may start the minigame before the tutorial flag is set, hiding the tower panel / build bar during the tutorial.
+  startTutorialIfNeeded(); // Show the tutorial on the first entry of level 1
   beginAutoWave();
 
-  // 切到该关卡的 BGM（launch → level{N}）
+  // Switch BGM for this level (launch -> level{N})
   setBgm('level' + currentLevel);
 }
 
 // ============================================================
-//  handleGameEnd — 胜利 / 失败后切换到结算面板
+//  handleGameEnd - switch to the end panel after victory / defeat
 // ============================================================
 function handleGameEnd(won) {
   levelResults[currentLevel] = won ? 'win' : 'lose';
@@ -238,7 +238,7 @@ function handleGameEnd(won) {
   endPanelAnim = 0;
   _endPanelWon = won;
   gamePhase    = 'endpanel';
-  // 停 BGM，留给胜/负音效独自响一下
+  // Stop BGM, let the win/lose SFX play out cleanly
   stopBgm();
   playSfx(won ? 'win' : 'lose');
 }

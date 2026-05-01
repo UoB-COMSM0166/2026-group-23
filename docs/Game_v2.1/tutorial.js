@@ -1,25 +1,25 @@
 // ============================================================
-//  tutorial.js — 新手引导（仅在玩家第一次进入关卡 1 时弹出）
+//  tutorial.js — Onboarding tutorial (only on the player's first entry to level 1)
 //
-//  工作方式：
-//    · 激活期间 sketch.js 会跳过所有战斗 update（类似暂停），但继续
-//      绘制画面；鼠标点击被本模块独占，防止误操作。
-//    · 完成后写入 localStorage['qd_tutorial_l1_done']，以后不再出现。
-//    · 用户也可按右上角「跳过」立刻结束。
+//  How it works:
+//    . While active, sketch.js skips all combat updates (similar to pause) but
+//      keeps drawing; mouse clicks are owned by this module to prevent misclicks.
+//    . On completion, writes localStorage['qd_tutorial_l1_done']; will not appear again.
+//    . The user can also press 'Skip' (top right) to end immediately.
 //
-//  依赖：state.js (tutorialActive / tutorialStep)、全局 p5 API、
-//        HUD_HEIGHT、BUILD_BTN_Y（ui/index.js 初始化后可用）
+//  Dependencies: state.js (tutorialActive / tutorialStep), p5 globals,
+//        HUD_HEIGHT, BUILD_BTN_Y (available after ui/index.js initializes)
 // ============================================================
 
 const TUTORIAL_FLAG_KEY = 'qd_tutorial_l1_done';
 
-// 每一步：
-//   title     — 面板标题
-//   body      — 正文（支持 \n 换行）
-//   highlight — 可选，需要用发光矩形突出显示的屏幕区域 {x,y,w,h}
-//   panelAt   — 面板相对高亮区域的位置：'below' | 'above' | 'center'
-//   btn       — 按钮文字
-// 每一步配置结构不变，只是 title/body/btn 改为 i18n key，绘制时再通过 t() 解析。
+// Each step:
+//   title     - panel title
+//   body      - body text (\\n line break supported)
+//   highlight - optional; screen region {x,y,w,h} highlighted with a glowing rect
+//   panelAt   - panel position relative to the highlight: 'below' | 'above' | 'center'
+//   btn       - button text
+// Each step's structure is unchanged; only title/body/btn became i18n keys, resolved through t() at draw time.
 const TUTORIAL_STEPS = [
   { key: 'step1', panelAt: 'center' },
   { key: 'step2', panelAt: 'below',  highlight: () => ({ x: 0, y: 0, w: width, h: HUD_HEIGHT }) },
@@ -30,13 +30,13 @@ const TUTORIAL_STEPS = [
 
 
 // ============================================================
-//  公共入口：sketch.js initGame() 末尾调用
+//  Public entry: called at the end of sketch.js initGame()
 // ============================================================
 function startTutorialIfNeeded() {
   if (currentLevel !== 1) return;
   try {
     if (localStorage.getItem(TUTORIAL_FLAG_KEY) === '1') return;
-  } catch (e) { /* localStorage 不可用时忽略，照常弹出 */ }
+  } catch (e) { /* Ignored if localStorage is unavailable; the tutorial pops up as usual */ }
   tutorialActive = true;
   tutorialStep   = 0;
 }
@@ -46,7 +46,7 @@ function _finishTutorial() {
   tutorialStep   = 0;
   try { localStorage.setItem(TUTORIAL_FLAG_KEY, '1'); } catch (e) {}
 
-  // 首次进关时，教程结束后再补启动开场小游戏，避免教程与小游戏 UI 互相遮挡
+  // On first level entry, run the opening minigame after the tutorial finishes to avoid the tutorial and minigame UIs overlapping
   if (waveState === 'countdown' && minigameState === 'idle' && typeof startMinigame === 'function') {
     startMinigame();
   }
@@ -54,8 +54,8 @@ function _finishTutorial() {
 
 
 // ============================================================
-//  点击处理 — sketch.js mousePressed 在 'playing' 最先调用
-//  返回 true 表示已消费，sketch.js 不再继续分发
+//  Click handling - sketch.js mousePressed calls this first in 'playing'
+//  Returns true to mean 'consumed'; sketch.js stops dispatching
 // ============================================================
 function handleTutorialClick(mx, my) {
   if (!tutorialActive) return false;
@@ -68,31 +68,31 @@ function handleTutorialClick(mx, my) {
     tutorialStep++;
     if (tutorialStep >= TUTORIAL_STEPS.length) _finishTutorial();
   }
-  return true; // 引导期间消费所有其它点击
+  return true; // Consume all other clicks while the tutorial is active
 }
 
 
 // ============================================================
-//  绘制 — sketch.js draw() playing 分支最后调用（在 drawUI 之后）
+//  Drawing - called last in sketch.js draw() 'playing' branch (after drawUI)
 // ============================================================
 function drawTutorial() {
   if (!tutorialActive) return;
   const step = TUTORIAL_STEPS[tutorialStep];
   if (!step) { _finishTutorial(); return; }
 
-  // 整体暗化遮罩
+  // Overall darkening mask
   push();
   noStroke(); fill(0, 0, 0, 170);
   rect(0, 0, width, height);
 
-  // 高亮区域（如果有）— 在遮罩上"挖"亮 + 发光边框
+  // Highlight region (if any) - 'cut out' brightness on the mask + glowing border
   let hl = null;
   if (step.highlight) {
     hl = step.highlight();
-    // 在高亮区叠加轻微高光
+    // Add a subtle highlight inside the region
     fill(0, 180, 255, 22);
     rect(hl.x, hl.y, hl.w, hl.h);
-    // 脉冲边框
+    // Pulsing border
     const pulse = sin(frameCount * 0.12) * 0.25 + 0.75;
     noFill();
     stroke(0, 220, 255, 220 * pulse); strokeWeight(2.5);
@@ -101,7 +101,7 @@ function drawTutorial() {
     rect(hl.x + 1, hl.y + 1, hl.w - 2, hl.h - 2, 4);
   }
 
-  // 面板
+  // Panel
   const PW = 520, PH = 190;
   let px = (width - PW) / 2;
   let py;
@@ -114,7 +114,7 @@ function drawTutorial() {
   }
   py = constrain(py, 12, height - PH - 12);
 
-  // 面板背景
+  // Panel background
   noStroke(); fill(4, 10, 24, 240);
   rect(px, py, PW, PH, 10);
   stroke(0, 200, 255, 200); strokeWeight(2); noFill();
@@ -122,7 +122,7 @@ function drawTutorial() {
   noStroke(); fill(0, 200, 255, 175);
   rect(px, py, PW, 6, 10, 10, 0, 0);
 
-  // 步骤指示
+  // Step indicator
   const total = TUTORIAL_STEPS.length;
   const dotGap = 14, dotY = py + PH - 18;
   const dotStartX = px + PW / 2 - (total - 1) * dotGap / 2;
@@ -132,7 +132,7 @@ function drawTutorial() {
     ellipse(dotStartX + i * dotGap, dotY, active ? 8 : 5, active ? 8 : 5);
   }
 
-  // 文本（通过 i18n 动态查询）
+  // Text (resolved dynamically through i18n)
   textFont('monospace');
   fill(0, 220, 255, 240); textSize(18); textAlign(LEFT, TOP);
   text(t('tutorial.' + step.key + '.title'), px + 22, py + 20);
@@ -144,7 +144,7 @@ function drawTutorial() {
   fill(210, 230, 250, 220); textSize(12);
   text(t('tutorial.' + step.key + '.body'), px + 22, py + 64, PW - 44, 100);
 
-  // 下一步按钮
+  // Next button
   const b = _tutorialNextBtnRect(px, py, PW, PH);
   const hov = _inRect(mouseX, mouseY, b);
   fill(hov ? color(0, 80, 140, 230) : color(10, 30, 60, 210));
@@ -154,7 +154,7 @@ function drawTutorial() {
   textSize(13); textAlign(CENTER, CENTER);
   text(t('tutorial.' + step.key + '.btn'), b.x + b.w / 2, b.y + b.h / 2);
 
-  // 右上角"跳过"
+  // 'Skip' (top right)
   const s = _tutorialSkipBtnRect();
   const shov = _inRect(mouseX, mouseY, s);
   fill(shov ? color(60, 20, 20, 210) : color(15, 10, 20, 180));
@@ -170,10 +170,10 @@ function drawTutorial() {
 
 
 // ============================================================
-//  内部工具
+//  Internal helpers
 // ============================================================
 function _tutorialNextBtnRect(px, py, PW, PH) {
-  // 如果没有传入面板坐标（点击时调用），按当前帧重算
+  // If panel coordinates were not passed (e.g. on click), recompute for the current frame
   if (px === undefined) {
     const step = TUTORIAL_STEPS[tutorialStep];
     PW = 520; PH = 190;

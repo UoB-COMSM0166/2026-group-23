@@ -1,10 +1,10 @@
 // ============================================================
-//  ui/pause.js — 暂停菜单（含二次确认退出）
-//  依赖 ui/common.js
+//  ui/pause.js — Pause menu (with quit confirm)
+//  Depends on ui/common.js
 // ============================================================
 
 // ============================================================
-//  暂停菜单
+//  Pause menu
 // ============================================================
 const pauseMenuState = {
   btns:     [],
@@ -19,7 +19,7 @@ function drawPauseMenu() {
 
   push();
 
-  // 半透明遮罩
+  // Semi-transparent mask
   noStroke(); fill(0, 0, 0, 175);
   rect(0, 0, width, height);
 
@@ -27,10 +27,10 @@ function drawPauseMenu() {
   const ph = pauseConfirmMode ? 260 : 360;
   const px = (width  - pw) / 2;
   const py = (height - ph) / 2;
-  // pulse 值域 [0.6, 1.0]，乘以 230 最大值 ≤ 230，无需 constrain
+  // pulse range [0.6, 1.0]; multiplied by 230 max <= 230, no constrain needed
   const pulse = sin(frameCount * 0.07) * 0.2 + 0.8;
 
-  // 面板框
+  // Panel frame
   fill(4, 8, 22, 235);
   stroke(0, 180, 255, 180); strokeWeight(2);
   rect(px, py, pw, ph, 12);
@@ -48,7 +48,7 @@ function drawPauseMenu() {
   pop();
 }
 
-/** 普通暂停菜单内容 */
+/** Normal pause menu content */
 function _drawPauseNormal(px, py, pw, ph, pulse) {
   fill(0, 200, 255, 230 * pulse); textSize(32);
   text(t('pause.title'), px + pw / 2, py + 60);
@@ -78,11 +78,11 @@ function _drawPauseNormal(px, py, pw, ph, pulse) {
   noStroke(); fill(0, 140, 180, 140); textSize(12);
   text(t('pause.hint'), px + pw / 2, py + ph - 20);
 
-  // 存储按钮区域供点击检测
+  // Store button rectangles for click detection
   pauseMenuState.btns = btns.map(b => ({ ...b, x: px + 30, w: pw - 60, h: 40 }));
 }
 
-/** 二次确认退出内容 */
+/** Quit confirm content */
 function _drawPauseConfirm(px, py, pw, ph, pulse) {
   fill(255, 100, 60, 230 * pulse); textSize(28);
   text(t('pause.confirmTitle'), px + pw / 2, py + 70);
@@ -93,7 +93,7 @@ function _drawPauseConfirm(px, py, pw, ph, pulse) {
   stroke(255, 80, 40, 80); strokeWeight(1.5);
   line(px + 30, py + 130, px + pw - 30, py + 130);
 
-  // 确认按钮
+  // Confirm button
   const confirmY = py + 150;
   const hov1 = isHover(px + 30, confirmY, pw - 60, 44);
   fill(hov1 ? color(140, 20, 20, 240) : color(60, 10, 10, 220));
@@ -102,7 +102,7 @@ function _drawPauseConfirm(px, py, pw, ph, pulse) {
   noStroke(); fill(255, 100, 100, hov1 ? 255 : 220);
   textSize(16); text(t('pause.confirmExit'), px + pw / 2, confirmY + 22);
 
-  // 取消按钮
+  // Cancel button
   const cancelY = py + 210;
   const hov2 = isHover(px + 30, cancelY, pw - 60, 40);
   fill(hov2 ? color(0, 50, 80, 230) : color(8, 18, 36, 210));
@@ -118,10 +118,10 @@ function _drawPauseConfirm(px, py, pw, ph, pulse) {
 }
 
 // ============================================================
-//  处理暂停菜单点击
+//  Handle pause menu click
 // ============================================================
 function handlePauseClick(mx, my) {
-  // 点击 HUD 暂停按钮（使用传入坐标，与全局 mouseX/Y 解耦）
+  // Click on the HUD pause button (uses passed coordinates, decoupled from global mouseX/Y)
   if (_pauseBtnRect && inRect(mx, my, _pauseBtnRect.x, _pauseBtnRect.y, _pauseBtnRect.w, _pauseBtnRect.h)) {
     playSfx('click');
     gamePaused = !gamePaused;
@@ -153,13 +153,13 @@ function handlePauseClick(mx, my) {
     }
   } else {
     const { px, pw, confirmY, cancelY } = pauseMenuState;
-    // 与 _drawPauseConfirm 中 rect(px + 30, …, pw - 60, …) 一致
+    // Match rect(px + 30, ..., pw - 60, ...) inside _drawPauseConfirm
     if (confirmY && inRect(mx, my, px + 30, confirmY, pw - 60, 44)) {
       playSfx('click');
       gamePaused = false;
       pauseConfirmMode = false;
       gamePhase = 'levelmap';
-      setBgm('launch');  // 回到菜单音乐
+      setBgm('launch');  // Back to menu music
       return true;
     }
     if (cancelY && inRect(mx, my, px + 30, cancelY, pw - 60, 40)) {
@@ -173,7 +173,7 @@ function handlePauseClick(mx, my) {
 }
 
 // ============================================================
-//  ESC 键切换暂停
+//  ESC toggles pause
 // ============================================================
 function handlePauseKey() {
   if (gamePhase !== 'playing') return;

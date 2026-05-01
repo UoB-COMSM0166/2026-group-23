@@ -1,25 +1,25 @@
 // ============================================================
-//  ui/common.js — UI 共享常量、HUD 渲染缓存、工具函数、点击特效
-//  所有其它 ui/*.js 均依赖本文件（须最先加载）
+//  ui/common.js — UI shared constants, HUD render cache, utility functions, click effects
+//  All other ui/*.js depend on this file (must load first)
 // ============================================================
 
 // ============================================================
-//  模块级常量（避免每帧重建对象）
+//  Module-level constants (avoid rebuilding objects each frame)
 // ============================================================
 
-/** 建造菜单塔类型顺序 */
+/** Tower types in build menu order */
 const TOWER_TYPES = ['rapid','laser','nova','chain','magnet','ghost','scatter','cannon'];
 
-/** 建造菜单显示名称 */
+/** Build menu display names */
 const TOWER_DISPLAY_NAMES = {
   rapid:'RAPID', laser:'LASER', nova:'NOVA',   chain:'CHAIN',
   magnet:'MAGNET', ghost:'GHOST', scatter:'AA-FAN', cannon:'CANNON',
 };
 
-// 悬浮提示文本已迁移到 i18n.js（key: tower.<type>.tipName / tipDesc）
-// 这里只保留类型列表供 build-menu.js 枚举。
+// Hover tooltip text has been moved to i18n.js (key: tower.<type>.tipName / tipDesc)
+// Only the type list is kept here for build-menu.js to enumerate.
 
-/** 特殊能力描述（drawTowerPanel 使用）。参数命名 tw 以避开全局 i18n 的 t()。 */
+/** Special-ability description (used by drawTowerPanel). The parameter is named tw to avoid the global i18n's t(). */
 const TOWER_SPECIALS = {
   laser:   (tw) => [[t('tower.laser.special',   tw.level),            [0,255,150,210]]],
   chain:   (tw) => [[t('tower.chain.special',   tw.level),            [100,200,255,210]]],
@@ -36,16 +36,16 @@ const TOWER_SPECIALS = {
   },
 };
 
-/** 建造菜单布局常量 */
+/** Build menu layout constants */
 const BUILD_BTN_W       = 86;
 const BUILD_BTN_SPACING = 5;
 const BUILD_BTN_STRIDE  = BUILD_BTN_W + BUILD_BTN_SPACING;
 
-/** 为 true 时在 HUD 左下角绘制鼠标坐标（每帧 text，生产环境建议关闭） */
+/** When true, draws the mouse coordinates in the bottom-left of the HUD (one text() per frame; turn off in production) */
 const UI_SHOW_MOUSE_DEBUG = false;
 
-// ── HUD 字符串 / 颜色缓存（数值不变时不重复 nf / lerpColor）──
-// lang 字段让切换语言时强制重建依赖翻译的 wave / progPct 字符串。
+// -- HUD string / color cache (skip nf / lerpColor when values are unchanged) --
+// The lang field forces wave / progPct strings to rebuild when the language changes.
 const _hudStr = { credits: '', hp: '', wave: '', hostiles: '', progPct: '' };
 const _hudSig = {
   coins: NaN, baseHp: NaN, baseHpMax: NaN, waveNum: NaN,
@@ -55,15 +55,15 @@ let _hudHpFill = null;
 let _hudBarFill = null;
 let _hudBarInnerW = 0;
 
-// ── 波次倒计时下方说明行（同一波准备期间文案固定，避免每帧拼接）──
+// -- Description line below the wave countdown (text fixed during a wave's prep, avoid rebuilding each frame) --
 let _wcDescKey = '';
 let _wcDescText = '';
 let _wcDescBoss = false;
 
-// ── 工具提示尺寸（仅依赖字体与文案，按塔类型缓存）──
+// -- Tooltip dimensions (cached per tower type; depend only on font and text) --
 const _tooltipBoxCache = Object.create(null);
 
-// ── 点击热区对象复用（减少每帧 {} 分配）──
+// -- Click hot-area object reuse (reduce per-frame {} allocation) --
 const _pauseBtnRectPool = { x: 0, y: 0, w: 0, h: 0 };
 const _waveEndBtnRectPool = { x: 0, y: 0, w: 0, h: 0 };
 
@@ -79,30 +79,27 @@ function _resetHudTextCache() {
 }
 
 // ============================================================
-//  工具函数
+//  Utility functions
 // ============================================================
 
-/** 矩形碰撞检测（使用全局 mouseX/mouseY） */
+/** Rectangle hit test (uses global mouseX/mouseY) */
 function isHover(x, y, w, h) {
   return mouseX >= x && mouseX <= x + w &&
       mouseY >= y && mouseY <= y + h;
 }
 
-/** 矩形碰撞检测（指定坐标版） */
+/** Rectangle hit test (with explicit coordinates) */
 function inRect(mx, my, x, y, w, h) {
   return mx >= x && mx <= x + w && my >= y && my <= y + h;
 }
 
-/**
- * 在 p5 绘制后统一将 textAlign 还原为默认值，
- * 避免在各绘制函数末尾反复调用。
- */
+/**\n * Restore textAlign to defaults after p5 drawing,\n * to avoid resetting at the end of every draw function.\n */
 function resetTextAlign() {
   textAlign(LEFT, BASELINE);
 }
 
 // ============================================================
-//  点击特效
+//  Click effects
 // ============================================================
 function drawClickEffects() {
   const next = [];

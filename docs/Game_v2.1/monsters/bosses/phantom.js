@@ -1,6 +1,6 @@
 // ============================================================
-//  monsters/bosses/phantom.js — BossPhantom 幻影 Boss
-//  依赖：monsters/core.js (Monster)
+//  monsters/bosses/phantom.js — BossPhantom phantom boss
+//  Dependencies: monsters/core.js (Monster)
 // ============================================================
 
 class BossPhantom extends Monster {
@@ -13,9 +13,9 @@ class BossPhantom extends Monster {
     this.empEffect = 0;
     this.clonesDone = false; this.isClone = false; this.clonePulse = 0;
     this.trail = []; this.bullets = []; this.shootTimer = 0;
-    // 新机制：每受到10%最大血量伤害位移一次，每位移3次触发干扰
-    this.dmgAccum    = 0;  // 累计伤害量
-    this.dashCount   = 0;  // 本轮已位移次数
+    // New mechanic: blink once per 10% max-HP damage taken; every 3 blinks triggers a disruption
+    this.dmgAccum    = 0;  // Cumulative damage
+    this.dashCount   = 0;  // Blinks performed in this round
   }
   takeDamage(dmg) {
     if (this.invincible > 0) return;
@@ -23,7 +23,7 @@ class BossPhantom extends Monster {
     this.hp -= dmg;
     this.dmgAccum += dmg;
 
-    // 每累计10%最大HP伤害触发一次位移
+    // One blink per cumulative 10% max-HP damage
     if (this.dmgAccum >= this.maxHp * 0.1) {
       this.dmgAccum = 0;
       this.ghostPos = { x:this.pos.x, y:this.pos.y };
@@ -32,7 +32,7 @@ class BossPhantom extends Monster {
       this.pos = r.pos; this.seg = r.seg;
       this.progress = calcProgress(this.pos, this.seg, this.path);
       this.dashCount++;
-      // 每位移3次，在当前位置触发干扰
+      // Every 3 blinks, trigger a disruption at the current position
       if (this.dashCount >= 3 && !this.isClone) {
         this.dashCount = 0;
         this.empEffect = 60;
@@ -76,7 +76,7 @@ class BossPhantom extends Monster {
     }
     this.bullets = this.bullets.filter(b => b.life > 0);
     for (const b of this.bullets) { b.x+=b.vx; b.y+=b.vy; b.life-=0.03; }
-    // 应用磁场减速
+    // Apply magnet slow
     let _spdMult = 1.0;
     if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
       _spdMult = this._magnetFactor;
@@ -101,11 +101,11 @@ class BossPhantom extends Monster {
     const ls = sin(this.walkTime)*9;
     fill(18,28,52); stroke(60,140,255,160); strokeWeight(1.2);
     if (this._headingMode === 'h') {
-      // 水平行走：腿前后摆（脚位移在 X 轴）
+      // Horizontal walking: legs swing forward/back (foot displacement on X)
       beginShape(); vertex(-4,2); vertex(-8,4); vertex(-9+ls,20); vertex(-4+ls,22); vertex(-2,5); endShape(CLOSE);
       beginShape(); vertex( 4,2); vertex( 8,4); vertex( 9-ls,20); vertex( 4-ls,22); vertex( 2,5); endShape(CLOSE);
     } else {
-      // 垂直行走：腿上下抬（脚位移在 Y 轴）—— 原始动画
+      // Vertical walking: legs lift up/down (foot displacement on Y) - original animation
       beginShape(); vertex(-4,2); vertex(-8,4); vertex(-9,20+ls); vertex(-4,22+ls); vertex(-2,5); endShape(CLOSE);
       beginShape(); vertex( 4,2); vertex( 8,4); vertex( 9,20-ls); vertex( 4,22-ls); vertex( 2,5); endShape(CLOSE);
     }

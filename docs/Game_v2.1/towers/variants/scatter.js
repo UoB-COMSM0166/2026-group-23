@@ -1,11 +1,11 @@
 // ============================================================
-//  towers/variants/scatter.js — SCATTER 散射对空炮（含迫击炮 Mortar 技能）
-//  通过 Tower.prototype 注入；须在 towers/base.js 之后加载
+//  towers/variants/scatter.js — SCATTER Scatter AA Gun (with Mortar skill)
+//  Injected via Tower.prototype; must load after towers/base.js
 // ============================================================
 
 Tower.prototype._updateScatter = function() {
   this.mortarPulse += 0.06;
-  // 加农炮蓄力计时（30秒=1800帧，升级缩短：Lv2=1500，Lv3=1200）
+  // Cannon charging timer (30s = 1800 frames; upgrades shorten: Lv2=1500, Lv3=1200)
   const mortarCDs = [1800, 1500, 1200];
   if (!this.mortarReady) {
     this.mortarTimer++;
@@ -15,7 +15,7 @@ Tower.prototype._updateScatter = function() {
     }
   }
 
-  // 普通扇形射击
+  // Normal fan-shaped fire
   const target = this.findTarget(true);
   if (!target) return;
   this.angle = Math.atan2(target.pos.y - this.py, target.pos.x - this.px);
@@ -34,14 +34,14 @@ Tower.prototype.fireMortar = function(tx, ty) {
   if (!this.mortarReady) return;
   this.mortarReady = false;
   this.mortarTimer = 0;
-  // 各等级伤害和爆炸半径（高伤害）
+  // Damage and explosion radius per level (high damage)
   const dmgs    = [600, 950, 1400];
   const radii   = [90,  115, 145];
   const dmg     = dmgs[this.level - 1];
   const radius  = radii[this.level - 1];
   _mortarShells.push({
     tx, ty,
-    flyFrames: 120,   // 飞行2秒，下落过程慢而有压迫感
+    flyFrames: 120,   // 2-second flight; descent is slow and ominous
     timer: 0,
     dmg, radius,
     exploded: false,
@@ -53,7 +53,7 @@ Tower.prototype._drawScatter = function(r, g, b) {
   const lv=this.level, pulse=sin(this.pulseTime*4)*0.5+0.5;
   const mortarCDs=[1800,1500,1200];
 
-  // 加农炮就绪指示
+  // Cannon-ready indicator
   if (this.mortarReady) {
     const mp = sin(this.mortarPulse*4)*0.5+0.5;
     noFill(); stroke(255,220,50,100+mp*120); strokeWeight(3+mp*2);
@@ -63,7 +63,7 @@ Tower.prototype._drawScatter = function(r, g, b) {
     fill(255,220,50,200+mp*50); noStroke(); textSize(8); textAlign(CENTER);
     text('★ READY', 0, -34);
   } else {
-    // 充能进度弧
+    // Charge progress arc
     const charge = this.mortarTimer / mortarCDs[lv-1];
     noFill(); stroke(255,200,50,30+charge*60); strokeWeight(1.5);
     arc(0,0,48,48,-HALF_PI,-HALF_PI+TWO_PI*charge);

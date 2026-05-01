@@ -1,11 +1,11 @@
 // ============================================================
-//  towers/variants/rapid.js — RAPID 快速塔（含超级机枪 Overdrive 模式）
-//  通过 Tower.prototype 注入；须在 towers/base.js 之后加载
+//  towers/variants/rapid.js — RAPID Rapid Tower (with Super Machine Gun Overdrive mode)
+//  Injected via Tower.prototype; must load after towers/base.js
 // ============================================================
 
 Tower.prototype._updateGeneric = function() {
   if (this.type !== 'rapid') {
-    // 非快速塔走原来逻辑
+    // Non-rapid towers fall through to the original logic
     const target = this.findTarget();
     if (!target) return;
     this.angle = Math.atan2(target.pos.y - this.py, target.pos.x - this.px);
@@ -15,7 +15,7 @@ Tower.prototype._updateGeneric = function() {
     projectiles.push(new Projectile(this.px, this.py, this.angle, this.projSpd, this.dmg, this.col, false, this.type, this.level, null, def.ignoreRobotShield || false));
     return;
   }
-  // ── 快速塔专属逻辑 ──
+  // -- Rapid tower exclusive logic --
   this.rapidPulse += 0.08;
   if (this.rapidOverdrive) {
     this.rapidFrames--;
@@ -27,18 +27,18 @@ Tower.prototype._updateGeneric = function() {
   const target = this.findTarget();
   if (!target) return;
 
-  // 提前量瞄准：预测目标下一帧位置，对高速目标（蜘蛛）更准确
+  // Lead-aiming: predict the target's next-frame position; more accurate against fast targets (spider)
   const dist = Math.hypot(target.pos.x - this.px, target.pos.y - this.py);
-  const flightTime = dist / this.projSpd; // 子弹飞行帧数估算
-  // 用目标速度估算落点偏移（如果目标有速度信息）
+  const flightTime = dist / this.projSpd; // Estimated bullet flight frames
+  // Use the target's velocity to estimate landing offset (if velocity info exists)
   let aimX = target.pos.x, aimY = target.pos.y;
   if (target.seg < target.path.length - 1) {
     const nx = target.path[target.seg + 1].x - target.pos.x;
     const ny = target.path[target.seg + 1].y - target.pos.y;
     const nlen = Math.hypot(nx, ny) || 1;
     const spd = target.spd || 1;
-    // 预测提前量 = 飞行时间 × 目标速度 × 方向
-    const lead = flightTime * spd * 0.6; // 0.6系数避免过度补偿
+    // Predicted lead = flight time x target velocity x direction
+    const lead = flightTime * spd * 0.6; // 0.6 coefficient avoids over-compensation
     aimX = target.pos.x + (nx / nlen) * lead;
     aimY = target.pos.y + (ny / nlen) * lead;
   }
@@ -56,7 +56,7 @@ Tower.prototype.activateOverdrive = function() {
   if (!this.rapidReady) return;
   this.rapidReady     = false;
   this.rapidOverdrive = true;
-  this.rapidFrames    = 300; // 5秒
+  this.rapidFrames    = 300; // 5 seconds
   this.rapidCharges   = 0;
   spawnParticles(this.px, this.py, color(255, 220, 0), 25);
 };
@@ -64,7 +64,7 @@ Tower.prototype.activateOverdrive = function() {
 Tower.prototype._drawRapid = function(r, g, b) {
   const lv = this.level;
 
-  // 超级机枪光环
+  // Super machine gun aura
   if (this.rapidOverdrive) {
     const ot = this.rapidFrames / 300;
     const op = sin(this.rapidPulse * 6) * 0.4 + 0.6;
@@ -73,7 +73,7 @@ Tower.prototype._drawRapid = function(r, g, b) {
     stroke(255,255,100, 140*op*ot); strokeWeight(2);
     ellipse(0,0,58,58);
   }
-  // 充能就绪光环
+  // Charge-ready aura
   if (this.rapidReady && !this.rapidOverdrive) {
     const rp = sin(this.rapidPulse*4)*0.5+0.5;
     noFill(); stroke(255,220,0,80+rp*120); strokeWeight(3+rp*2);
@@ -107,7 +107,7 @@ Tower.prototype._drawRapid = function(r, g, b) {
   fill(255,220); ellipse(0,0,2.5,2.5);
   pop();
 
-  // 充能条（快速塔专属）
+  // Charge bar (rapid-tower exclusive)
   const maxCharges = 20;
   const bW=24, bH=3, bx=-bW/2, by=15;
   fill(10,8,2,180); stroke(r,g,b,60); strokeWeight(0.5);

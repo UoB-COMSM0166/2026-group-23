@@ -1,27 +1,27 @@
 // ============================================================
-//  map/map-lv2.js  —  关卡2  星云冰蓝地
-//  风格：冰雪星球地面 + 冰晶柱 + 星云气体 + 冻结岩
+//  map/map-lv2.js  -  Level 2 nebula icy blue
+//  Style: snowy planet ground + ice crystal columns + nebula gas + frozen rocks
 // ============================================================
 
 function _bg_nebula(lv, theme) {
   background(4, 8, 24);
 
-  // ── 冰雪地面（蓝白噪声）──
+  // -- Snowy ground (blue-white noise) --
   for (let gx=0; gx<GRID_COLS; gx++) {
     for (let gy=1; gy<GRID_ROWS; gy++) {
       const px=gx*CELL_SIZE, py=gy*CELL_SIZE;
       if (pathCellSet && pathCellSet.has(gx+','+gy)) continue;
       const {n1,n2,n3,n4}=_floorCache[gx][gy];
       noStroke();
-      // 蓝灰冰面底色
+      // Blue-grey ice base
       fill(12+n3*14, 22+n1*12+n2*8, 48+n4*20, 255);
       rect(px,py,CELL_SIZE,CELL_SIZE);
       if ((gx+gy)%2===0) { fill(0,0,0,15); rect(px,py,CELL_SIZE,CELL_SIZE); }
-      // 冰面反光纹（斜向细线）
+      // Ice surface reflections (thin diagonal lines)
       stroke(100+n3*60, 160+n1*40, 220+n4*35, 28); strokeWeight(0.8);
       const cx2=px+CELL_SIZE/2, cy2=py+CELL_SIZE/2;
       line(cx2+n1*20,cy2-n3*16, cx2+n2*18,cy2+n4*14);
-      // 偶发亮冰面
+      // Occasional bright ice
       if (n3>0.78) {
         noStroke(); fill(180,220,255, n3*25);
         ellipse(cx2+n1*14,cy2+n2*12, 10+n4*8, 6+n4*5);
@@ -29,7 +29,7 @@ function _bg_nebula(lv, theme) {
     }
   }
 
-  // ── 路径底色（暗蓝冰石）──
+  // -- Path base color (dark blue ice stone) --
   noStroke();
   for (let gx=0; gx<GRID_COLS; gx++)
     for (let gy=0; gy<GRID_ROWS; gy++) {
@@ -39,7 +39,7 @@ function _bg_nebula(lv, theme) {
       rect(gx*CELL_SIZE, gy*CELL_SIZE, CELL_SIZE, CELL_SIZE);
     }
 
-  // ── 星云背景光（大范围柔光团）──
+  // -- Nebula background glow (large soft halo) --
   noStroke();
   const T=frameCount;
   const nebulaDefs=[
@@ -74,35 +74,35 @@ function _deco_nebula() {
     const ds=0.85+d.gy/GRID_ROWS*0.3;
     push(); translate(cx,cy); noStroke();
 
-    if (type===0) {       // 冰晶柱（高耸）
+    if (type===0) {       // Tall ice crystal column
       const sz=(16+d.r2*12)*ds;
-      // 阴影
+      // Shadow
       fill(0,0,0,28); ellipse(sz*.18,sz*.6,sz*1.4,sz*.35);
-      // 晶柱主体（六棱柱感，两侧面）
+      // Crystal column body (hexagonal feel, two side faces)
       const crystalPulse=sin(T*.03+d.r1*5)*.3+.7;
-      fill(15,30,75,240); // 暗面
+      fill(15,30,75,240); // Dark face
       beginShape();
       vertex(-sz*.18,-sz*.7); vertex(sz*.18,-sz*.7);
       vertex(sz*.25,sz*.3);   vertex(-sz*.25,sz*.3);
       endShape(CLOSE);
-      fill(25,55,130,220); // 亮面（左）
+      fill(25,55,130,220); // Bright face (left)
       beginShape();
       vertex(-sz*.18,-sz*.7); vertex(-sz*.02,-sz*.7);
       vertex(-sz*.04,sz*.3);  vertex(-sz*.25,sz*.3);
       endShape(CLOSE);
-      // 内光（冰晶折射）
+      // Inner glow (ice crystal refraction)
       fill(120,180,255, 40*crystalPulse);
       beginShape();
       vertex(-sz*.05,-sz*.5); vertex(sz*.12,-sz*.4);
       vertex(sz*.08,sz*.0);   vertex(-sz*.08,.0);
       endShape(CLOSE);
-      // 顶部尖锋高光
+      // Tip highlight
       fill(200,230,255,180*crystalPulse);
       triangle(-sz*.05,-sz*.7, sz*.05,-sz*.7, 0,-sz*.92);
-      // 底部融水圆
+      // Bottom melt-water circle
       fill(60,100,200,40); ellipse(0,sz*.32,sz*.5,sz*.15);
 
-    } else if (type===1) { // 星云气体团（动态）
+    } else if (type===1) { // Nebula gas cluster (animated)
       const sz=(12+d.r2*10)*ds;
       const gp1=sin(T*.025+d.r1*4)*.4+.6;
       const gp2=sin(T*.02+d.r2*3+1.5)*.4+.6;
@@ -112,14 +112,14 @@ function _deco_nebula() {
       ellipse(sz*.1*gp2,sz*.05,sz*1.6,sz*1.3);
       fill(160,200,255, 12*gp1);
       ellipse(-sz*.12,sz*.08*gp1, sz*.9,sz*.7);
-      // 星点
+      // Stars
       fill(255,255,255,50*gp1*d.r3);
       ellipse(sz*.05,-sz*.1,2.5,2.5);
 
-    } else if (type===2) { // 冻结岩石（冰包裹）
+    } else if (type===2) { // Frozen rock (encased in ice)
       const sz=(10+d.r2*9)*ds;
       fill(0,0,0,30); ellipse(sz*.1,sz*.5,sz*1.5,sz*.3);
-      // 岩石内核
+      // Inner rock
       fill(30,40,70,240);
       beginShape();
       for (let k=0;k<7;k++) {
@@ -128,7 +128,7 @@ function _deco_nebula() {
         vertex(cos(ang)*r, sin(ang)*r*.65);
       }
       endShape(CLOSE);
-      // 冰壳（半透明蓝白）
+      // Ice shell (semi-transparent blue-white)
       const ip=sin(T*.02+d.r1*4)*.2+.8;
       fill(120,180,240, 50*ip);
       beginShape();
@@ -138,11 +138,11 @@ function _deco_nebula() {
         vertex(cos(ang)*r, sin(ang)*r*.7);
       }
       endShape(CLOSE);
-      // 冰面高光
+      // Ice highlight
       fill(200,230,255,80*ip);
       ellipse(-sz*.2,-sz*.22,sz*.3,sz*.2);
 
-    } else {               // 小冰晶群
+    } else {               // Small ice crystal cluster
       const sz=(6+d.r2*6)*ds;
       fill(0,0,0,22); ellipse(sz*.08,sz*.45,sz*1.6,sz*.28);
       for (let k=0;k<3;k++) {

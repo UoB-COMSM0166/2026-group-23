@@ -1,13 +1,13 @@
 // ============================================================
 //  map/map-core.js
-//  路径定义、格子判定、缓存构建、drawPaths、共享辅助
+//  Path definitions, cell tests, cache build, drawPaths, shared helpers
 //
-//  对外接口（供 sketch.js / ui.js 调用）：
+//  Public API (used by sketch.js / ui.js):
 //    initMap()           initPathCells()      isCellBuildable(gx,gy)
 //    drawBackground()    drawPaths()          drawScanlines()
 //    drawHexMarker()     distAB(a,b)
 //
-//  内部共享（供各 map-lvN.js 使用）：
+//  Internal sharing (used by each map-lvN.js):
 //    _floorCache[][]     _decoCache[]         _pathFlowPts[]
 //    _rng(seed)          _drawFog()           _drawCornerHUD()
 //    _road_stonebrick()  _road_metalplate()   _road_crystalpath()
@@ -16,7 +16,7 @@
 // ============================================================
 
 // ============================================================
-//  关卡路径 & 主题配置
+//  Level paths & theme configuration
 // ============================================================
 const LEVEL_PATHS = {
   1: {
@@ -58,13 +58,13 @@ const LEVEL_PATHS = {
 
 let CURRENT_LEVEL_PATHS = LEVEL_PATHS[1];
 
-// ── 路径转像素坐标 ──
+// -- Path-to-pixel conversion --
 function pathToPixels(p) {
   return p.map(n => ({ x: n.x*CELL_SIZE + CELL_SIZE/2, y: n.y*CELL_SIZE + CELL_SIZE/2 }));
 }
 
 // ============================================================
-//  格子判定
+//  Cell tests
 // ============================================================
 let pathCellSet = null;
 
@@ -94,7 +94,7 @@ function isCellBuildable(gx, gy) {
 }
 
 // ============================================================
-//  缓存（所有关卡共用同一套缓存变量）
+//  Caches (one set of cache variables shared across all levels)
 // ============================================================
 let _floorCache  = [];  // [gx][gy] = { n1,n2,n3,n4 }
 let _decoCache   = [];  // [{ gx, gy, r1..r4, style }]
@@ -135,7 +135,7 @@ function _buildDecoCache() {
       _decoCache.push({ gx, gy, r1:rng(), r2:rng(), r3:rng(), r4:rng(), style });
     }
   }
-  _decoCache.sort((a,b) => a.gy - b.gy); // 近处(gy大)后画，有层次感
+  _decoCache.sort((a,b) => a.gy - b.gy); // Larger gy is drawn later for a sense of depth
 }
 
 function _buildPathFlowCache() {
@@ -150,14 +150,14 @@ function _buildPathFlowCache() {
   }
 }
 
-// ── 固定种子随机数生成器 ──
+// -- Fixed-seed pseudo-random generator --
 function _rng(seed) {
   let s = seed;
   return () => { s=(s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; };
 }
 
 // ============================================================
-//  drawBackground  —  按 style 路由到各关卡文件
+//  drawBackground - dispatch to the per-level file based on style
 // ============================================================
 function drawBackground() {
   const lv    = (typeof currentLevel!=='undefined') ? currentLevel : 1;
@@ -172,7 +172,7 @@ function drawBackground() {
   }
 }
 
-// ── 通用 legacy 背景（无专属主题时兜底）──
+// -- Generic legacy background (fallback when no dedicated theme) --
 function _bg_legacy(lv, theme) {
   const [br,bg2,bb]    = theme.bg;
   const [gr,gg,gb]     = theme.grid;
@@ -204,7 +204,7 @@ function _bg_legacy(lv, theme) {
 }
 
 // ============================================================
-//  drawPaths  —  按 style 选路面风格
+//  drawPaths - pick path style based on `style`
 // ============================================================
 function distAB(a,b){ return Math.hypot(b.x-a.x, b.y-a.y); }
 
@@ -258,10 +258,10 @@ function drawPaths() {
 }
 
 // ============================================================
-//  路面绘制函数
+//  Path drawing functions
 // ============================================================
 
-// ── 石砖路（lv1 草地）──
+// -- Stone bricks (lv1 grassland) --
 function _road_stonebrick(pathPx, r,g,b, w, lane) {
   const rng = _rng(lane*5557+3);
   for (let i=0; i<pathPx.length-1; i++) {
@@ -288,28 +288,28 @@ function _road_stonebrick(pathPx, r,g,b, w, lane) {
   }
 }
 
-// ── 冰晶石路（lv2 星云）──
+// -- Ice crystal stones (lv2 nebula) --
 function _road_crystalpath(pathPx, r,g,b, w, lane) {
   const rng=_rng(lane*3331+7), T=frameCount;
   for (let i=0; i<pathPx.length-1; i++) {
     const a=pathPx[i], b2=pathPx[i+1];
     const ang=Math.atan2(b2.y-a.y,b2.x-a.x), d=distAB(a,b2);
     push(); translate((a.x+b2.x)/2,(a.y+b2.y)/2); rotate(ang);
-    // 底层（深蓝黑）
+    // Base layer (deep blue-black)
     noStroke(); fill(8,12,35,255); rect(-d/2-2,-w/2,d+4,w);
-    // 冰晶板块
+    // Ice crystal slabs
     const tileW=w*0.78, cols=Math.ceil(d/tileW)+1;
     for (let c=0; c<cols; c++) {
       const n=rng(), tx=-d/2+c*tileW, tw=tileW*0.93;
       fill(18+n*12, 35+n*20, 75+n*30, 230); rect(tx+1,-w/2+2,tw,w-4,2);
-      // 冰面高光（斜向）
+      // Ice surface highlights (diagonal)
       const glowP=sin(T*0.03+c*0.8+i)*0.3+0.7;
       fill(r,g,b, 35*glowP*n); rect(tx+1,-w/2+2,tw*0.5,3);
       fill(180,220,255, 20*glowP); rect(tx+1,-w/2+2,tw,3);
-      // 板缝
+      // Slab seams
       stroke(5,10,25,180); strokeWeight(1.5); line(tx,-w/2+2,tx,w/2-2);
     }
-    // 能量流边线
+    // Energy flow edges
     const ep=sin(T*0.04+i*0.6)*0.5+0.5;
     noFill(); stroke(r,g,b,50+ep*40); strokeWeight(2);
     line(-d/2,-w/2+1,d/2,-w/2+1); line(-d/2,w/2-1,d/2,w/2-1);
@@ -319,7 +319,7 @@ function _road_crystalpath(pathPx, r,g,b, w, lane) {
   }
 }
 
-// ── 金属铁板路（lv3 熔岩）──
+// -- Metal plate path (lv3 lava) --
 function _road_metalplate(pathPx, r,g,b, w, lane) {
   const T=frameCount;
   for (let i=0; i<pathPx.length-1; i++) {
@@ -348,32 +348,32 @@ function _road_metalplate(pathPx, r,g,b, w, lane) {
   }
 }
 
-// ── 虚空量子路（lv4）──
+// -- Void quantum path (lv4) --
 function _road_voidpath(pathPx, r,g,b, w, lane) {
   const T=frameCount, rng=_rng(lane*4441+11);
   for (let i=0; i<pathPx.length-1; i++) {
     const a=pathPx[i], b2=pathPx[i+1];
     const ang=Math.atan2(b2.y-a.y,b2.x-a.x), d=distAB(a,b2);
     push(); translate((a.x+b2.x)/2,(a.y+b2.y)/2); rotate(ang);
-    // 深空底
+    // Deep space base
     noStroke(); fill(8,4,22,255); rect(-d/2-2,-w/2,d+4,w);
-    // 量子板块（半透明，带扭曲感）
+    // Quantum slabs (semi-transparent, with a warped feel)
     const tileW=w*0.9, cols=Math.ceil(d/tileW)+1;
     for (let c=0; c<cols; c++) {
       const n=rng(), tx=-d/2+c*tileW, tw=tileW*0.93;
       const vp=sin(T*0.025+c*1.1+i*0.5)*0.4+0.6;
       fill(25+n*15, 10+n*8, 55+n*25, 200*vp); rect(tx+1,-w/2+2,tw,w-4,2);
-      // 能量网格线
+      // Energy grid lines
       stroke(r,g,b, 20*vp); strokeWeight(0.7);
       for (let row=0; row<3; row++) {
         const ry2=-w/2+2+(w-4)*row/2;
         line(tx+1,ry2, tx+tw,ry2);
       }
-      // 扭曲高光
+      // Warped highlights
       const sp=sin(T*0.04+c*0.7)*0.5+0.5;
       fill(r,g,b, 40*sp*n); noStroke(); rect(tx+tw*0.1,-w/2+2,tw*0.3,2);
     }
-    // 外边能量线（双色交替）
+    // Outer energy lines (alternating colors)
     const ep=sin(T*0.05+i*0.8)*0.5+0.5;
     noFill();
     stroke(r,g,b, 70+ep*50); strokeWeight(1.8);
@@ -384,27 +384,27 @@ function _road_voidpath(pathPx, r,g,b, w, lane) {
   }
 }
 
-// ── 血石路（lv5 废墟）──
+// -- Bloodstone path (lv5 ruins) --
 function _road_bloodstone(pathPx, r,g,b, w, lane) {
   const rng=_rng(lane*6661+5), T=frameCount;
   for (let i=0; i<pathPx.length-1; i++) {
     const a=pathPx[i], b2=pathPx[i+1];
     const ang=Math.atan2(b2.y-a.y,b2.x-a.x), d=distAB(a,b2);
     push(); translate((a.x+b2.x)/2,(a.y+b2.y)/2); rotate(ang);
-    // 底层（深红黑）
+    // Base layer (deep red-black)
     noStroke(); fill(25,6,8,255); rect(-d/2-2,-w/2,d+4,w);
-    // 不规则石板
+    // Irregular slabs
     const tileW=w*0.82, cols=Math.ceil(d/tileW)+1;
     for (let c=0; c<cols; c++) {
       const n=rng(), tx=-d/2+c*tileW, tw=tileW*0.91;
-      // 石板（暗红褐）
+      // Slabs (dark red-brown)
       fill(42+n*18, 18+n*8, 14+n*6, 245); rect(tx+1,-w/2+2,tw,w-4,1);
-      // 高光
+      // Highlights
       fill(60+n*22,26+n*10,20+n*8, 70); rect(tx+1,-w/2+2,tw*0.4,2); rect(tx+1,-w/2+2,2,w*0.45);
-      // 暗纹（横向磨损）
+      // Dark grain (horizontal wear)
       fill(18,6,4,60);
       for (let k=0; k<2; k++) rect(tx+tw*0.1+k*tw*0.35, -w/2+w*0.25+k*w*0.2, tw*0.2, 1.5);
-      // 缝隙（带红光渗出）
+      // Cracks (with red light bleeding through)
       const gp=sin(T*0.04+c*0.9+i)*0.5+0.5;
       stroke(r,g*0.4,b*0.4, 40+gp*40); strokeWeight(1.5);
       line(tx,-w/2+2,tx,w/2-2);
@@ -417,7 +417,7 @@ function _road_bloodstone(pathPx, r,g,b, w, lane) {
   }
 }
 
-// ── Legacy 路面 ──
+// -- Legacy paths --
 function _road_legacy(pathPx, r,g,b, w) {
   noStroke();
   for (let i=0; i<pathPx.length-1; i++) {
@@ -452,7 +452,7 @@ function _road_legacy(pathPx, r,g,b, w) {
 }
 
 // ============================================================
-//  共用动画层
+//  Shared animation layer
 // ============================================================
 
 function _drawFlowParticles(r1,g1,b1, r2,g2,b2, style) {
@@ -511,7 +511,7 @@ function _drawWaypoints(pathPx, r,g,b) {
 }
 
 // ============================================================
-//  六边形标记、雾气、角落HUD、标签、扫描线
+//  Hex markers, fog, corner HUD, label, scan lines
 // ============================================================
 
 function drawHexMarker(x,y,col,label) {
@@ -563,7 +563,7 @@ function _drawLevelLabel(lv, r,g,b, a) {
 
 function drawScanlines() {
   noStroke();
-  // 加大步长、略增厚条纹：视觉接近原效果，rect 次数约降为原来的 ~1/2（降 draw call）
+  // Bigger step + slightly thicker stripes: visually similar to the original effect, while halving rect calls (fewer draw calls)
   for (let y = 0; y < height; y += 8) {
     fill(0, 0, 0, 14);
     rect(0, y, width, 3);

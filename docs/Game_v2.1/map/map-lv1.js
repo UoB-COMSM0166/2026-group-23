@@ -1,13 +1,13 @@
 // ============================================================
-//  map/map-lv1.js  —  关卡1  青草地
-//  调用方：map-core.js drawBackground() → _bg_grassland()
-//  依赖：_floorCache  _decoCache  _drawFog  _drawCornerHUD  _drawLevelLabel
+//  map/map-lv1.js  -  Level 1 grassland
+//  Caller: map-core.js drawBackground() -> _bg_grassland()
+//  Dependencies: _floorCache  _decoCache  _drawFog  _drawCornerHUD  _drawLevelLabel
 // ============================================================
 
 function _bg_grassland(lv, theme) {
   background(22, 38, 14);
 
-  // ── 草地地面（噪声色偏 + 草纹）──
+  // -- Grassland ground (noise color shift + grass texture) --
   for (let gx=0; gx<GRID_COLS; gx++) {
     for (let gy=1; gy<GRID_ROWS; gy++) {
       const px=gx*CELL_SIZE, py=gy*CELL_SIZE;
@@ -17,7 +17,7 @@ function _bg_grassland(lv, theme) {
       fill(28+n3*18, 52+n1*14+n2*8, 16+n4*10, 255);
       rect(px, py, CELL_SIZE, CELL_SIZE);
       if ((gx+gy)%2===0) { fill(0,0,0,18); rect(px,py,CELL_SIZE,CELL_SIZE); }
-      // 草纹
+      // Grass texture
       stroke(40+n3*20, 80+n1*15, 20+n4*12, 55); strokeWeight(1);
       const blades=4+Math.floor(n3*3);
       for (let k=0; k<blades; k++) {
@@ -29,7 +29,7 @@ function _bg_grassland(lv, theme) {
     }
   }
 
-  // ── 路径格子底色（泥土）──
+  // -- Path cell base color (dirt) --
   noStroke();
   for (let gx=0; gx<GRID_COLS; gx++)
     for (let gy=0; gy<GRID_ROWS; gy++) {
@@ -49,15 +49,15 @@ function _bg_grassland(lv, theme) {
   _drawLevelLabel(lv, 80,130,50, 55);
 }
 
-// ── 草地装饰物 ──
+// -- Grassland decorations --
 function _deco_grassland() {
   for (const d of _decoCache) {
     const cx=d.gx*CELL_SIZE+CELL_SIZE/2, cy=d.gy*CELL_SIZE+CELL_SIZE/2;
     const type=Math.floor(d.r1*4);
-    const ds=0.85+d.gy/GRID_ROWS*0.3; // 透视深度缩放
+    const ds=0.85+d.gy/GRID_ROWS*0.3; // Perspective depth scale
     push(); translate(cx,cy); noStroke();
 
-    if (type===0) {         // 橡树
+    if (type===0) {         // Oak
       const sz=(22+d.r2*10)*ds;
       fill(0,0,0,30); ellipse(sz*0.22,sz*0.18,sz*1.6,sz*0.5);
       for (const [ox,oy,r,c] of [
@@ -69,7 +69,7 @@ function _deco_grassland() {
       fill(70,48,22,180); rect(-sz*.08,sz*.28,sz*.06,sz*.38,2);
       fill(0,0,0,40); rect(-sz*.08,sz*.62,sz*.16,sz*.08,1);
 
-    } else if (type===1) {  // 松树
+    } else if (type===1) {  // Pine
       const sz=(14+d.r2*7)*ds;
       fill(0,0,0,25); ellipse(sz*.15,sz*.5,sz*1.2,sz*.3);
       for (let ti=0; ti<3; ti++) {
@@ -82,7 +82,7 @@ function _deco_grassland() {
       }
       fill(50,30,12,220); rect(-sz*.06,sz*.48,sz*.12,sz*.22,1);
 
-    } else if (type===2) {  // 灌木
+    } else if (type===2) {  // Bush
       const sz=(10+d.r2*6)*ds;
       fill(0,0,0,22); ellipse(sz*.1,sz*.35,sz*1.8,sz*.4);
       for (let bi=0; bi<3; bi++) {
@@ -92,7 +92,7 @@ function _deco_grassland() {
         fill(bc[0]+10,bc[1]+12,bc[2]+6,80); ellipse(bx-br*.2,by-br*.2,br*.35,br*.28);
       }
 
-    } else {                // 石头
+    } else {                // Stone
       const sz=(8+d.r2*8)*ds;
       fill(0,0,0,35); ellipse(sz*.12,sz*.55,sz*1.5,sz*.35);
       const sr=95+d.r3*25, sg=88+d.r3*20, sb=78+d.r3*18;

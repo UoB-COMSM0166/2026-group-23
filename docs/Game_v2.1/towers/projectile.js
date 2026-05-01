@@ -1,9 +1,9 @@
 // ============================================================
-//  towers/projectile.js — Projectile 子弹类（支持 nova 穿透 / chain 跳链 / ghost 追踪 / scatter 对空）
+//  towers/projectile.js — Projectile bullet class (supports nova piercing / chain jump / ghost homing / scatter AA)
 // ============================================================
 
 // ============================================================
-//  Projectile — 支持 nova穿透、chain跳链、ghost追踪、scatter对空
+//  Projectile - supports nova piercing, chain jump, ghost homing, scatter AA
 // ============================================================
 class Projectile {
   constructor(x, y, angle, spd, dmg, col, antiAir, towerType, level, chainTarget, ignoreRobotShield) {
@@ -12,25 +12,25 @@ class Projectile {
     this.dmg = dmg; this.col = col; this.antiAir = antiAir;
     this.towerType = towerType; this.level = level;
     this.alive = true; this.life = 1.0;
-    // Chain 直接锁定目标
+    // Chain locks the target directly
     this.chainTarget = chainTarget || null;
-    // Ghost 追踪
+    // Ghost homing
     this.target = null;
     this.turnSpd = 0.08;
-    // Nova 发散：越飞越大
+    // Nova spread: grows larger as it travels
     this.novaRadius = 4;
-    // 快速塔专属：无视机器人护盾
+    // Rapid-tower exclusive: ignores robot shield
     this.ignoreRobotShield = ignoreRobotShield || false;
-    // 快速塔专属
+    // Rapid-tower exclusive
     this.isOverdrive = false;
-    this.srcX = x; this.srcY = y; // 记录发射源坐标用于充能回溯
+    this.srcX = x; this.srcY = y; // Record source coordinates for charge backtrack
     this.isCannonShell = false;
     this.targetX = 0; this.targetY = 0;
     this.blastRadius = 0;
   }
 
   update() {
-    // Ghost 追踪逻辑（地面导弹）
+    // Ghost homing logic (ground missile)
     if (this.towerType === 'ghost' && !this.isAirMissile && manager) {
       if (!this.target || !this.target.alive || this.target.reached) {
         const inRange = manager.getMonstersInRange(this.x, this.y, 300, false)
@@ -50,10 +50,10 @@ class Projectile {
         this.vx = cos(curA) * spd; this.vy = sin(curA) * spd;
       }
     }
-    // 对空追踪导弹逻辑（幽灵塔第9发）
+    // AA homing missile logic (ghost tower's 9th shot)
     if (this.towerType === 'ghost' && this.isAirMissile && manager) {
       if (!this.target || !this.target.alive || this.target.reached) {
-        // 重新寻找最近空中目标
+        // Re-acquire the nearest aerial target
         const airTargets = manager.monsters.filter(m =>
           m.alive && !m.reached &&
           (m instanceof MechPhoenix || m instanceof GhostBird ||
@@ -70,13 +70,13 @@ class Projectile {
         let diff = desiredA - curA;
         while (diff > PI)  diff -= TWO_PI;
         while (diff < -PI) diff += TWO_PI;
-        curA += constrain(diff, -this.turnSpd * 4.0, this.turnSpd * 4.0); // 对空导弹高转向速率
+        curA += constrain(diff, -this.turnSpd * 4.0, this.turnSpd * 4.0); // AA missile uses high turn rate
         const spd = Math.hypot(this.vx, this.vy);
         this.vx = cos(curA) * spd; this.vy = sin(curA) * spd;
       }
     }
 
-    // Nova：子弹越飞越大
+    // Nova: bullets grow as they travel
     if (this.towerType === 'nova') {
       this.novaRadius = 4 + (1.0 - this.life) * 55;
     }
@@ -86,12 +86,12 @@ class Projectile {
       this.life -= 0.012;
       if (this.life <= 0) { this.alive = false; return; }
     } else {
-      // ghost/cannon 子弹只在命中目标时消亡，不自动衰减
-      // 但超出地图边界时清除
+      // ghost / cannon bullets only die on hitting the target; do not auto-decay
+      // But clear when leaving the map bounds
       if (this.x < -200 || this.x > width + 200 || this.y < -200 || this.y > height + 200) {
         this.alive = false; return;
       }
-      this.life = max(this.life - 0.003, 0.1); // 视觉淡出用，不归零
+      this.life = max(this.life - 0.003, 0.1); // Used for visual fade-out, not zeroed
     }
 
     const isNova    = this.towerType === 'nova';
@@ -99,7 +99,7 @@ class Projectile {
     const isScatter = this.towerType === 'scatter';
 
     if (isNova) {
-      // 发散光波：用当前半径判断命中（越飞越大越容易命中）
+      // Spread light ring: hit detection uses the current radius (bigger = easier to hit)
       if (!this.hitSet) this.hitSet = new Set();
       if (manager) {
         for (const m of manager.monsters) {
@@ -111,27 +111,27 @@ class Projectile {
           }
         }
       }
-      return; // nova子弹自然消亡（life归零）
+      return; // Nova bullets die naturally when life hits zero
     }
 
-    // 大炮炮弹：飞向目标点，到达后范围爆炸（同时伤害空中和地面）
+    // Cannon shell: flies to the target point, then explodes in an area on arrival (hits both air and ground)
     if (this.towerType === 'cannon') {
       const dx = this.targetX - this.x, dy = this.targetY - this.y;
       const dist2 = Math.hypot(dx, dy);
       if (dist2 <= Math.hypot(this.vx, this.vy) * 1.5) {
-        // 到达目标点，范围爆炸（同时打击地面+空中）
+        // Reached the target point; AoE explosion (hits ground + air)
         if (manager) {
           for (const m of manager.monsters) {
             if (!m.alive || m.reached) continue;
             if (m instanceof GhostBird && m.isGhost) continue;
             if (Math.hypot(m.pos.x - this.targetX, m.pos.y - this.targetY) <= this.blastRadius) {
               m.takeDamage(this.dmg);
-              spawnParticles(m.pos.x, m.pos.y, color(...this.col), 4);   // 补丁 3：8→4
+              spawnParticles(m.pos.x, m.pos.y, color(...this.col), 4);   // Patch 3: 8 -> 4
             }
           }
         }
-        // 爆炸粒子
-        spawnParticles(this.targetX, this.targetY, color(...this.col), 15);   // 补丁 3：30→15
+        // Explosion particles
+        spawnParticles(this.targetX, this.targetY, color(...this.col), 15);   // Patch 3: 30 -> 15
         _cannonBlasts.push({ x: this.targetX, y: this.targetY, r: this.blastRadius, life: 30 });
         playSfx('explode');
         this.alive = false;
@@ -143,11 +143,11 @@ class Projectile {
     let hits = manager ? manager.getMonstersInRange(this.x, this.y, hitR, this.antiAir) : [];
     if (this.antiAir) hits = hits.filter(m => m.isFlying || (m instanceof BossCarrier && !m.grounded));
     else              hits = hits.filter(m => !m.isFlying);
-    // 对空导弹用自己的范围检测，不依赖hits
+    // AA missile uses its own range check, does not rely on hits
     if (hits.length === 0 && !this.isAirMissile) return;
 
     if (isGhost && this.isAirMissile) {
-      // 对空追踪导弹：靠近空中目标时爆炸+减速
+      // AA homing missile: explodes + slows when close to an aerial target
       const airHits = manager.monsters.filter(m =>
         m.alive && !m.reached &&
         (m instanceof MechPhoenix || m instanceof GhostBird ||
@@ -155,13 +155,13 @@ class Projectile {
         !(m instanceof GhostBird && m.isGhost) &&
         Math.hypot(m.pos.x - this.x, m.pos.y - this.y) <= 18
       );
-      if (airHits.length === 0) return; // 还没靠近目标
+      if (airHits.length === 0) return; // Not yet near the target
       for (const m of airHits) {
-        // 对所有空中目标直接修改baseSpd实现减速，3秒后恢复
+        // Slow all aerial targets by directly modifying baseSpd; recover after 3 seconds
         if (!m._airSlowApplied) {
           m._origBaseSpd = m.baseSpd || m.spd;
           m.baseSpd = m._origBaseSpd * 0.45;
-          if (!m.baseSpd) m.spd = m._origBaseSpd * 0.45; // BossCarrier用spd
+          if (!m.baseSpd) m.spd = m._origBaseSpd * 0.45; // BossCarrier uses spd
           m._airSlowApplied = true;
           m._airSlowExpire = frameCount + 180;
         }
@@ -175,7 +175,7 @@ class Projectile {
       spawnParticles(this.x, this.y, color(...this.col), 10);
       this.alive = false;
     } else if (isScatter) {
-      // 散射弹对BossCarrier造成3倍伤害（对空Boss专属加成）
+      // Scatter shells deal 3x damage to BossCarrier (anti-air boss exclusive bonus)
       const scatterTargets = hits.filter(m => m.isFlying || (m instanceof BossCarrier && !m.grounded));
       for (const m of scatterTargets) {
         const bonusMult = (m instanceof BossCarrier) ? 3.0 : 1.0;
@@ -184,19 +184,19 @@ class Projectile {
       }
       this.alive = false;
     } else {
-      // rapid 等普通单体
+      // rapid and other normal single-target
       manager.damageAt(this.x, this.y, this.dmg, false, false, false, this.ignoreRobotShield);
       spawnParticles(this.x, this.y, color(...this.col), 4);
 
-      // 快速塔专属：命中充能 + 超级机枪电弧跳链
+      // Rapid-tower exclusive: charge on hit + super-machine-gun arc chain
       if (this.towerType === 'rapid') {
-        // 找到命中的目标
+        // Find the target hit
         const hitTarget = manager ? manager.monsters.find(m =>
           m.alive && !m.reached && !m.isFlying &&
           Math.hypot(m.pos.x - this.x, m.pos.y - this.y) <= m.radius + 5
         ) : null;
 
-        // 充能（每次命中+1，满20通知对应塔）
+        // Charge (+1 per hit; notify the tower at 20)
         if (towers) {
           const srcTower = towers.find(t =>
             t.type === 'rapid' &&
@@ -212,7 +212,7 @@ class Projectile {
           }
         }
 
-        // 超级机枪模式：每弹电弧跳链最近2只怪，无视所有护盾
+        // Super-machine-gun mode: each shot arcs to the 2 nearest mobs, ignoring all shields
         if (this.isOverdrive && hitTarget && manager) {
           let lastPos = { x: hitTarget.pos.x, y: hitTarget.pos.y };
           const hit = new Set([hitTarget]);
@@ -226,7 +226,7 @@ class Projectile {
               Math.hypot(b.pos.x-lastPos.x,b.pos.y-lastPos.y) <
               Math.hypot(a.pos.x-lastPos.x,a.pos.y-lastPos.y) ? b : a
             );
-            // 电弧伤害无视所有护盾（直接扣HP）
+            // Arc damage ignores all shields (deduct HP directly)
             next.hp -= floor(this.dmg * 0.6);
             if (next.hp <= 0) { next.alive = false; spawnParticles(next.pos.x,next.pos.y,next.deathColor,20); }
             spawnParticles(next.pos.x, next.pos.y, color(255,220,80), 5);
@@ -247,32 +247,32 @@ class Projectile {
     noStroke(); fill(r, g, b, this.life * 240);
 
     if (this.towerType === 'nova') {
-      // 发散光波：中心圆+向外扩散的光环（越飞越大）
-      pop(); // 先退出 rotate push，用世界坐标画圆环
+      // Spread light ring: center circle + outward expanding halo (grows as it travels)
+      pop(); // Exit the rotate push first; draw the ring in world coordinates
       push(); translate(this.x, this.y);
       const nr = this.novaRadius;
       const alpha = this.life * 200;
-      // 外光环
+      // Outer halo
       noFill(); stroke(r, g, b, alpha * 0.7); strokeWeight(2.5 + this.level);
       ellipse(0, 0, nr * 2, nr * 2);
-      // 内发光核
+      // Inner glow core
       noStroke(); fill(r, g, b, alpha * 0.9);
       ellipse(0, 0, min(nr * 0.6, 14), min(nr * 0.6, 14));
-      // 中心亮点
+      // Center highlight
       fill(255, 230, 180, alpha);
       ellipse(0, 0, 5, 5);
       pop();
-      return; // 不执行后面的pop
+      return; // Skip the trailing pop
     } else if (this.towerType === 'cannon') {
-      // 大炮炮弹：大圆球+火焰尾迹
+      // Cannon shell: large round ball + flame trail
       pop(); push(); translate(this.x, this.y); rotate(Math.atan2(this.vy, this.vx));
       const cs = 7 + this.level * 2;
-      // 尾迹火焰
+      // Trail flame
       noStroke(); fill(r, g, b, this.life * 80);
       ellipse(-cs * 2, 0, cs * 3, cs * 1.5);
       fill(255, 160, 60, this.life * 140);
       ellipse(-cs * 1.2, 0, cs * 2, cs);
-      // 炮弹主体
+      // Shell body
       fill(r, g, b, this.life * 240);
       ellipse(0, 0, cs * 2, cs * 1.6);
       fill(255, 200, 120, this.life * 200);
@@ -282,28 +282,28 @@ class Projectile {
       pop();
       return;
     } else if (this.towerType === 'ghost' && this.isAirMissile) {
-      // 对空追踪导弹：蓝白色，细长锥形+冰蓝尾迹
+      // AA homing missile: blue-white, slim conical body + ice-blue trail
       fill(100, 220, 255, this.life*230);
       beginShape(); vertex(sz*1.4,0); vertex(-sz*0.3,sz*0.45); vertex(-sz*0.3,-sz*0.45); endShape(CLOSE);
       fill(220, 245, 255, this.life*180); ellipse(0,0,sz*0.6,sz*0.6);
       stroke(100,200,255,this.life*100); strokeWeight(sz*0.8); line(-sz*2,0,0,0); noStroke();
-      // 减速冰晶特效小点
+      // Slowing ice-crystal speckles
       fill(180,240,255,this.life*120); noStroke();
       ellipse(-sz*0.8, sz*0.3, sz*0.35, sz*0.35);
       ellipse(-sz*0.8, -sz*0.3, sz*0.35, sz*0.35);
     } else if (this.towerType === 'ghost') {
-      // 追踪导弹（地面）：紫色+发光尾迹
+      // Homing missile (ground): purple + glowing trail
       fill(r,g,b,this.life*230);
       beginShape(); vertex(sz*1.2,0); vertex(-sz*0.4,sz*0.5); vertex(-sz*0.4,-sz*0.5); endShape(CLOSE);
       fill(255,200,255,this.life*160); ellipse(0,0,sz*0.7,sz*0.7);
       stroke(r,g,b,this.life*80); strokeWeight(sz*0.6); line(-sz*1.5,0,0,0); noStroke();
     } else if (this.towerType === 'scatter') {
-      // 散射弹：细长红色
+      // Scatter shell: slim red
       fill(r,g,b,this.life*230);
       rectMode(CENTER); rect(0,0,sz*2.2,sz*0.4,1);
       fill(255,180,200,this.life*180); ellipse(sz*1.0,0,sz*0.55,sz*0.55);
     } else {
-      // 默认（rapid等）
+      // Default (rapid etc.)
       rectMode(CENTER); rect(0,0,sz*2,sz*0.45,2);
     }
     pop();

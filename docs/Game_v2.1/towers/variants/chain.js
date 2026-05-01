@@ -1,10 +1,10 @@
 // ============================================================
-//  towers/variants/chain.js — CHAIN 链式电弧塔（命中跳链）
-//  通过 Tower.prototype 注入；须在 towers/base.js 之后加载
+//  towers/variants/chain.js — CHAIN Chain Arc Tower (chains on hit)
+//  Injected via Tower.prototype; must load after towers/base.js
 // ============================================================
 
 Tower.prototype._updateChain = function() {
-  // 链式电弧可以穿透坦克护盾屏障，直接搜索范围内怪物（含被屏障覆盖的）
+  // Chain arc can pierce the tank shield barrier; search all monsters in range (including those covered by the barrier)
   let inRange = manager ? manager.monsters.filter(m =>
     m.alive && !m.reached && !m.isFlying &&
     Math.hypot(m.pos.x - this.px, m.pos.y - this.py) <= this.range
@@ -14,11 +14,11 @@ Tower.prototype._updateChain = function() {
   this.angle = Math.atan2(target.pos.y - this.py, target.pos.x - this.px);
   if (this.timer < this.fireRate) return;
   this.timer = 0; this.shootFlash = 14;
-  // 塔→第一目标（无视坦克屏障）
+  // Tower -> first target (ignores tank barrier)
   target.takeDamage(this.dmg);
   spawnParticles(target.pos.x, target.pos.y, color(...this.col), 6);
   _chainArcs.push({ x1: this.px, y1: this.py, x2: target.pos.x, y2: target.pos.y, life: 16 });
-  // 跳链 Lv1=1跳 Lv2=2跳 Lv3=3跳（跳链也无视坦克屏障）
+  // Chain jumps Lv1=1 / Lv2=2 / Lv3=3 (jumps also ignore the tank barrier)
   let lastPos = { x: target.pos.x, y: target.pos.y };
   const hit = new Set([target]);
   for (let j = 0; j < this.level; j++) {

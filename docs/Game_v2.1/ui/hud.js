@@ -1,11 +1,11 @@
 // ============================================================
-//  ui/hud.js — 顶部 HUD（金币 / 基地HP / 波次 / 敌人数 / 进度 / 暂停按钮）
-//  依赖 ui/common.js
+//  ui/hud.js — Top HUD (coins / base HP / wave / enemy count / progress / pause button)
+//  Depends on ui/common.js
 // ============================================================
 
 
 // ============================================================
-//  HUD 顶栏
+//  HUD top bar
 // ============================================================
 function drawHUD() {
   const nMon = manager.monsters.length;
@@ -20,7 +20,7 @@ function drawHUD() {
     _hudStr.hp = nf(baseHp, 2) + '/' + baseHpMax;
     _hudHpFill = lerpColor(color(220, 30, 30), color(0, 220, 140), baseHp / baseHpMax);
   }
-  // 语言切换也视为 wave/progPct 文案失效（文案依赖 t()）
+  // Treat language changes as wave/progPct cache invalidation (text depends on t())
   if (_hudSig.waveState !== waveState || _hudSig.waveNum !== waveNum ||
       _hudSig.totalWaves !== TOTAL_WAVES || _hudSig.lang !== currentLang) {
     _hudSig.waveState = waveState;
@@ -40,7 +40,7 @@ function drawHUD() {
     _hudStr.hostiles = nf(nMon, 3);
   }
 
-  // 背景与边框
+  // Background and border
   noStroke(); fill(5, 8, 18, 225);
   rect(0, 0, width, HUD_HEIGHT);
   stroke(0, 180, 255, 180); strokeWeight(1.5);
@@ -71,7 +71,7 @@ function drawHUD() {
   text(_hudStr.progPct, barX + barW / 2, barY + barH / 2);
 
   if (frameCount < jammedUntilFrame) {
-    const jp = sin(frameCount * 0.3) * 0.5 + 0.5;  // 重命名避免遮蔽 i18n t()
+    const jp = sin(frameCount * 0.3) * 0.5 + 0.5;  // Renamed to avoid shadowing i18n's t()
     noStroke(); fill(255, 80, 0, 140 + jp * 80);
     rect(0, HUD_HEIGHT, width, 20);
     fill(255, 220, 180, 230); textSize(13); textAlign(CENTER, CENTER);

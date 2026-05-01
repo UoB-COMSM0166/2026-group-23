@@ -1,9 +1,9 @@
 // ============================================================
-//  towers/base.js — Tower 基类（构造 / 属性 / 升级 / 选目标 / 调度 / 共享绘制）
-//  变种行为分散在 towers/variants/*.js 中，通过 Tower.prototype 注入
+//  towers/base.js — Tower base class (constructor / properties / upgrade / target select / scheduling / shared draw)
+//  Variant behavior is split across towers/variants/*.js, injected via Tower.prototype
 // ============================================================
 
-// 干扰半径（由 Boss 设置，Tower.update 读取做范围判断）
+// Disruption radius (set by Boss; Tower.update reads it for range checks)
 let jamRadius = 180;
 
 class Tower {
@@ -21,23 +21,23 @@ class Tower {
     this.buildAnim  = 1.0;
     this.upgradeEffect = 0;
 
-    // 激光专用
+    // Laser-only
     this.laserTargets  = [];
     this.laserBeamEnds = [];
 
-    // 散射对空炮加农炮专用
+    // Scatter AA / cannon-only
     this.mortarTimer     = 0;
     this.mortarReady     = false;
     this.mortarPulse     = 0;
 
-    // 快速塔超级机枪专用
-    this.rapidCharges    = 0;    // 当前充能次数（满20激活）
-    this.rapidReady      = false; // 是否等待玩家点击激活
-    this.rapidOverdrive  = false; // 超级机枪模式是否激活
-    this.rapidFrames     = 0;    // 超级机枪剩余帧数
+    // Rapid-tower super-machine-gun-only
+    this.rapidCharges    = 0;    // Current charge count (full at 20)
+    this.rapidReady      = false; // Whether waiting for the player to click to activate
+    this.rapidOverdrive  = false; // Whether super-machine-gun mode is active
+    this.rapidFrames     = 0;    // Remaining frames of super-machine-gun mode
     this.rapidPulse      = 0;
 
-    // 幽灵塔追踪导弹计数
+    // Ghost tower homing-missile counter
     this.ghostShotCount  = 0;
   }
 
@@ -105,7 +105,7 @@ class Tower {
     push(); translate(this.px, this.py);
     const [r, g, b] = this.col;
 
-    // 范围圈
+    // Range circle
     if (dist(mouseX, mouseY, this.px, this.py) < CELL_SIZE * 0.5) {
       noFill(); stroke(r, g, b, 45); strokeWeight(1);
       ellipse(0, 0, this.range * 2, this.range * 2);
@@ -113,14 +113,14 @@ class Tower {
 
     scale(1 - this.buildAnim * 0.55);
 
-    // 升级光效
+    // Upgrade glow
     if (this.upgradeEffect > 0) {
       const t = this.upgradeEffect / 40; this.upgradeEffect--;
       noFill(); stroke(255, 240, 180, t * 220); strokeWeight(1.5 + t * 3);
       rectMode(CENTER); rect(0, 0, CELL_SIZE*(0.92-t*0.18), CELL_SIZE*(0.92-t*0.18));
     }
 
-    // 底座
+    // Base
     fill(10, 15, 25); stroke(r, g, b, 110); strokeWeight(0.8 + this.level * 0.4);
     rectMode(CENTER); rect(0, 0, CELL_SIZE * 0.62, CELL_SIZE * 0.62, 4);
 

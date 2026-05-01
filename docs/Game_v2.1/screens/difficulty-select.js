@@ -1,21 +1,21 @@
 // ============================================================
 //  screens/difficulty-select.js
-//  难度选择界面
-//  迁移自：ui.js（原 drawDifficultySelect / _drawDiffCard / handleDifficultyClick）
-//  依赖全局：gamePhase, gameDifficulty
+//  Difficulty select screen
+//  Migrated from ui.js (was drawDifficultySelect / _drawDiffCard / handleDifficultyClick)
+//  Global dependencies: gamePhase, gameDifficulty
 // ============================================================
 
 function drawDifficultySelect() {
   background(4, 7, 18);
 
-  // ── 网格背景 ──
+  // -- Grid background --
   stroke(0, 150, 220, 10); strokeWeight(1);
   for (let x = 0; x < width; x += 50) line(x, 0, x, height);
   for (let y = 0; y < height; y += 50) line(0, y, width, y);
 
   textFont('monospace'); textAlign(CENTER, CENTER);
 
-  // ── 标题 ──
+  // -- Title --
   const pulse = sin(frameCount * 0.07) * 0.3 + 0.7;
   noStroke();
   fill(0, 200, 255, 220 * pulse); textSize(28);
@@ -23,11 +23,11 @@ function drawDifficultySelect() {
   fill(0, 140, 200, 160 * pulse); textSize(11);
   text(t('diff.select'), width / 2, height / 2 - 118);
 
-  // ── 分割线 ──
+  // -- Divider --
   stroke(0, 180, 255, 60); strokeWeight(1);
   line(width / 2 - 200, height / 2 - 105, width / 2 + 200, height / 2 - 105);
 
-  // ── EASY 卡片 ──
+  // -- EASY card --
   const eX = width / 2 - 210, eY = height / 2 - 90, eW = 190, eH = 240;
   _drawDiffCard(eX, eY, eW, eH, [0, 220, 120], t('diff.easy'), t('diff.easySub'), [
     t('diff.easy.l1'),
@@ -36,7 +36,7 @@ function drawDifficultySelect() {
     t('diff.easy.l4'),
   ]);
 
-  // ── DIFFICULT 卡片 ──
+  // -- DIFFICULT card --
   const dX = width / 2 + 20, dY = height / 2 - 90, dW = 190, dH = 240;
   _drawDiffCard(dX, dY, dW, dH, [255, 100, 40], t('diff.difficult'), t('diff.difficultSub'), [
     t('diff.difficult.l1'),
@@ -45,7 +45,7 @@ function drawDifficultySelect() {
     t('diff.difficult.l4'),
   ]);
 
-  // ── 返回按钮 ──
+  // -- Back button --
   const bkH = mouseX < 92 && mouseY < 38;
   fill(bkH ? color(0, 45, 75, 220) : color(5, 10, 24, 200));
   stroke(0, 160, 215, bkH ? 200 : 95); strokeWeight(1);
@@ -53,7 +53,7 @@ function drawDifficultySelect() {
   noStroke(); fill(0, 200, 255, bkH ? 240 : 175); textSize(10); textAlign(CENTER, CENTER);
   text(t('diff.back'), 47, 19);
 
-  // ── 底部提示 ──
+  // -- Bottom hint --
   noStroke(); fill(0, 140, 200, 120 * pulse); textSize(10); textAlign(CENTER, CENTER);
   text(t('diff.bottom'), width / 2, height / 2 + 175);
   textAlign(LEFT, BASELINE);
@@ -99,7 +99,7 @@ function _drawDiffCard(x, y, w, h, col, title, subtitle, lines) {
 }
 
 function handleDifficultyClick(mx, my) {
-  // 返回按钮
+  // Back button
   if (mx < 92 && my < 38) { playSfx('click'); gamePhase = 'launch'; return; }
 
   // EASY

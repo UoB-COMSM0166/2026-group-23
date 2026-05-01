@@ -1,6 +1,6 @@
 // ============================================================
-//  monsters/mobs/robot.js — MechRobot 机器人（带护盾）
-//  依赖：monsters/core.js (Monster)
+//  monsters/mobs/robot.js — MechRobot (with shield)
+//  Dependencies: monsters/core.js (Monster)
 // ============================================================
 
 class MechRobot extends Monster {
@@ -15,7 +15,7 @@ class MechRobot extends Monster {
   takeDamage(dmg, fromSide, ignoreShield) {
     this.hitFlash = 7;
     if (ignoreShield) {
-      // 快速塔专属：完全无视护盾，直接造成全额伤害
+      // Rapid tower exclusive: completely ignores the shield, dealing full damage
       this.shielded = false;
       this.hp -= dmg;
       if (!this.shieldTriggered && this.hp > 0 && this.hp/this.maxHp <= 0.6) {
@@ -58,13 +58,13 @@ class MechRobot extends Monster {
     }
     this.bullets = this.bullets.filter(b => b.life > 0);
     for (const b of this.bullets) { b.x += b.vx; b.y += b.vy; b.life -= 0.035; }
-    // 应用磁场减速
+    // Apply magnet slow
     let _spdMult = 1.0;
     if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
       _spdMult = this._magnetFactor;
     } else { this._magnetFactor = 1.0; }
     if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
-    // 对空导弹减速
+    // AA missile slow
     if (this._airSlowed && this._airSlowed >= frameCount) _spdMult *= this._airSlowFactor || 0.5;
     const r = moveAlongPath(this.pos, this.seg, this.path, this.spd * _spdMult);
     this.pos = r.pos; this.seg = r.seg;
@@ -90,11 +90,11 @@ class MechRobot extends Monster {
     const ls = sin(this.walkTime) * 11;
     fill(20,28,46); stroke(55,115,195,185); strokeWeight(1.3);
     if (this._headingMode === 'h') {
-      // 水平行走：腿前后摆（脚位移在 X 轴），两腿反相
+      // Horizontal walking: legs swing forward/back (foot displacement on X), legs in opposite phase
       beginShape(); vertex(-4,0); vertex(-9,2); vertex(-10+ls,18); vertex(-5+ls,20); vertex(-2,4); endShape(CLOSE);
       beginShape(); vertex( 4,0); vertex( 9,2); vertex( 10-ls,18); vertex( 5-ls,20); vertex( 2,4); endShape(CLOSE);
     } else {
-      // 垂直行走：腿上下抬（脚位移在 Y 轴）—— 原始动画
+      // Vertical walking: legs lift up/down (foot displacement on Y) - original animation
       beginShape(); vertex(-4,0); vertex(-9,2); vertex(-10,18+ls); vertex(-5,20+ls); vertex(-2,4); endShape(CLOSE);
       beginShape(); vertex( 4,0); vertex( 9,2); vertex( 10,18-ls); vertex( 5,20-ls); vertex( 2,4); endShape(CLOSE);
     }

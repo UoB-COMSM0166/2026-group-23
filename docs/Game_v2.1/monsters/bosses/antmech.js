@@ -1,6 +1,6 @@
 // ============================================================
-//  monsters/bosses/antmech.js — BossAntMech 蚁型机甲 Boss
-//  依赖：monsters/core.js (Monster)
+//  monsters/bosses/antmech.js — BossAntMech ant-mech boss
+//  Dependencies: monsters/core.js (Monster)
 // ============================================================
 
 class BossAntMech extends Monster {
@@ -20,8 +20,8 @@ class BossAntMech extends Monster {
   }
   takeDamage(dmg) {
     if (this.phaseState==='giant') dmg=floor(dmg*0.15);
-    if (this.phaseState==='normal') dmg=floor(dmg*1.5); // 正常形态受到1.5倍伤害
-    if (this.phaseState==='tiny' && Math.random() < 0.6) return; // 缩小形态60%概率闪避
+    if (this.phaseState==='normal') dmg=floor(dmg*1.5); // Takes 1.5x damage in normal form
+    if (this.phaseState==='tiny' && Math.random() < 0.6) return; // 60% dodge chance in shrunk form
     this.hitFlash=5;
     if (this.shielded) {
       this.shieldHp-=dmg; this.shieldPulse=14;
@@ -57,7 +57,7 @@ class BossAntMech extends Monster {
       const prev=this.phaseState;
       this.phaseIdx=(this.phaseIdx+1)%this.phaseOrder.length;
       this.phaseState=this.phaseOrder[this.phaseIdx]; this.phaseTimer=0;
-      if (prev==='tiny'&&this.phaseState==='normal') { this.shockwave=60; this.shockwaveR=0; jammedUntilFrame=frameCount+180; if (typeof jamRadius !== 'undefined') jamRadius=180; jamPos={x:this.pos.x,y:this.pos.y}; } // 退出缩小时干扰延长至3秒
+      if (prev==='tiny'&&this.phaseState==='normal') { this.shockwave=60; this.shockwaveR=0; jammedUntilFrame=frameCount+180; if (typeof jamRadius !== 'undefined') jamRadius=180; jamPos={x:this.pos.x,y:this.pos.y}; } // On exit from shrunk form, the disruption is extended to 3 seconds
     }
     const targets={normal:1.0,giant:this.berserk?5.0:4.5,tiny:this.berserk?0.15:0.18};
     this.targetScale=targets[this.phaseState];
@@ -83,7 +83,7 @@ class BossAntMech extends Monster {
     }
     this.bullets=this.bullets.filter(b=>b.life>0);
     for (const b of this.bullets) { b.x+=b.vx; b.y+=b.vy; b.life-=0.028; }
-    // 应用磁场减速
+    // Apply magnet slow
     let _spdMult = 1.0;
     if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
       _spdMult = this._magnetFactor;
@@ -104,19 +104,19 @@ class BossAntMech extends Monster {
       noFill(); stroke(80,255,120,55); strokeWeight(14); ellipse(0,0,90,110);
     }
 
-    // ── 正确人体行走骨骼系统 ──
-    // 以髋部为原点，腿向下，头向上
-    // wt 是步伐相位，两腿相差 PI（正常走路）
+    // -- Proper humanoid walking skeleton system --
+    // Origin at the hip; legs go down, head goes up
+    // wt is the stride phase; the two legs are PI apart (normal walking)
     const wt = this.legTime;
 
-    // 身体轻微左右侧倾 & 上下弹跳（重心转移）
-    const bodyLean  = sin(wt) * 1.8;           // 侧倾
-    const bodyBounce = -abs(sin(wt * 2)) * 1.5; // 走一步弹两次（脚落地时最低）
+    // Slight side-to-side tilt and up-and-down bob (weight transfer)
+    const bodyLean  = sin(wt) * 1.8;           // Side tilt
+    const bodyBounce = -abs(sin(wt * 2)) * 1.5; // Two bobs per stride (lowest when foot lands)
 
-    // 髋关节位置（身体中心下方）
+    // Hip joint position (just below the body center)
     const hipY = 8 + bodyBounce;
 
-    // ─ 骨骼绘制函数：从关节A到关节B ─
+    // - Bone draw helper: from joint A to joint B -
     const drawLimb = (x1,y1,x2,y2,w,col) => {
       stroke(...col,200); strokeWeight(w); line(x1,y1,x2,y2);
     };
@@ -124,65 +124,65 @@ class BossAntMech extends Monster {
       fill(...col,230); noStroke(); ellipse(x,y,r,r);
     };
 
-    // ── 先画腿（在身体后面）──
-    // 大腿长18，小腿长17，用前摆角和后摆角
+    // -- Draw legs first (behind the body) --
+    // Thigh length 18, shin length 17; use forward and backward swing angles
     const legThigh = 18, legShin = 17;
 
     for (const side of [-1, 1]) {
-      // 左腿(side=-1)相位 = wt，右腿(side=1)相位 = wt+PI
+      // Left leg (side=-1) phase = wt; right leg (side=1) phase = wt+PI
       const phase = wt + (side > 0 ? Math.PI : 0);
-      const thighAngle = sin(phase) * 0.42;  // 大腿前后摆幅（弧度）
-      // 膝盖弯曲：腿向后时弯曲更多（自然步态）
+      const thighAngle = sin(phase) * 0.42;  // Thigh forward/back swing range (radians)
+      // Knee bend: more bent when the leg swings back (natural gait)
       const kneeBend = max(0.18, -sin(phase) * 0.5 + 0.22);
 
       const hipX = side * 7;
       const shinAngle = thighAngle + kneeBend;
 
-      // 关节位置：根据 _headingMode 切换主摆动轴
+      // Joint position: switch the main swing axis based on _headingMode
       let kneeX, kneeY, footX, footY, bootRot;
       if (this._headingMode === 'h') {
-        // 水平行走：脚向前/后摆（X 轴）—— 原侧视骨骼
+        // Horizontal walking: feet swing forward/back (X axis) - original side-view skeleton
         kneeX = hipX + sin(thighAngle) * legThigh;
         kneeY = hipY + cos(thighAngle) * legThigh;
         footX = kneeX + sin(shinAngle) * legShin;
         footY = kneeY + cos(shinAngle) * legShin;
         bootRot = shinAngle * 0.3;
       } else {
-        // 垂直行走：腿径直向下（X 锁在 hip），脚在 Y 轴前后摆
-        // 一只脚向前迈（更靠下），另一只向后撤（缩回上抬），相位反相
-        const yLead = sin(phase) * 5;          // ±5px 的前后位移
+        // Vertical walking: legs straight down (X locked at hip), feet swing forward/back on Y
+        // One foot steps forward (lower), the other pulls back (lifts up); inverse phase
+        const yLead = sin(phase) * 5;          // +/-5px forward/back displacement
         const liftKnee = max(0, sin(phase)) * 3;
         kneeX = hipX;
         kneeY = hipY + cos(thighAngle) * legThigh - liftKnee + yLead * 0.4;
         footX = kneeX;
         footY = kneeY + cos(shinAngle) * legShin + yLead * 0.6;
-        // 靴子方向跟随脚的位移：往前(+Y)迈时朝下，往后撤时略翘
+        // Boot orientation follows foot displacement: forward (+Y) points down; backward tilts up slightly
         bootRot = yLead * 0.05;
       }
 
-      // 大腿
+      // Thigh
       drawLimb(hipX,hipY, kneeX,kneeY, 5, [25,105,40]);
-      // 小腿
+      // Shin
       drawLimb(kneeX,kneeY, footX,footY, 4, [20,90,35]);
-      // 膝关节
+      // Knee joint
       drawJoint(kneeX,kneeY, 7, [40,160,60]);
-      // 靴子
+      // Boot
       fill(15,65,28,230); stroke(40,150,60,190); strokeWeight(1);
       push(); translate(footX,footY); rotate(bootRot);
       rectMode(CENTER); rect(2,2,11,5,2); rectMode(CORNER);
       pop();
     }
 
-    // ── 躯干 ──
-    const torsoY  = hipY - 16;  // 躯干中心
+    // -- Torso --
+    const torsoY  = hipY - 16;  // Torso center
     const torsoH  = 22;
     push(); translate(bodyLean, 0);
 
-    // 骨盆
+    // Pelvis
     fill(14,40,20); stroke(50,185,70,200); strokeWeight(1.5);
     rectMode(CENTER); rect(0, hipY, 16, 8, 2); rectMode(CORNER);
 
-    // 躯干主体
+    // Torso main body
     fill(16,44,22); stroke(55,200,80,210); strokeWeight(1.8);
     beginShape();
       vertex(-13, hipY-2); vertex(-15, torsoY-4);
@@ -190,28 +190,28 @@ class BossAntMech extends Monster {
       vertex(15,  torsoY-4); vertex(13, hipY-2);
     endShape(CLOSE);
 
-    // 胸甲细节线条
+    // Chest plate detail lines
     stroke(45,165,68,120); strokeWeight(0.8);
     line(-9,torsoY-torsoH*0.3, -9,torsoY+2);
     line( 9,torsoY-torsoH*0.3,  9,torsoY+2);
     line(-11,torsoY-6, 11,torsoY-6);
 
-    // 核心发光块（胸口）
+    // Core glow block (chest)
     const coreCol = this.berserk ? color(255,80,50,230) : color(0,215+sin(this.corePulse)*35,65,235);
     fill(coreCol); noStroke(); rectMode(CENTER);
     rect(0, torsoY-4, 10, 14, 2);
     fill(160,255,190,150); rect(0, torsoY-4, 4, 6, 1);
     rectMode(CORNER);
 
-    // 肩膀
+    // Shoulders
     fill(22,60,30); stroke(65,215,88,200); strokeWeight(1.5);
     ellipse(-17, torsoY-torsoH*0.3, 11, 11);
     ellipse( 17, torsoY-torsoH*0.3, 11, 11);
 
-    // ── 手臂（对侧摆动：右腿前迈时左臂前摆）──
+    // -- Arms (counter-swing: right leg forward -> left arm forward) --
     const armLen1 = 14, armLen2 = 13;
     for (const side of [-1, 1]) {
-      // 手臂与对侧腿同相
+      // Arms in phase with the opposite leg
       const armPhase = wt + (side < 0 ? Math.PI : 0);
       const armSwing = sin(armPhase) * 0.38;
       const elbowBend = max(0.1, abs(sin(armPhase)) * 0.35 + 0.12);
@@ -226,31 +226,31 @@ class BossAntMech extends Monster {
       drawLimb(shldrX,shldrY, elbowX,elbowY, 4, [25,108,44]);
       drawLimb(elbowX,elbowY, handX,handY,   3, [20,92,38]);
       drawJoint(elbowX,elbowY, 5.5, [38,155,58]);
-      // 拳头
+      // Fist
       fill(18,85,35,225); stroke(42,162,62,180); strokeWeight(1);
       rectMode(CENTER); rect(handX,handY,7,6,2); rectMode(CORNER);
     }
 
-    // ── 头盔（蚁人特征：光滑流线型+眼镜缝+触角）──
+    // -- Helmet (ant-soldier features: smooth streamline + visor seam + antennae) --
     const headY = torsoY - torsoH * 0.4 - 14;
-    // 颈部
+    // Neck
     fill(14,40,20); stroke(50,180,68,190); strokeWeight(1.2);
     rectMode(CENTER); rect(0, torsoY-torsoH*0.4-4, 8, 8, 2); rectMode(CORNER);
-    // 头盔主体
+    // Helmet main body
     fill(14,38,20); stroke(62,215,88,225); strokeWeight(2);
     ellipse(0, headY, 24, 28);
-    // 面罩分割线（上下半球接缝）
+    // Visor split line (upper/lower hemisphere seam)
     stroke(45,175,70,160); strokeWeight(1);
     arc(0, headY, 22, 26, 0.1, PI-0.1);
-    // 眼镜缝（发光）
+    // Visor seam (glowing)
     fill(0,230+sin(this.corePulse*1.8)*30,80,240); noStroke();
     rectMode(CENTER);
     rect(-5, headY-1, 7, 3, 1);
     rect( 5, headY-1, 7, 3, 1);
     rectMode(CORNER);
-    // 中央鼻梁
+    // Center nose ridge
     fill(20,60,30,200); noStroke(); rectMode(CENTER); rect(0,headY-1,2,5,1); rectMode(CORNER);
-    // 触角
+    // Antennae
     stroke(52,195,78,195); strokeWeight(1.6);
     const antBase = headY-12;
     line(-4,antBase, -7,antBase-10);
@@ -260,14 +260,14 @@ class BossAntMech extends Monster {
 
     pop(); // end bodyLean translate
 
-    // ── 护盾 ──
+    // -- Shield --
     if (this.shielded) {
       const sp=this.shieldPulse>0?map(this.shieldPulse,25,0,1,0):sin(frameCount*0.045)*0.3+0.7;
       noFill(); stroke(80,255,120,80*sp); strokeWeight(8);
       beginShape(); for(let k=0;k<6;k++) vertex(cos(k*PI/3)*42,sin(k*PI/3)*42); endShape(CLOSE);
     }
 
-    // ── 子弹 ──
+    // -- Bullets --
     for (const b of this.bullets) {
       push(); translate(b.x-this.pos.x, b.y-this.pos.y);
       rotate(Math.atan2(b.vy,b.vx));

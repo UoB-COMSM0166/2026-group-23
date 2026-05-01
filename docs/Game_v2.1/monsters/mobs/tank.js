@@ -1,6 +1,6 @@
 // ============================================================
-//  monsters/mobs/tank.js — MechTank 重装坦克
-//  依赖：monsters/core.js (Monster)
+//  monsters/mobs/tank.js — MechTank heavy tank
+//  Dependencies: monsters/core.js (Monster)
 // ============================================================
 
 class MechTank extends Monster {
@@ -8,17 +8,17 @@ class MechTank extends Monster {
     super(path, 1600, 0.55, 45);
     this.radius = 22; this.deathColor = color(180, 140, 40);
     this.walkTime = 0; this.corePulse = 0;
-    this.shieldTimer = 180;    // 出生3秒后激活第一次护盾（而非从0开始等待）
+    this.shieldTimer = 180;    // Activate the first shield 3 seconds after spawn (instead of waiting from 0)
     this.shieldActive = false;
-    this.shieldDur = 240;      // 护盾持续4秒（原3秒）
-    this.shieldCooldown = 540; // 冷却9秒（原15秒）
+    this.shieldDur = 240;      // Shield lasts 4 seconds (was 3 seconds)
+    this.shieldCooldown = 540; // 9-second cooldown (was 15 seconds)
     this.shieldFrames = 0;
     this.shieldRadius = 130;
     this.shieldPulse = 0;
     this.turretAngle = 0;
   }
   takeDamage(dmg) {
-    // 护盾激活时自身也受到免疫保护
+    // While the shield is active, the tank itself is also protected by immunity
     if (this.shieldActive) return;
     this.hp -= dmg; this.hitFlash = 6;
     if (this.hp <= 0) { this.alive = false; spawnParticles(this.pos.x, this.pos.y, this.deathColor, 30); }
@@ -27,22 +27,22 @@ class MechTank extends Monster {
     this.walkTime += 0.12; this.corePulse += 0.06; this.shieldPulse += 0.08;
     this.turretAngle += 0.02;
 
-    // 护盾状态机
+    // Shield state machine
     if (this.shieldActive) {
       this.shieldFrames--;
-      // 每帧给范围内所有地面怪（含BOSS）施加护盾标记
+      // Each frame, mark all in-range ground mobs (including bosses)
       if (typeof manager !== 'undefined') {
         for (const m of manager.monsters) {
           if (!m.alive || m === this || m.isFlying) continue;
           if (distAB(this.pos, m.pos) <= this.shieldRadius) {
-            m._tankShielded = this.shieldFrames + 1; // 只要>0就免疫
+            m._tankShielded = this.shieldFrames + 1; // Immune as long as the count is > 0
           }
         }
       }
       if (this.shieldFrames <= 0) {
         this.shieldActive = false;
         this.shieldTimer = 0;
-        // 清除范围内怪的护盾标记
+        // Clear shield marks on monsters in range
         if (typeof manager !== 'undefined') {
           for (const m of manager.monsters) { m._tankShielded = 0; }
         }
@@ -56,13 +56,13 @@ class MechTank extends Monster {
       }
     }
 
-    // 应用磁场减速
+    // Apply magnet slow
     let _spdMult = 1.0;
     if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
       _spdMult = this._magnetFactor;
     } else { this._magnetFactor = 1.0; }
     if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
-    // 对空导弹减速
+    // AA missile slow
     if (this._airSlowed && this._airSlowed >= frameCount) _spdMult *= this._airSlowFactor || 0.5;
     const r = moveAlongPath(this.pos, this.seg, this.path, this.spd * _spdMult);
     this.pos = r.pos; this.seg = r.seg;
@@ -72,7 +72,7 @@ class MechTank extends Monster {
   draw() {
     push(); translate(this.pos.x, this.pos.y);
 
-    // ── 护盾光环（状态层，世界坐标，不随车身旋转）──
+    // -- Shield aura (state layer, world coords, does not rotate with the body) --
     if (this.shieldActive) {
       const p = sin(this.shieldPulse * 3) * 0.4 + 0.6;
       noFill(); stroke(255, 210, 60, 80 * p); strokeWeight(12);
@@ -83,46 +83,46 @@ class MechTank extends Monster {
       ellipse(0, 0, this.shieldRadius * 2, this.shieldRadius * 2);
     }
 
-    // ── 车身（履带 + 炮塔 + 核心）随 heading 旋转 ──
+    // -- Body (treads + turret + core) rotates with heading --
     push(); rotate(this.heading);
 
-    // 履带（沿车身长轴方向，前后两条）
+    // Treads (along the body's long axis, two stripes)
     const ls = sin(this.walkTime) * 3;
     fill(55, 45, 20); stroke(100, 80, 30, 200); strokeWeight(1.2);
     rect(-20, 8 + ls, 40, 10, 2);
     rect(-20, -18 - ls, 40, 10, 2);
-    // 履带齿
+    // Tread teeth
     stroke(80, 65, 25, 160); strokeWeight(0.8);
     for (let i = -18; i < 20; i += 6) {
       line(i, 8 + ls, i, 18 + ls);
       line(i, -18 - ls, i, -8 - ls);
     }
 
-    // 主炮塔底座
+    // Main turret base
     fill(60, 50, 20); stroke(120, 100, 40, 200); strokeWeight(1.5);
     ellipse(0, -4, 34, 28);
 
-    // 旋转炮塔（自转，叠在车身旋转之上）
+    // Rotating turret (self-rotation, layered on top of the body rotation)
     push(); rotate(this.turretAngle);
     fill(50, 42, 18); stroke(130, 110, 45, 220); strokeWeight(1.3);
     ellipse(0, 0, 26, 26);
-    // 主炮管
+    // Main barrel
     fill(40, 34, 14); stroke(120, 100, 40); strokeWeight(1.5);
     rectMode(CENTER); rect(14, 0, 22, 7, 1);
-    // 副炮管
+    // Secondary barrel
     stroke(100, 85, 35); strokeWeight(1);
     rect(10, -8, 14, 4, 1);
     rect(10, 8, 14, 4, 1);
     rectMode(CORNER);
     pop();
 
-    // 核心能量
+    // Core energy
     const cr = 7 + sin(this.corePulse) * 1.5;
     fill(this.shieldActive ? color(255, 220, 60, 220) : color(220, 170, 40, 200));
     noStroke(); ellipse(0, -4, cr, cr);
     fill(255, 255, 200, 180); ellipse(0, -4, cr * 0.4, cr * 0.4);
 
-    pop();   // ← 结束车身旋转
+    pop();   // <- end body rotation
 
     pop();
     this.drawHealthBar();

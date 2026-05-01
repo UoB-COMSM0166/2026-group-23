@@ -1,6 +1,6 @@
 // ============================================================
-//  towers/variants/ghost.js — GHOST 幽灵导弹塔（追踪导弹）
-//  通过 Tower.prototype 注入；须在 towers/base.js 之后加载
+//  towers/variants/ghost.js — GHOST Ghost Missile Tower (homing missiles)
+//  Injected via Tower.prototype; must load after towers/base.js
 // ============================================================
 
 Tower.prototype._updateGhost = function() {
@@ -19,11 +19,11 @@ Tower.prototype._updateGhost = function() {
     p.target = tgt;
     projectiles.push(p);
   }
-  // 每发射9发后额外发射一颗对空追踪导弹
+  // Every 9 shots, fire one extra AA homing missile
   this.ghostShotCount++;
   if (this.ghostShotCount >= 3) {
     this.ghostShotCount = 0;
-    // 寻找范围内空中目标（全图范围）
+    // Search for an aerial target in range (whole-map range)
     const airCandidates = manager.monsters.filter(m =>
       m.alive && !m.reached &&
       (m instanceof MechPhoenix || m instanceof GhostBird ||
@@ -33,7 +33,7 @@ Tower.prototype._updateGhost = function() {
     if (airCandidates.length > 0) {
       const airTgt = airCandidates[0];
       const a = Math.atan2(airTgt.pos.y - this.py, airTgt.pos.x - this.px);
-      // 追踪导弹伤害是普通弹的2倍，速度更快
+      // Homing missile damage is 2x normal; speed is faster
       const missile = new Projectile(this.px, this.py, a, this.projSpd * 2.2, floor(this.dmg * 0.4), this.col, true, 'ghost', this.level);
       missile.target = airTgt;
       missile.isAirMissile = true;
@@ -46,23 +46,23 @@ Tower.prototype._updateGhost = function() {
 Tower.prototype._drawGhost = function(r, g, b) {
   push(); rotate(this.angle);
   const lv=this.level, pulse=sin(this.pulseTime*5)*0.5+0.5;
-  // 导弹发射架
+  // Missile launcher
   for(let i=0;i<lv;i++){
     const oy=(i-(lv-1)/2)*7;
     push(); translate(0,oy);
     fill(25,12,38); stroke(r,g,b,160); strokeWeight(1);
     rectMode(CENTER); rect(8,0,14,4,1);
-    // 导弹筒
+    // Missile tube
     fill(18,8,28); stroke(r,g,b,130); strokeWeight(0.8);
     rect(12,0,8,3,1);
     if(this.shootFlash>0){noStroke();fill(r,g,b,220);ellipse(16,0,5,5);}
     pop();
   }
-  // 核心
+  // Core
   const cr=6+lv*1.5;
   fill(r,g,b,80+pulse*70); noStroke(); ellipse(0,0,cr*2,cr*2);
   fill(220,160,255,200); ellipse(0,0,cr*0.5,cr*0.5);
-  // 旋转光环
+  // Spinning halo
   push(); rotate(this.pulseTime*2);
   noFill(); stroke(r,g,b,70+pulse*40); strokeWeight(0.9);
   ellipse(0,0,(cr+4)*2,(cr+4)*2);

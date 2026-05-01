@@ -1,11 +1,11 @@
 // ============================================================
-//  towers/variants/cannon.js — CANNON 轨道巨炮（全图蓄力巨弹）
-//  通过 Tower.prototype 注入；须在 towers/base.js 之后加载
+//  towers/variants/cannon.js — CANNON Orbital Cannon (whole-map charged shell)
+//  Injected via Tower.prototype; must load after towers/base.js
 // ============================================================
 
 Tower.prototype._updateCannon = function() {
   if (!manager) return;
-  // 只在开炮时重新随机目标，蓄力期间锁定目标不变，避免枪头乱甩
+  // Re-randomize target only when firing; lock target during charging to prevent the barrel from snapping around
   if (!this._cannonTarget || !this._cannonTarget.alive || this._cannonTarget.reached) {
     const allTargets = manager.monsters.filter(m =>
       m.alive && !m.reached && !(m instanceof GhostBird && m.isGhost)
@@ -26,7 +26,7 @@ Tower.prototype._updateCannon = function() {
   shell.blastRadius = blastR;
   shell.life = 1.0;
   projectiles.push(shell);
-  // 开炮后重新随机下一个目标
+  // Re-randomize the next target after firing
   this._cannonTarget = null;
 };
 
@@ -36,7 +36,7 @@ Tower.prototype._drawCannon = function(r, g, b) {
   const pulse = sin(this.pulseTime * 3) * 0.5 + 0.5;
   const ready = charge >= 0.97;
 
-  // 旋转光环（比其他塔大20%）
+  // Spinning halo (20% larger than other towers)
   push(); rotate(this.pulseTime * (0.5 + charge * 3));
   noFill(); strokeWeight(1.2 + lv * 0.42);
   stroke(r, g, b, 55 + charge * 120);
@@ -49,7 +49,7 @@ Tower.prototype._drawCannon = function(r, g, b) {
   }
   pop();
 
-  // 蓄力满时瞄准线
+  // Aim line shown while fully charged
   if (ready && this._cannonTarget && this._cannonTarget.alive) {
     const tx = this._cannonTarget.pos.x - this.px;
     const ty = this._cannonTarget.pos.y - this.py;
@@ -85,7 +85,7 @@ Tower.prototype._drawCannon = function(r, g, b) {
   }
   pop();
 
-  // 核心
+  // Core
   const cr = 7.2 + lv * 1.44 + charge * 3.6;
   fill(r, floor(g * (1 - charge * 0.8)), floor(b * (1 - charge * 0.8)), 80 + charge * 130);
   noStroke(); ellipse(0, 0, cr * 2, cr * 2);
@@ -93,7 +93,7 @@ Tower.prototype._drawCannon = function(r, g, b) {
   ellipse(0, 0, cr * 0.5, cr * 0.5);
   fill(255, 255, 255, 200); ellipse(0, 0, 2.88, 2.88);
 
-  // 蓄力条
+  // Charge bar
   const bW = 25.92 + lv * 4.32, bH = 3.6, bx = -bW / 2, by = 20.16 + lv * 1.44;
   fill(12, 6, 6); stroke(r, g, b, 80); strokeWeight(0.5);
   rectMode(CORNER); rect(bx, by, bW, bH, 1);

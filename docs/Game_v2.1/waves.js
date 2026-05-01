@@ -1,10 +1,10 @@
 // ============================================================
-//  waves.js — 波次推进系统（运行时逻辑）
-//  波次配置数据已抽离到 data/waves.js（WAVE_CONFIGS / WAVE_CONFIG）
+//  waves.js — Wave progression system (runtime logic)
+//  Wave configuration data has been moved to data/waves.js (WAVE_CONFIGS / WAVE_CONFIG)
 // ============================================================
 
 
-// waveCountdownActive 已移至 state.js
+// waveCountdownActive has been moved to state.js
 
 function launchWave(n) {
   waveNum = n;
@@ -28,7 +28,7 @@ function beginAutoWave() {
   waveState = 'countdown';
   waveCountdownActive = false;
   waveCountdownEnd    = 0;
-  // 教程期间先保留主界面，等教程结束后再进入首个小游戏
+  // During the tutorial, keep the main UI; only enter the first minigame after the tutorial ends
   if (!tutorialActive && typeof startMinigame === 'function') {
     startMinigame();
   }

@@ -1,6 +1,6 @@
 // ============================================================
-//  map/map-lv3.js  —  关卡3  熔岩炽核地
-//  从 map.js 迁移，保持逻辑不变
+//  map/map-lv3.js  -  Level 3 lava core
+//  Migrated from map.js, behaviour unchanged
 // ============================================================
 
 function _bg_inferno(lv, theme) {
@@ -14,12 +14,12 @@ function _bg_inferno(lv, theme) {
       noStroke();
       fill(38+n3*20, 18+n1*8, 4+n2*4, 255); rect(px,py,CELL_SIZE,CELL_SIZE);
       if ((gx+gy)%2===0) { fill(0,0,0,22); rect(px,py,CELL_SIZE,CELL_SIZE); }
-      // 岩裂纹
+      // Rock cracks
       stroke(55+n3*20,22+n1*8,5+n4*4,45); strokeWeight(1);
       const cx2=px+CELL_SIZE/2, cy2=py+CELL_SIZE/2;
       line(cx2+n1*18,cy2+n2*18, cx2+n3*18-8,cy2+n4*18-8);
       if (n3>0.55) line(cx2-n2*14,cy2+n1*12, cx2+n4*12,cy2-n3*14);
-      // 熔岩光池
+      // Lava light pool
       if (n3>0.72) {
         noStroke();
         const lp=sin(frameCount*.04+gx*.7+gy*.5)*.5+.5;
@@ -56,7 +56,7 @@ function _deco_inferno() {
     const ds=0.85+d.gy/GRID_ROWS*0.3;
     push(); translate(cx,cy);
 
-    if (type===0) {        // 火山岩
+    if (type===0) {        // Volcanic rock
       const sz=(14+d.r2*12)*ds;
       noStroke(); fill(0,0,0,40); ellipse(sz*.15,sz*.55,sz*1.6,sz*.38);
       fill(55+d.r3*20, 25+d.r3*10, 8+d.r3*5, 245);
@@ -72,7 +72,7 @@ function _deco_inferno() {
       if (d.r3>0.5) line(sz*.15,sz*.18, -sz*.05,sz*.3);
       noStroke(); fill(80,35,12,100); ellipse(-sz*.2,-sz*.2,sz*.3,sz*.22);
 
-    } else if (type===1) { // 熔岩池（动态）
+    } else if (type===1) { // Lava pool (animated)
       const sz=(8+d.r2*8)*ds;
       const lp=sin(T*.06+d.r1*4)*.5+.5, lp2=sin(T*.04+d.r2*3+1)*.5+.5;
       noStroke();
@@ -87,7 +87,7 @@ function _deco_inferno() {
       }
       fill(255,100,0, 25+lp*20); ellipse(0,0,sz*3.2,sz*2.2);
 
-    } else if (type===2) { // 焦木
+    } else if (type===2) { // Charred wood
       const sz=(10+d.r2*8)*ds;
       noStroke(); fill(0,0,0,30); ellipse(sz*.1,sz*.6,sz*1.2,sz*.28);
       fill(22,12,6,250); rect(-sz*.22,-sz*.1,sz*.44,sz*.72,2);
@@ -99,7 +99,7 @@ function _deco_inferno() {
       noStroke(); fill(180+ep*40,30+ep*15,0, 60+ep*80);
       ellipse(0,-sz*.12+ep*sz*.04, sz*.3,sz*.15);
 
-    } else {               // 小岩石
+    } else {               // Small rocks
       const sz=(6+d.r2*7)*ds;
       noStroke(); fill(0,0,0,35); ellipse(sz*.1,sz*.5,sz*1.4,sz*.3);
       fill(45+d.r3*18,20+d.r3*8,6+d.r3*4,240);

@@ -1,10 +1,10 @@
 // ============================================================
-//  ui/wave-ui.js — 波次结束面板、倒计时、全部通关提示
-//  依赖 ui/common.js；与 minigame.js 通过全局函数交互
+//  ui/wave-ui.js — Wave end panel, countdown, all-clear notice
+//  Depends on ui/common.js; interacts with minigame.js through globals
 // ============================================================
 
 // ============================================================
-//  波次结束面板
+//  Wave end panel
 // ============================================================
 function showWaveEndPanel() {
   waveEndPanelVisible = true;
@@ -15,11 +15,7 @@ function showWaveEndPanel() {
   _mortarTower        = null;
 }
 
-/**
- * 处理波次结束面板点击。
- * 面板可见时会拦截所有点击（防止穿透），返回 true。
- * 点击确认按钮后隐藏面板并尝试启动小游戏。
- */
+/**\n * Handle wave-end-panel clicks.\n * While visible the panel intercepts all clicks (prevents pass-through), returns true.\n * After the confirm button is clicked, hide the panel and try to launch the minigame.\n */
 function handleWaveEndClick(mx, my) {
   if (!waveEndPanelVisible) return false;
 
@@ -33,12 +29,12 @@ function handleWaveEndClick(mx, my) {
     }
   }
 
-  // 面板可见时始终拦截点击，避免穿透到地图
+  // While visible, always intercept clicks to prevent pass-through to the map
   return true;
 }
 
 // ============================================================
-//  波次倒计时 & 通关提示
+//  Wave countdown & clear notice
 // ============================================================
 function drawWaveUI() {
   textFont('monospace');
@@ -116,7 +112,7 @@ function _drawWaveCountdown() {
 
   const wc  = WAVE_CONFIGS[currentLevel] || [];
   const cfg = wc[nextW - 1];
-  // 缓存 key 加入语言维度，切换语言时强制重建文本
+  // Cache key includes the language; rebuild text when the language changes
   const descKey = currentLevel + '\0' + nextW + '\0' + currentLang;
   if (cfg && descKey !== _wcDescKey) {
     _wcDescKey = descKey;

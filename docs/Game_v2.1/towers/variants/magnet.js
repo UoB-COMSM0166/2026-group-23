@@ -1,6 +1,6 @@
 // ============================================================
-//  towers/variants/magnet.js — MAGNET 磁场干扰塔（无伤害范围减速）
-//  通过 Tower.prototype 注入；须在 towers/base.js 之后加载
+//  towers/variants/magnet.js — MAGNET Magnetic Jammer (no damage, area slow)
+//  Injected via Tower.prototype; must load after towers/base.js
 // ============================================================
 
 Tower.prototype._updateMagnet = function() {
@@ -12,7 +12,7 @@ Tower.prototype._updateMagnet = function() {
     const d = Math.hypot(m.pos.x - this.px, m.pos.y - this.py);
     if (d > this.range) continue;
     const factor = lerp(minFactor, 0.75, d / this.range);
-    // 取最强减速
+    // Take the strongest slow
     if (m._magnetFactor === undefined || factor < m._magnetFactor) {
       m._magnetFactor = factor;
       m._magnetFrame  = frameCount;
@@ -22,7 +22,7 @@ Tower.prototype._updateMagnet = function() {
 
 Tower.prototype._drawMagnet = function(r, g, b) {
   const lv=this.level, pulse=sin(this.pulseTime*3)*0.5+0.5;
-  // 旋转磁力线
+  // Spinning magnetic field lines
   push(); rotate(this.pulseTime*0.8);
   for(let i=0;i<4+lv;i++){
     const a=(TWO_PI/(4+lv))*i;
@@ -31,22 +31,22 @@ Tower.prototype._drawMagnet = function(r, g, b) {
     line(cos(a)*inner, sin(a)*inner, cos(a)*outer, sin(a)*outer);
   }
   pop();
-  // 外干扰圆环（脉冲）
+  // Outer disruption ring (pulse)
   noFill(); stroke(r,g,b,40+pulse*35); strokeWeight(3+lv);
   ellipse(0,0,(14+lv*4)*2,(14+lv*4)*2);
-  // 核心磁铁形状
+  // Core magnet shape
   fill(20,10,35); stroke(r,g,b,180); strokeWeight(1.4);
   rectMode(CENTER);
-  // U形磁铁两臂
+  // U-magnet two arms
   rect(-6, 2, 5, 14+lv*2, 1);
   rect( 6, 2, 5, 14+lv*2, 1);
   rect(0, 9+lv, 17, 5, 2);
-  // 磁极颜色
+  // Magnet pole color
   noStroke();
   fill(255, 80, 80, 200); rect(-6, -4-lv, 5, 4, 1);
   fill(80, 150, 255, 200); rect( 6, -4-lv, 5, 4, 1);
   rectMode(CORNER);
-  // 中央场力线
+  // Center field lines
   stroke(r,g,b,60+pulse*50); strokeWeight(0.8);
   for(let i=-3;i<=3;i++){
     const x=i*3, yTop=-8-lv, yBot=5;

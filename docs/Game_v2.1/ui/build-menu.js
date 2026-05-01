@@ -1,10 +1,10 @@
 // ============================================================
-//  ui/build-menu.js — 底部建造菜单与塔悬浮提示
-//  依赖 data/towers.js (TOWER_DEFS) 与 ui/common.js
+//  ui/build-menu.js — Bottom build menu and tower hover tooltip
+//  Depends on data/towers.js (TOWER_DEFS) and ui/common.js
 // ============================================================
 
 // ============================================================
-//  建造菜单
+//  Build menu
 // ============================================================
 function drawBuildMenu() {
   textFont('monospace'); noStroke();
@@ -26,7 +26,7 @@ function drawBuildMenu() {
     const selected  = selectedTowerType === type;
     const canAfford = coins >= def.cost;
 
-    // 按钮背景
+    // Button background
     if (selected)        { fill(r, g, b, 80); stroke(r, g, b, 255); strokeWeight(2); }
     else if (!canAfford) { fill(15, 15, 25, 150); stroke(60, 60, 70, 100); strokeWeight(1); }
     else                 { fill(10, 20, 40, 200); stroke(r, g, b, 120); strokeWeight(1); }
@@ -46,13 +46,13 @@ function drawBuildMenu() {
     fill(r, g, b, canAfford ? 200 : 80);
     rect(bx + BUILD_BTN_W - 12, by + 8, 4, 20, 1);
 
-    // 悬浮检测（合并进同一循环，避免二次遍历）
+    // Hover detection (merged into the same loop to avoid a second pass)
     if (isHover(bx, by, BUILD_BTN_W, 36)) {
       hoverTowerType = type;
     }
   }
 
-  // 取消按钮
+  // Cancel button
   if (selectedTowerType) {
     const cancelX = 6 + TOWER_TYPES.length * BUILD_BTN_STRIDE;
     const by = BUILD_BTN_Y + 6;
@@ -66,12 +66,12 @@ function drawBuildMenu() {
 }
 
 // ============================================================
-//  鼠标悬停塔简介
+//  Tower hover tooltip
 // ============================================================
 function drawTowerHoverTooltip() {
   if (!hoverTowerType) return;
 
-  // 缓存 key 加入语言维度，语言切换后自动重算宽度
+  // Cache key includes the language so widths are recomputed when the language changes
   const cacheKey = hoverTowerType + '|' + currentLang;
   let box = _tooltipBoxCache[cacheKey];
   if (!box) {
@@ -90,7 +90,7 @@ function drawTowerHoverTooltip() {
   const { name, desc, w, h, pad: padding } = box;
   textFont('monospace');
 
-  // 防止超出屏幕边界
+  // Prevent overflow off the screen edges
   let x = mouseX + 20;
   let y = mouseY + 20;
   if (x + w > width)  x = width  - w - 8;

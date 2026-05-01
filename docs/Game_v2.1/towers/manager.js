@@ -1,6 +1,6 @@
 // ============================================================
-//  towers/manager.js — towers/projectiles 顶层数组与统一更新入口
-//  须在 Tower / Projectile / effects 全部加载后再加载
+//  towers/manager.js — Top-level arrays for towers/projectiles + unified update entry
+//  Must load after Tower / Projectile / effects are all loaded
 // ============================================================
 
 let towers = [], projectiles = [];

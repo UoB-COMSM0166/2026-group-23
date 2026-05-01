@@ -1,25 +1,25 @@
 // ============================================================
 //  screens/launch-screen.js
-//  启动页面：Logo 动画 + 点击进入
-//  依赖全局：gamePhase, launchAnim, launchReady, launchParticles
+//  Launch screen: logo animation + click to enter
+//  Global dependencies: gamePhase, launchAnim, launchReady, launchParticles
 // ============================================================
 
 function drawLaunchScreen() {
   launchAnim++;
-  // ── 背景图片（如果存在）──
+  // -- Background image (if present) --
   if (!window.launchBg) {
-    // 首次运行时尝试加载背景
+    // Try loading the background on first run
     window.launchBg = loadImage('assert/mrrockyd0710_sci-fi_tower_defense_world_map_top-down_futuristic_7a9633b1-791f-480d-ab58-37f08c2bfe1a.png');
   }
 
   if (window.launchBg && window.launchBg.width) {
     image(window.launchBg, 0, 0, width, height);
   } else {
-    // 若图片尚未加载完成则使用原背景色
+    // Use the original background color if the image is not yet loaded
     background(2, 4, 14);
   }
 
-  // ── 流动粒子星空 ──
+  // -- Flowing particle starfield --
   noStroke();
   for (const p of launchParticles) {
     p.x += p.vx; p.y += p.vy; p.life -= 0.0025;
@@ -32,7 +32,7 @@ function drawLaunchScreen() {
     ellipse(p.x, p.y, p.size, p.size);
   }
 
-  // ── 扫描线 & 网格 ──
+  // -- Scan line & grid --
   stroke(0, 90, 160, 7); strokeWeight(1);
   for (let x = 0; x < width; x += 50) line(x, 0, x, height);
   for (let y = 0; y < height; y += 50) line(0, y, width, y);
@@ -43,7 +43,7 @@ function drawLaunchScreen() {
   const fadein = constrain(launchAnim / 90, 0, 1);
   const pulse  = sin(launchAnim * 0.06) * 0.25 + 0.75;
 
-  // ── 顶部标签 ──
+  // -- Top label --
   if (fadein > 0.2) {
     const t = constrain((fadein - 0.2) / 0.5, 0, 1);
     stroke(0, 180, 255, t * 70); strokeWeight(1);
@@ -52,7 +52,7 @@ function drawLaunchScreen() {
     text('◈ QUANTUM DEFENSE NETWORK v5.0  |  INITIALIZED ◈', width/2, height/2 - 128);
   }
 
-  // ── 主标题双行 ──
+  // -- Two-line main title --
   if (fadein > 0.1) {
     const t = constrain((fadein - 0.1) / 0.55, 0, 1);
     noStroke();
@@ -65,14 +65,14 @@ function drawLaunchScreen() {
     text('DROP', width/2, height/2 - 4);
   }
 
-  // ── 副标题 ──
+  // -- Subtitle --
   if (fadein > 0.55) {
     const t = constrain((fadein - 0.55) / 0.4, 0, 1);
     noStroke(); fill(160, 200, 240, t * 175); textSize(12);
     text('Quantum Drop: Defense Protocol', width/2, height/2 + 50);
   }
 
-  // ── 装饰六边形 ──
+  // -- Decorative hexagon --
   if (fadein > 0.3) {
     const t = constrain((fadein - 0.3) / 0.5, 0, 1);
     push(); translate(width/2, height/2 + 50);
@@ -93,14 +93,14 @@ function drawLaunchScreen() {
     pop();
   }
 
-  // ── 底部线 ──
+  // -- Bottom line --
   if (fadein > 0.65) {
     const t = constrain((fadein - 0.65) / 0.3, 0, 1);
     stroke(0, 180, 255, t * 65); strokeWeight(1);
     line(width/2 - 230*t, height/2 + 80, width/2 + 230*t, height/2 + 80);
   }
 
-  // ── 点击提示（CONTINUE）——主入口 ──
+  // -- Click hint (CONTINUE) - main entry --
   if (launchAnim > 130) {
     launchReady = true;
     const blink = sin(launchAnim * 0.12) * 0.5 + 0.5;
@@ -110,19 +110,19 @@ function drawLaunchScreen() {
     text('SELECT DIFFICULTY & MISSION TO BEGIN', width/2, height/2 + 133);
   }
 
-  // ── 测试模式入口（右下角） ──
+  // -- Test mode entry (bottom right) --
   if (launchAnim > 80) {
     _drawTestModeBtn();
     _drawCodexBtn();
   }
 
-  // ── 语言切换（右上角） ──
+  // -- Language toggle (top right) --
   _drawLangToggleBtn();
 
-  // ── 静音切换（语言按钮左侧） ──
+  // -- Mute toggle (left of the language button) --
   _drawMuteToggleBtn();
 
-  // ── 底栏 ──
+  // -- Bottom bar --
   noStroke(); fill(0, 80, 140, 50); rect(0, height - 22, width, 22);
   stroke(0, 130, 195, 45); strokeWeight(1); line(0, height - 22, width, height - 22);
   noStroke(); fill(0, 150, 215, 90); textSize(8); textAlign(LEFT, CENTER);
@@ -132,7 +132,7 @@ function drawLaunchScreen() {
   textAlign(LEFT, BASELINE);
 }
 
-// ── 测试模式按钮（解锁全关卡，跳过动画直接进地图）──
+// -- Test mode button (unlock all levels, skip animation, jump straight to map) --
 function _drawTestModeBtn() {
   const bx = width - 138, by = height - 54, bw = 128, bh = 26;
   const hov = mouseX >= bx && mouseX <= bx + bw && mouseY >= by && mouseY <= by + bh;
@@ -145,16 +145,16 @@ function _drawTestModeBtn() {
   textAlign(LEFT, BASELINE);
 }
 
-// 检测测试按钮点击
+// Detect test button click
 function handleLaunchTestBtn(mx, my) {
   const bx = width - 138, by = height - 54, bw = 128, bh = 26;
   return mx >= bx && mx <= bx + bw && my >= by && my <= by + bh;
 }
 
-// ── 图鉴入口按钮（DEV 按钮左侧）──
+// -- Codex entry button (left of the DEV button) --
 function _codexBtnRect() {
   const bw = 100, bh = 26;
-  // 紧贴 DEV 按钮左边，留 8px 间隔
+  // Sit right next to the DEV button with an 8px gap
   const bx = width - 138 - 8 - bw;
   const by = height - 54;
   return { x: bx, y: by, w: bw, h: bh };
@@ -172,18 +172,18 @@ function _drawCodexBtn() {
   textAlign(LEFT, BASELINE);
 }
 
-// 检测图鉴按钮点击；命中则在新标签页打开 codex.html 并返回 true
+// Detect codex button click; on hit, open codex.html in a new tab and return true
 function handleLaunchCodexBtn(mx, my) {
   const r = _codexBtnRect();
   if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
     try { window.open('codex.html', '_blank'); }
-    catch (e) { /* 弹窗被拦截时静默失败 */ }
+    catch (e) { /* Silently ignore when the popup is blocked */ }
     return true;
   }
   return false;
 }
 
-// ── 语言切换按钮（右上角，EN / 中 两段式）──
+// -- Language toggle button (top right, two-segment EN / CN) --
 function _langBtnRects() {
   const bw = 34, bh = 22, gap = 4, rx = width - 10 - bw;
   const enRect = { x: rx - bw - gap, y: 10, w: bw, h: bh };
@@ -209,7 +209,7 @@ function _drawLangToggleBtn() {
   textAlign(LEFT, BASELINE);
 }
 
-// 检测语言按钮点击；命中则切换并返回 true
+// Detect language button click; on hit, switch language and return true
 function handleLaunchLangBtn(mx, my) {
   const { enRect, zhRect } = _langBtnRects();
   const inRect = (r) => mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h;
@@ -218,9 +218,9 @@ function handleLaunchLangBtn(mx, my) {
   return false;
 }
 
-// ── 静音切换按钮（语言按钮左侧的方块） ──
+// -- Mute toggle button (square left of the language button) --
 function _muteBtnRect() {
-  // 语言 EN 按钮之左再让出 8px
+  // Leave another 8px gap to the left of the EN button
   const { enRect } = _langBtnRects();
   const bw = 28, bh = 22, gap = 8;
   return { x: enRect.x - gap - bw, y: enRect.y, w: bw, h: bh };
@@ -234,11 +234,11 @@ function _drawMuteToggleBtn() {
   stroke(audioMuted ? color(255, 80, 80, 220) : color(0, 200, 255, hov ? 180 : 110));
   strokeWeight(1);
   rect(r.x, r.y, r.w, r.h, 4);
-  // 图标：喇叭 + （静音时）斜线
+  // Icon: speaker + (slash when muted)
   noStroke();
   const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
   fill(audioMuted ? color(255, 140, 140, 235) : color(180, 230, 255, hov ? 240 : 200));
-  // 喇叭主体：简化为梯形 + 三条波纹
+  // Speaker body: simplified trapezoid + three sound waves
   rect(cx - 7, cy - 3, 4, 6, 1);
   triangle(cx - 3, cy - 6, cx + 2, cy - 9, cx + 2, cy + 9);
   triangle(cx - 3, cy + 6, cx + 2, cy - 9, cx + 2, cy + 9);
@@ -253,7 +253,7 @@ function _drawMuteToggleBtn() {
   noStroke();
 }
 
-// 命中返回 true（切换静音，不消费后续点击）
+// Return true on hit (toggles mute, does not consume the subsequent click)
 function handleLaunchMuteBtn(mx, my) {
   const r = _muteBtnRect();
   if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
@@ -263,10 +263,10 @@ function handleLaunchMuteBtn(mx, my) {
   return false;
 }
 
-// 激活测试模式：解锁全部关卡，直接跳地图
+// Activate test mode: unlock all levels and jump straight to the map
 function activateTestMode() {
   unlockedLevel = 5;
-  // 同步到 levels.js 的数组（二者并存时都要更新）
+  // Sync with the levels.js array (when both exist, both must be updated)
   if (typeof levelUnlocked !== 'undefined') {
     for (let i = 0; i < levelUnlocked.length; i++) levelUnlocked[i] = true;
   }

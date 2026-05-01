@@ -1,6 +1,6 @@
 // ============================================================
-//  home-tower.js — HomeTower 终点基地塔
-//  依赖：towers.js 之后加载；本类原位于 monsters.js，重构迁出
+//  home-tower.js — HomeTower base structure at the path endpoint
+//  Dependencies: must load after towers.js. This class used to live in monsters.js; moved out during refactor.
 // ============================================================
 
 class HomeTower {
@@ -30,7 +30,7 @@ class HomeTower {
     const p = sin(this.pulseTime) * 0.35 + 0.65;
     push(); translate(this.px, this.py);
 
-    // 外六边形护盾
+    // Outer hexagonal shield
     push(); rotate(this.shieldAngle);
     const sAlpha = this.hitFlash > 0 ? 240 : 85;
     const sCol   = this.hitFlash > 0 ? color(255,80,80,sAlpha) : color(0,200,255,sAlpha);
@@ -40,7 +40,7 @@ class HomeTower {
     endShape(CLOSE);
     pop();
 
-    // 内旋转八边形
+    // Inner rotating octagon
     push(); rotate(-this.shieldAngle*1.7);
     noFill(); stroke(0,180,255,55*p); strokeWeight(1);
     beginShape();
@@ -48,14 +48,14 @@ class HomeTower {
     endShape(CLOSE);
     pop();
 
-    // 受击冲击波
+    // Hit shockwave
     if (this.dmgEffect > 0) {
       const t = this.dmgEffect/32;
       noFill(); stroke(255,60,60,t*200); strokeWeight(3.5);
       ellipse(0,0,(1-t)*85+8,(1-t)*85+8);
     }
 
-    // 主体底座
+    // Main base
     const baseCol = this.hitFlash>0 ? color(75,8,8) : color(8,18,38);
     fill(baseCol); stroke(this.hitFlash>0?color(255,80,80):color(0,160,255),175); strokeWeight(2);
     beginShape();
@@ -63,20 +63,20 @@ class HomeTower {
     vertex(0,27); vertex(-21,19); vertex(-27,0); vertex(-21,-19);
     endShape(CLOSE);
 
-    // 核心塔身
+    // Core tower body
     fill(12,25,52); stroke(0,180,255,195); strokeWeight(1.5);
     beginShape();
     vertex(0,-21); vertex(13,-13); vertex(17,0);
     vertex(13,13); vertex(0,17); vertex(-13,13); vertex(-17,0); vertex(-13,-13);
     endShape(CLOSE);
 
-    // 中央能量核
+    // Central energy core
     const cSize = 9 + sin(this.pulseTime*3)*2.2;
     const cCol  = this.hitFlash>0 ? color(255,80,60) : color(0,220,255);
     fill(cCol); noStroke(); ellipse(0,0,cSize,cSize);
     fill(255,255,255,175); ellipse(0,0,cSize*0.38,cSize*0.38);
 
-    // 四炮台
+    // Four turrets
     for (let k=0;k<4;k++) {
       push(); rotate(k*HALF_PI + this.shieldAngle*0.28);
       fill(15,30,58); stroke(0,155,215,150); strokeWeight(1);
@@ -85,7 +85,7 @@ class HomeTower {
       pop();
     }
 
-    // 标签（字号与行距加大，便于辨认）
+    // Label (font size and line height enlarged for readability)
     noStroke(); fill(0,215,255,195*p);
     textFont('monospace'); textAlign(CENTER,CENTER);
     const hpRatio = baseHp/baseHpMax;

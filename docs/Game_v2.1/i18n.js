@@ -1,13 +1,13 @@
 // ============================================================
-//  i18n.js — 多语言字典与 t(key) 查询函数
+//  i18n.js — Multi-language dictionary and the t(key) lookup function
 //
-//  · 默认 English；玩家可在启动页右上角切换中/英，选项写入 localStorage。
-//  · 翻译 key 采用 "模块.场景.用途" 分层，例如 tutorial.step1.title。
-//  · 缺失 key 时自动回退到英文，再回退显示 key 本身（便于发现漏译）。
-//  · 数据文件里的英文代号（SECTOR ALPHA / RAPID / LASER …）保留原样，
-//    只翻译描述性文字与 UI 按钮。
+//  . Default English; players can switch CN/EN from the launch screen, the choice is stored in localStorage.
+//  . Translation keys use the layout 'module.scene.usage', e.g. tutorial.step1.title.
+//  . Missing keys fall back to English, then to the key itself (so missing translations are easy to spot).
+//  . English code names in data files (SECTOR ALPHA / RAPID / LASER ...) are kept verbatim;
+//    only descriptive text and UI buttons are translated.
 //
-//  依赖：state.js 中声明的 currentLang。
+//  Dependencies: currentLang declared in state.js.
 // ============================================================
 
 const I18N_STORAGE_KEY = 'qd_lang';
@@ -234,7 +234,7 @@ const I18N = {
     'level.5.subtitle': '终极门户',
     'level.5.desc':     '终极关卡，全精英部队 + 三大 Boss。',
 
-    // ── 塔名（升级面板标题）──
+    // -- Tower names (upgrade panel title) --
     'tower.rapid.name':   '快速塔',
     'tower.laser.name':   '激光切割者',
     'tower.nova.name':    'Nova 穿透炮',
@@ -244,7 +244,7 @@ const I18N = {
     'tower.scatter.name': '散射对空炮',
     'tower.cannon.name':  '轨道巨炮',
 
-    // ── 建造菜单悬浮提示 ──
+    // -- Build menu hover tooltips --
     'tower.rapid.tipName':   '快速塔',
     'tower.rapid.tipDesc':   '高射速，适合清兵',
     'tower.laser.tipName':   '激光切割者',
@@ -262,7 +262,7 @@ const I18N = {
     'tower.cannon.tipName':  '轨道巨炮',
     'tower.cannon.tipDesc':  '全图打击，超大爆炸半径',
 
-    // ── 塔特殊能力（升级面板）──
+    // -- Tower special abilities (upgrade panel) --
     'tower.laser.special':    '◆ 多目标锁定 × {0}',
     'tower.chain.special':    '◆ 跳链 × {0} 次  衰减×0.72',
     'tower.magnet.special':   '◆ 无伤害  范围减速辅助',
@@ -272,7 +272,7 @@ const I18N = {
     'tower.cannon.special1':  '◆ 全图轨道炮  空陆两用',
     'tower.cannon.special2':  '◆ 爆炸半径 {0}  优先打空中',
 
-    // ── 升级/拆除面板 ──
+    // -- Upgrade / sell panel --
     'tower.panel.atk':        'ATK  {0}',
     'tower.panel.rng':        'RNG  {0}',
     'tower.panel.spd':        'SPD  {0}/s',
@@ -291,7 +291,7 @@ const I18N = {
     'hud.waveDone':           '完成',
     'hud.jammed':             '⚠  防御干扰中 — 所有塔已瘫痪  ⚠',
 
-    // ── 暂停菜单 ──
+    // -- Pause menu --
     'pause.title':            '已暂停',
     'pause.subtitle':         '游戏已暂停',
     'pause.continue':         '▶ 继续',
@@ -303,7 +303,7 @@ const I18N = {
     'pause.confirmExit':      '确认退出到关卡选择',
     'pause.confirmCancel':    '取消，返回暂停菜单',
 
-    // ── 波次 UI ──
+    // -- Wave UI --
     'wave.breakTitle':        '波次间歇',
     'wave.breakDesc':         '准备迎接下一波敌人。',
     'wave.continue':          '继续',
@@ -315,12 +315,12 @@ const I18N = {
     'wave.allClear':          '全部波次已清除',
     'wave.totalCredits':      '总金币: {0}',
 
-    // ── 放置 / 准星 ──
+    // -- Placement / crosshair --
     'placement.cantBuild':    '无法建造',
     'placement.noCoins':      '金币不足',
     'placement.clickToFire':  '点击发射炮弹',
 
-    // ── 难度选择 ──
+    // -- Difficulty select --
     'diff.title':            'Quantum Drop',
     'diff.select':           '选择难度',
     'diff.back':              '◀ 返回',
@@ -340,7 +340,7 @@ const I18N = {
     'diff.start':            '▶  开始',
     'diff.selectBtn':        '选择',
 
-    // ── 结算面板 ──
+    // -- End-of-level panel --
     'end.complete':          '任务完成',
     'end.failed':            '任务失败',
     'end.completeSub':       '量子基地成功守卫',
@@ -353,7 +353,7 @@ const I18N = {
     'end.stages':            '⊞ 关卡选择',
     'end.next':              '▶▶ 下一关: {0}',
 
-    // ── 小游戏 HUD ──
+    // -- Minigame HUD --
     'mg.inFlight':           '◈ 在途',
     'mg.landed':             '◈ 已落底',
     'mg.estCoins':           '◈ 预计金币',
@@ -362,19 +362,19 @@ const I18N = {
   },
 };
 
-// ── 查询函数：t(key, ...args)。支持 {0} {1} 位置参数替换 ──
+// -- Lookup function: t(key, ...args). Supports {0} {1} positional substitution --
 function t(key) {
   const dict = I18N[currentLang] || I18N.en;
   let s = dict[key];
   if (s === undefined) s = I18N.en[key];
-  if (s === undefined) s = key; // 回退显示 key 便于发现漏译
+  if (s === undefined) s = key; // Falling back to the key makes missing translations easy to spot
   for (let i = 1; i < arguments.length; i++) {
     s = s.split('{' + (i - 1) + '}').join(arguments[i]);
   }
   return s;
 }
 
-// ── 切换语言（写入 localStorage）──
+// -- Switch language (writes to localStorage) --
 function setLang(lang) {
   if (lang !== 'en' && lang !== 'zh') return;
   currentLang = lang;

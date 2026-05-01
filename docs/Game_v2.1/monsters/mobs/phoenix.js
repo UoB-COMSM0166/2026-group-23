@@ -1,6 +1,6 @@
 // ============================================================
-//  monsters/mobs/phoenix.js — MechPhoenix 机械凤凰（飞行）
-//  依赖：monsters/core.js (Monster)
+//  monsters/mobs/phoenix.js — MechPhoenix mechanical phoenix (flying)
+//  Dependencies: monsters/core.js (Monster)
 // ============================================================
 
 class MechPhoenix extends Monster {
@@ -16,7 +16,7 @@ class MechPhoenix extends Monster {
     this.wingTime += 0.22; this.diveTimer++;
     this.floatY = cos(this.wingTime * 0.38) * 8; this.boneAngle += 0.03;
     this.diving = this.diveTimer % 180 < 42;
-    // 对空导弹减速到期后恢复baseSpd
+    // Restore baseSpd after AA missile slow expires
     if (this._airSlowApplied && this._airSlowExpire && frameCount >= this._airSlowExpire) {
       this.baseSpd = this._origBaseSpd || 2.0;
       this._airSlowApplied = false; this._airSlowExpire = 0;
@@ -30,13 +30,13 @@ class MechPhoenix extends Monster {
     }
     if (this.jamEffect > 0) this.jamEffect--;
     this.trail.push({ x:this.pos.x, y:this.pos.y+this.floatY, vx:(random()-0.5)*1.2, vy:(random()-0.5)*1.2+0.5, life:1.0, size:random(5,14) });
-    // 应用磁场减速
+    // Apply magnet slow
     let _spdMult = 1.0;
     if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
       _spdMult = this._magnetFactor;
     } else { this._magnetFactor = 1.0; }
     if (this._carrierAura && this._carrierAura >= frameCount) _spdMult *= 1.3;
-    // 对空导弹减速
+    // AA missile slow
     if (this._airSlowed && this._airSlowed >= frameCount) _spdMult *= this._airSlowFactor || 0.5;
     const r = moveAlongPath(this.pos, this.seg, this.path, this.spd * _spdMult);
     this.pos = r.pos; this.seg = r.seg;

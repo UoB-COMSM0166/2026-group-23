@@ -1,18 +1,18 @@
 // ============================================================
-//  ui/index.js — UI 主绘制入口 drawUI() 与 initUI()
-//  依赖上述所有 ui/*.js；必须最后加载
+//  ui/index.js — UI main draw entry drawUI() and initUI()
+//  Depends on every ui/*.js above; must load last
 // ============================================================
 
 // ============================================================
-//  主绘制入口 & 初始化
+//  Main draw entry & initialization
 // ============================================================
 function drawUI() {
   const inMinigame = minigameState !== 'idle';
   if (inMinigame) {
-    // 小游戏期间隐藏建造/塔面板等 UI，但保留主 HUD
+    // During the minigame, hide the build / tower panel UI but keep the main HUD
     drawHUD();
-    drawWaveUI();    // 保留波次间隔确认框等必要流程 UI
-    drawPauseMenu(); // 暂停菜单仍可用
+    drawWaveUI();    // Keep necessary flow UI such as the wave-interval confirm box
+    drawPauseMenu(); // Pause menu still works
     return;
   }
 
@@ -20,7 +20,7 @@ function drawUI() {
   drawTowerHoverTooltip();
   drawPlacementPreview();
 
-  // 加农炮瞄准准星
+  // Cannon aiming crosshair
   if (_mortarAiming && _mortarTower) {
     const displayRadius = 28;
     const pulse = sin(frameCount * 0.18) * 0.4 + 0.6;
@@ -49,7 +49,7 @@ function drawUI() {
   drawScanlines();
   drawWaveUI();
   drawHUD();
-  drawPauseMenu(); // 始终最后绘制，覆盖所有内容
+  drawPauseMenu(); // Always drawn last to overlay everything
 }
 
 function initUI() {

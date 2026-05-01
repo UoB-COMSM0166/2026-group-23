@@ -1,6 +1,6 @@
 // ============================================================
-//  monsters/mobs/snake.js — MechSnake 机械蛇
-//  依赖：monsters/core.js (Monster)
+//  monsters/mobs/snake.js — MechSnake mechanical snake
+//  Dependencies: monsters/core.js (Monster)
 // ============================================================
 
 class MechSnake extends Monster {
@@ -9,19 +9,19 @@ class MechSnake extends Monster {
     this.radius = 9; this.deathColor = color(160, 30, 5);
     this.waveTime = 0; this.breathe = 0;
     this.history = Array(120).fill(null).map(() => ({ x: path[0].x, y: path[0].y }));
-    this.healTimer = 240; this.healEffect = 0; // 出生4秒后触发第一次（原10秒）
+    this.healTimer = 240; this.healEffect = 0; // First trigger 4 seconds after spawn (was 10 seconds)
     this.HEAL_RADIUS = 260;
   }
   move() {
     this.waveTime += 0.13; this.breathe += 0.08; this.healTimer++;
-    if (this.healTimer >= 360) { // 冷却6秒（原10秒）
+    if (this.healTimer >= 360) { // 6-second cooldown (was 10 seconds)
       this.healTimer = 0; this.healEffect = 60;
       if (typeof manager !== 'undefined') {
         for (const m of manager.monsters) {
           if (!m.alive || m === this) continue;
           const d = distAB(this.pos, m.pos);
           if (d > this.HEAL_RADIUS) continue;
-          // 只给小怪回血，Boss不回血
+          // Heal small mobs only; bosses are not healed
           const isBoss = (m instanceof BossFission)||(m instanceof BossPhantom)||
                          (m instanceof BossAntMech)||(m instanceof FissionCore)||
                          (m instanceof BossCarrier);
@@ -31,7 +31,7 @@ class MechSnake extends Monster {
       }
     }
     if (this.healEffect > 0) this.healEffect--;
-    // 应用磁场减速
+    // Apply magnet slow
     let _spdMult = 1.0;
     if (this._magnetFactor !== undefined && this._magnetFactor < 1.0 && this._magnetFrame >= frameCount - 1) {
       _spdMult = this._magnetFactor;
