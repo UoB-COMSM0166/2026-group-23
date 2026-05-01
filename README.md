@@ -924,11 +924,11 @@ This per-person breakdown supplements the [Group Members](#group-members) table 
 <a name="10-ai-usage-statement"></a>
 <h2 align="center">10. AI Usage Statement</h2>
 
-We disclose AI tool usage in line with University of Bristol guidance. **Game runtime code was written by team members; no AI code generation was used inside `docs/Game_v2.1/`.**
+We disclose AI tool usage in line with University of Bristol guidance. **Game runtime code was authored, reviewed and integrated by team members. AI coding assistants were used as tools, not as authors — every merged commit was reviewed by a human contributor before landing on `main`.**
 
 Specifically:
 
-- **Game runtime code (`docs/Game_v2.1/*.js`)** — written by team members. No AI-generated source files. All design decisions (architecture, balance values, level layouts, the v1.4 → v2.0 refactor strategy) are team work.
+- **Game runtime code (`docs/Game_v2.1/*.js`)** — authored and maintained by team members. Individual contributors may have used AI assistants (e.g. GitHub Copilot, ChatGPT, Claude) for routine tasks such as snippet completion, type-error diagnosis, refactor sketching, or naming suggestions — comparable to using Stack Overflow or IDE auto-complete. No file was generated end-to-end by an AI tool, and every PR was reviewed by at least one other contributor before merge. All design decisions — architecture, balance values, level layouts, the prototype-injection pattern, the v1.4 → v2.0 refactor strategy — are team work, decided in workshop discussion.
 - **Game entity visuals** — every monster, tower, projectile, particle and HUD element is drawn procedurally in JS from primitives + trigonometry. No AI-generated images are used for any in-game entity.
 - **Launch-screen background image** (`docs/Game_v2.1/assert/mrrockyd0710_sci-fi_tower_defense_world_map_top-down_futuristic_<uuid>.png`) — generated with **Midjourney** as a static menu backdrop. It does not affect gameplay and is not used for any in-game entity.
 - **Audio assets** (6 BGM tracks + 5 SFX in `assert/audio/`) — sourced from royalty-free libraries; per-track attribution is on the v2.2 to-do list (called out in *Sustainability › Future actions*).
