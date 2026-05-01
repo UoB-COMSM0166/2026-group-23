@@ -190,33 +190,34 @@ Launch Screen
 
 **Towers**
 
-| Tower | Label | Cost | Description | Max Level |
-|---|---|---:|---|---:|
-| Rapid Fire | `RAPID` | ¥110 | High-frequency single target; ignores Robot shield; 20-charge super-gun mode | Lv3 |
-| Laser Cutter | `LASER` | ¥180 | Charges then fires at multiple targets simultaneously (Lv1 → Lv3: 1 → 3 targets) | Lv3 |
-| Nova Cannon | `NOVA` | ¥200 | Piercing shot through all ground enemies; area explosion on impact | Lv3 |
-| Chain Arc | `CHAIN` | ¥160 | Chain lightning (Lv1 → Lv3: 1 → 3 jumps); ignores Tank barrier | Lv3 |
-| Magnet Tower | `MAGNET` | ¥130 | No damage; continuously slows nearby enemies (up to 80 % at Lv3) | Lv3 |
-| Ghost Missile | `GHOST` | ¥190 | Homing missiles (Lv1 → Lv3: 1 → 3); near-full-map range | Lv3 |
-| Scatter Cannon | `SCATTER` | ¥150 | Shotgun spread targeting aerial units only (Lv1 → Lv3: 3 → 7 pellets) | Lv3 |
-| Rail Cannon | `CANNON` | ¥220 | Manual-aim rail cannon; massive single-shot damage with long reload | Lv3 |
+| Preview | Tower | Label | Cost | Description | Max Level |
+|:---:|---|---|---:|---|---:|
+| <img src="docs/codex/tower/tower_rapid.png"   width="64" alt="Rapid Fire"    /> | Rapid Fire     | `RAPID`   | ¥110 | High-frequency single target; ignores Robot shield; 20-charge super-gun mode | Lv3 |
+| <img src="docs/codex/tower/tower_laser.png"   width="64" alt="Laser Cutter"  /> | Laser Cutter   | `LASER`   | ¥180 | Charges then fires at multiple targets simultaneously (Lv1 → Lv3: 1 → 3 targets) | Lv3 |
+| <img src="docs/codex/tower/tower_nova.png"    width="64" alt="Nova Cannon"   /> | Nova Cannon    | `NOVA`    | ¥200 | Piercing shot through all ground enemies; area explosion on impact | Lv3 |
+| <img src="docs/codex/tower/tower_chain.png"   width="64" alt="Chain Arc"     /> | Chain Arc      | `CHAIN`   | ¥160 | Chain lightning (Lv1 → Lv3: 1 → 3 jumps); ignores Tank barrier | Lv3 |
+| <img src="docs/codex/tower/tower_magnet.png"  width="64" alt="Magnet Tower"  /> | Magnet Tower   | `MAGNET`  | ¥130 | No damage; continuously slows nearby enemies (up to 80 % at Lv3) | Lv3 |
+| <img src="docs/codex/tower/tower_ghost.png"   width="64" alt="Ghost Missile" /> | Ghost Missile  | `GHOST`   | ¥190 | Homing missiles (Lv1 → Lv3: 1 → 3); near-full-map range | Lv3 |
+| <img src="docs/codex/tower/tower_scatter.png" width="64" alt="Scatter Cannon"/> | Scatter Cannon | `SCATTER` | ¥150 | Shotgun spread targeting aerial units only (Lv1 → Lv3: 3 → 7 pellets) | Lv3 |
+| <img src="docs/codex/tower/tower_cannon.png"  width="64" alt="Rail Cannon"   /> | Rail Cannon    | `CANNON`  | ¥220 | Manual-aim rail cannon; massive single-shot damage with long reload | Lv3 |
 
 > Each tower upgrades up to **3 times**. Demolishing refunds **80 %** of the original build cost.
+> Thumbnails are direct frames from the game's procedural rendering pipeline (no separate sprite files) — captured via [`docs/Game_v2.1/codex-export.html`](docs/Game_v2.1/codex-export.html).
 
 **Enemies**
 
-| Enemy | Lane | Special ability |
-|---|---|---|
-| Mech Snake | Main | Group heal every 900 frames |
-| Mech Spider | Edge | Periodic dash (3.5× speed for 20 frames) |
-| Armoured Tank | Main | Barrier shield — only Chain Arc can pierce |
-| Robot | Main | Shield triggers at 60 % HP — Rapid Fire ignores it |
-| Mech Phoenix | Air | Jamming pulse — disables all towers for 90 frames |
-| Ghost Bird | Air | High-speed flyer — only anti-air towers can target |
-| Steel Carrier | Main | Massive HP, very slow |
-| Boss① Fission Core | Main | Overload burst; splits into 4 Mech Snakes at 50 % HP |
-| Boss② Phantom Protocol | Main | Quantum dodge every 3 hits; EMP disables towers; spawns 2 clones at 30 % HP |
-| Boss③ Ant-Mech | Main | Alternates Giant (−85 % dmg taken) ↔ Tiny (×2.2 dmg taken); Berserk at 50 % HP |
+| Preview | Enemy | Lane | Special ability |
+|:---:|---|---|---|
+| <img src="docs/codex/monster/monster_mechsnake.png"   width="64" alt="Mech Snake"   /> | Mech Snake             | Main | Group heal every 900 frames |
+| <img src="docs/codex/monster/monster_mechspider.png"  width="64" alt="Mech Spider"  /> | Mech Spider            | Edge | Periodic dash (3.5× speed for 20 frames) |
+| <img src="docs/codex/monster/monster_mechtank.png"    width="64" alt="Armoured Tank"/> | Armoured Tank          | Main | Barrier shield — only Chain Arc can pierce |
+| <img src="docs/codex/monster/monster_mechrobot.png"   width="64" alt="Robot"        /> | Robot                  | Main | Shield triggers at 60 % HP — Rapid Fire ignores it |
+| <img src="docs/codex/monster/monster_mechphoenix.png" width="64" alt="Mech Phoenix" /> | Mech Phoenix           | Air  | Jamming pulse — disables all towers for 90 frames |
+| <img src="docs/codex/monster/monster_ghostbird.png"   width="64" alt="Ghost Bird"   /> | Ghost Bird             | Air  | High-speed flyer — only anti-air towers can target |
+| <img src="docs/codex/monster/monster_bosscarrier.png" width="64" alt="Steel Carrier"/> | Steel Carrier          | Main | Massive HP, very slow |
+| <img src="docs/codex/monster/monster_bossfission.png" width="64" alt="Fission Core" /> | Boss① Fission Core     | Main | Overload burst; splits into 4 Mech Snakes at 50 % HP |
+| <img src="docs/codex/monster/monster_bossphantom.png" width="64" alt="Phantom"      /> | Boss② Phantom Protocol | Main | Quantum dodge every 3 hits; EMP disables towers; spawns 2 clones at 30 % HP |
+| <img src="docs/codex/monster/monster_bossantmech.png" width="64" alt="Ant-Mech"     /> | Boss③ Ant-Mech         | Main | Alternates Giant (−85 % dmg taken) ↔ Tiny (×2.2 dmg taken); Berserk at 50 % HP |
 
 **Ball-drop mini-game**
 

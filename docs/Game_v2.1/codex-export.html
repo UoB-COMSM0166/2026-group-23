@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quantum Drop · Codex Export (PNG)</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 24px 28px;
+      background: linear-gradient(180deg, #050a14 0%, #0a1525 100%);
+      color: #cfeafe;
+      font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
+      min-height: 100vh;
+    }
+    h1 { margin: 0 0 6px 0; font-size: 18px; letter-spacing: 2px; color: #5aeaff; }
+    h1 .sub { color: #6a8caa; font-weight: normal; font-size: 11px; margin-left: 12px; }
+    p { color: #94a3b8; font-size: 12px; line-height: 1.6; max-width: 760px; }
+    p code { background: #0d1828; padding: 1px 5px; border-radius: 2px; color: #9fc8e8; }
+
+    .toolbar { margin: 18px 0; display: flex; gap: 12px; align-items: center; }
+    button {
+      background: #7c3aed; color: #ffffff;
+      border: none; padding: 11px 22px;
+      font-family: inherit; font-size: 13px; font-weight: bold; letter-spacing: 1px;
+      cursor: pointer; border-radius: 4px;
+    }
+    button:hover { background: #8b5cf6; }
+    button:disabled { background: #334155; cursor: not-allowed; }
+    button.ghost { background: #0d1828; color: #cfeafe; border: 1px solid #1f3a5e; }
+    button.ghost:hover { background: #14243a; }
+
+    #status { color: #94a3b8; font-size: 12px; }
+
+    h2 {
+      color: #67e8f9; font-size: 12px; letter-spacing: 2px;
+      margin: 28px 0 10px 0; padding-bottom: 6px;
+      border-bottom: 1px solid #1a3050;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, 110px);
+      gap: 10px;
+    }
+    .cell {
+      display: flex; flex-direction: column; align-items: center;
+      background: #0d1828;
+      padding: 8px 4px;
+      border: 1px solid #1f3a5e;
+      border-radius: 4px;
+    }
+    .cell canvas {
+      display: block;
+      image-rendering: pixelated;
+      width: 100px; height: 100px;
+    }
+    .cell .label {
+      margin-top: 6px;
+      font-size: 10px; color: #cfeafe;
+      letter-spacing: 1px;
+      text-align: center;
+    }
+    .cell .filename {
+      margin-top: 2px;
+      font-size: 9px; color: #6a8caa;
+      text-align: center;
+    }
+    .cell a {
+      margin-top: 4px;
+      font-size: 9px; color: #5aeaff;
+      text-decoration: none;
+    }
+    .cell a:hover { text-decoration: underline; }
+    .cell.error { border-color: #ef4444; }
+    .cell.error .label { color: #f87171; }
+
+    /* Hidden mount for the throwaway p5 canvas */
+    #hidden-mount { position: absolute; left: -9999px; top: -9999px; }
+  </style>
+</head>
+<body>
+  <h1>QUANTUM DROP <span class="sub">· CODEX EXPORT · 100×100 PNG batch</span></h1>
+  <p>
+    Renders every tower (8) and monster/boss (10) on its own 100×100 canvas using the same JS code the live game runs.
+    Click <b>Save All</b> to download 18 PNG files. Drop them into <code>docs/assets/codex/towers/</code> and <code>docs/assets/codex/monsters/</code> in the repo (folders will need to be created), then commit.
+  </p>
+
+  <div class="toolbar">
+    <button id="save-all" disabled>⬇ Save all 18 PNGs</button>
+    <button id="rerender" class="ghost">↻ Re-render</button>
+    <span id="status">Loading game scripts…</span>
+  </div>
+
+  <h2>Towers (8)</h2>
+  <div id="towers-grid" class="grid"></div>
+
+  <h2>Monsters &amp; Bosses (10)</h2>
+  <div id="monsters-grid" class="grid"></div>
+
+  <!-- Hidden p5 mount; we never display the live p5 canvas, only the per-entity offscreen canvases -->
+  <div id="hidden-mount"></div>
+
+  <!-- p5.js (same version as codex.html) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+
+  <!-- Stub audio so codex stays silent and never autoplays -->
+  <script>
+    window.playSfx              = function () {};
+    window.playBgm              = function () {};
+    window.stopBgm              = function () {};
+    window.setMuted             = function () {};
+    window.unlockAudioOnGesture = function () {};
+  </script>
+
+  <!-- Game scripts (mirror of codex.html — DO NOT REORDER) -->
+  <script src="state.js"></script>
+  <script src="data/towers.js"></script>
+  <script src="data/waves.js"></script>
+  <script src="data/levels.js"></script>
+  <script src="i18n.js"></script>
+  <script src="map/map-core.js"></script>
+  <script src="monsters/core.js"></script>
+  <script src="monsters/mobs/snake.js"></script>
+  <script src="monsters/mobs/spider.js"></script>
+  <script src="monsters/mobs/tank.js"></script>
+  <script src="monsters/mobs/robot.js"></script>
+  <script src="monsters/mobs/phoenix.js"></script>
+  <script src="monsters/mobs/ghostbird.js"></script>
+  <script src="monsters/bosses/fission.js"></script>
+  <script src="monsters/bosses/phantom.js"></script>
+  <script src="monsters/bosses/antmech.js"></script>
+  <script src="monsters/bosses/carrier.js"></script>
+  <script src="monsters/manager.js"></script>
+  <script src="towers/base.js"></script>
+  <script src="towers/projectile.js"></script>
+  <script src="towers/effects.js"></script>
+  <script src="towers/variants/rapid.js"></script>
+  <script src="towers/variants/laser.js"></script>
+  <script src="towers/variants/nova.js"></script>
+  <script src="towers/variants/chain.js"></script>
+  <script src="towers/variants/magnet.js"></script>
+  <script src="towers/variants/ghost.js"></script>
+  <script src="towers/variants/scatter.js"></script>
+  <script src="towers/variants/cannon.js"></script>
+  <script src="towers/manager.js"></script>
+
+  <!-- ============================================================ -->
+  <!-- Export sketch: render each entity on its own canvas -->
+  <!-- ============================================================ -->
+  <script>
+    // Constants normally declared by sketch.js (we don't load sketch.js).
+    // Tower base / variants reference these at construct + draw time.
+    const CELL_SIZE        = 70;
+    const GRID_COLS        = 14;
+    const GRID_ROWS        = 12;
+    const HUD_HEIGHT       = 46;
+    const COUNTDOWN_FRAMES = 300;
+
+    // Per-thumbnail render size
+    const SIZE       = 100;
+    const WARM_FRAMES = 30;   // run this many update frames before the capture frame
+
+    const TOWER_LIST = [
+      { name: 'Rapid',   type: 'rapid'   },
+      { name: 'Laser',   type: 'laser'   },
+      { name: 'Nova',    type: 'nova'    },
+      { name: 'Chain',   type: 'chain'   },
+      { name: 'Magnet',  type: 'magnet'  },
+      { name: 'Ghost',   type: 'ghost'   },
+      { name: 'Scatter', type: 'scatter' },
+      { name: 'Cannon',  type: 'cannon'  },
+    ];
+
+    const MONSTER_LIST = [
+      { name: 'Snake',     cls: 'MechSnake'   },
+      { name: 'Spider',    cls: 'MechSpider'  },
+      { name: 'Tank',      cls: 'MechTank'    },
+      { name: 'Robot',     cls: 'MechRobot'   },
+      { name: 'Phoenix',   cls: 'MechPhoenix' },
+      { name: 'GhostBird', cls: 'GhostBird'   },
+      { name: 'Fission',   cls: 'BossFission' },
+      { name: 'Phantom',   cls: 'BossPhantom' },
+      { name: 'AntMech',   cls: 'BossAntMech' },
+      { name: 'Carrier',   cls: 'BossCarrier' },
+    ];
+
+    // Class map (top-level class declarations are not on window; need bare-name lookup)
+    let MONSTER_CLS;
+
+    // Captured PNG blobs, in display order
+    const captured = [];
+
+    // ── Game-globals stub (same as codex.js) ──
+    function bootGameGlobals() {
+      if (typeof manager === 'undefined' || manager === null) {
+        manager = {
+          monsters: [],
+          getMonstersInRange(cx, cy, range, antiAir) {
+            const out = [];
+            for (const m of this.monsters) {
+              if (!m.alive || m.reached) continue;
+              if (Math.hypot(m.pos.x - cx, m.pos.y - cy) <= range + (m.radius || 14)) out.push(m);
+            }
+            return out;
+          },
+          damageAt(x, y, dmg, antiAir, fromSide, _, ignoreShield) {
+            for (const m of this.monsters) {
+              if (!m.alive || m.reached) continue;
+              if (Math.hypot(m.pos.x - x, m.pos.y - y) <= (m.radius || 14) + 6) {
+                if (typeof m.takeDamage === 'function') m.takeDamage(dmg, fromSide, ignoreShield);
+                return true;
+              }
+            }
+            return false;
+          },
+          damageInRadius(cx, cy, radius, dmg) {
+            for (const m of this.monsters) {
+              if (!m.alive || m.reached) continue;
+              if (Math.hypot(m.pos.x - cx, m.pos.y - cy) <= radius) {
+                if (typeof m.takeDamage === 'function') m.takeDamage(dmg);
+              }
+            }
+          },
+        };
+      }
+      if (typeof towers      === 'undefined') towers      = [];
+      if (typeof projectiles === 'undefined') projectiles = [];
+      if (typeof particles   === 'undefined') particles   = [];
+      if (typeof gamePhase   === 'undefined') gamePhase   = 'playing';
+      if (typeof gamePaused  === 'undefined') gamePaused  = false;
+      if (typeof jammedUntilFrame === 'undefined') jammedUntilFrame = 0;
+    }
+
+    // Build a closed-loop circular path for a viewport of size×size
+    function makeCirclePath(size) {
+      const m = 14;
+      const cx = size / 2, cy = size / 2;
+      const r = (size / 2) - m;
+      const N = 32;
+      const pts = [];
+      for (let i = 0; i <= N; i++) {
+        const a = (i / N) * Math.PI * 2 - Math.PI / 2;
+        pts.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
+      }
+      return pts;
+    }
+
+    // ── Card chrome painted into the offscreen canvas ──
+    function paintBackdrop() {
+      // Solid void-black background (matches visual-identity.md)
+      noStroke();
+      fill(15, 23, 42);                 // #0F172A
+      rect(0, 0, SIZE, SIZE);
+      // Subtle violet border so the thumbnail reads as an icon "card"
+      noFill();
+      stroke(124, 58, 237, 140);        // violet
+      strokeWeight(1.4);
+      rect(0.7, 0.7, SIZE - 1.4, SIZE - 1.4, 5);
+    }
+
+    // ── Render one tower, return PNG blob ──
+    function renderTower(def) {
+      paintBackdrop();
+
+      const tower = new Tower(0, 0, def.type);
+      tower.px = SIZE / 2;
+      tower.py = SIZE / 2;
+      tower.range = SIZE * 0.42;
+      tower.buildAnim = 0;
+
+      // Dummy target orbits the tower so it can fire / animate
+      const dummyPath = makeCirclePath(SIZE);
+      const towerDef  = TOWER_DEFS[def.type];
+      const isAirOnly = !!(towerDef && towerDef.onlyAir);
+      const DummyCls  = isAirOnly ? MONSTER_CLS.GhostBird : MONSTER_CLS.MechSpider;
+      const dummy = new DummyCls(dummyPath);
+      dummy.maxHp = 1e9;
+      dummy.hp    = 1e9;
+      dummy.takeDamage = function () {};
+      if ('spawnDash'           in dummy) dummy.spawnDash           = false;
+      if ('spawnDashFrames'     in dummy) dummy.spawnDashFrames     = 0;
+      if ('spawnDashInvincible' in dummy) dummy.spawnDashInvincible = false;
+      if ('isGhost'             in dummy) dummy.isGhost             = false;
+
+      // Per-render scope: only this tower / dummy is "in the world"
+      const savedMon  = manager.monsters;
+      const savedTow  = towers;
+      const savedProj = projectiles;
+      const savedPart = particles;
+      manager.monsters = [dummy];
+      towers           = [tower];
+      projectiles      = [];
+      particles        = [];
+
+      // Warm up animations (advance frameCount manually since draw loop is off)
+      for (let i = 0; i < WARM_FRAMES; i++) {
+        frameCount++;
+        if (dummy.reached || dummy.seg >= dummy.path.length - 1) {
+          dummy.seg = 0;
+          dummy.pos = { x: dummy.path[0].x, y: dummy.path[0].y };
+          dummy.reached = false;
+        }
+        dummy.update();
+        tower.update();
+      }
+
+      // Final draw
+      paintBackdrop();
+      tower.draw();
+      // Optional: draw projectiles + effects so e.g. CHAIN shows an arc
+      if (typeof _drawChainArcs        === 'function') _drawChainArcs();
+      if (typeof _drawCannonBlasts     === 'function') _drawCannonBlasts();
+      if (typeof _updateDrawMortarShells === 'function') _updateDrawMortarShells();
+      for (const p of projectiles) { p.update(); p.draw(); }
+
+      // Restore globals
+      manager.monsters = savedMon;
+      towers           = savedTow;
+      projectiles      = savedProj;
+      particles        = savedPart;
+
+      return canvasToBlobAsync();
+    }
+
+    // ── Render one monster, return PNG blob ──
+    function renderMonster(def) {
+      paintBackdrop();
+
+      const Cls = MONSTER_CLS[def.cls];
+      if (typeof Cls !== 'function') return Promise.resolve(null);
+
+      const path  = makeCirclePath(SIZE);
+      const monster = new Cls(path);
+
+      // Per-render scope
+      const savedMon  = manager.monsters;
+      const savedPart = particles;
+      manager.monsters = [monster];
+      particles        = [];
+
+      // Warm up animations (advance frameCount manually since draw loop is off)
+      for (let i = 0; i < WARM_FRAMES; i++) {
+        frameCount++;
+        if (monster.reached || monster.seg >= monster.path.length - 1) {
+          monster.seg = 0;
+          monster.pos = { x: monster.path[0].x, y: monster.path[0].y };
+          monster.reached = false;
+        }
+        monster.update();
+      }
+
+      // Centre the monster for a clean thumbnail
+      monster.pos = { x: SIZE / 2, y: SIZE / 2 };
+      // Don't override heading — let the monster keep its natural orientation
+
+      // Final draw
+      paintBackdrop();
+      monster.draw();
+
+      // Restore
+      manager.monsters = savedMon;
+      particles        = savedPart;
+
+      return canvasToBlobAsync();
+    }
+
+    // ── Capture the live p5 canvas as a PNG blob ──
+    function canvasToBlobAsync() {
+      return new Promise(resolve => {
+        const cv = drawingContext.canvas;
+        cv.toBlob(blob => resolve(blob), 'image/png');
+      });
+    }
+
+    // ── Trigger a single download ──
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      // Revoke after a delay so the download has time to fire
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    // ── Render an entity, copy bytes to a display canvas, store blob for batch save ──
+    async function renderAndDisplay(kind, def, container) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      const dispCanvas = document.createElement('canvas');
+      dispCanvas.width = SIZE;
+      dispCanvas.height = SIZE;
+      cell.appendChild(dispCanvas);
+
+      const lbl = document.createElement('div');
+      lbl.className = 'label';
+      lbl.textContent = def.name.toUpperCase();
+      cell.appendChild(lbl);
+
+      const filename = `${kind}_${(def.type || def.cls).toLowerCase()}.png`;
+      const fn = document.createElement('div');
+      fn.className = 'filename';
+      fn.textContent = filename;
+      cell.appendChild(fn);
+
+      container.appendChild(cell);
+
+      try {
+        const blob = (kind === 'tower') ? await renderTower(def) : await renderMonster(def);
+        if (!blob) {
+          cell.classList.add('error');
+          lbl.textContent = def.name.toUpperCase() + ' (failed)';
+          return;
+        }
+
+        // Copy live canvas bytes onto the display canvas (so the thumbnail stays put even when we re-render)
+        const liveCanvas = drawingContext.canvas;
+        const ctx = dispCanvas.getContext('2d');
+        ctx.drawImage(liveCanvas, 0, 0);
+
+        // Per-cell single-download link
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.textContent = '⬇ download';
+        cell.appendChild(a);
+
+        captured.push({ kind, name: filename, blob });
+      } catch (e) {
+        console.error(e);
+        cell.classList.add('error');
+        lbl.textContent = def.name.toUpperCase() + ' (' + e.message + ')';
+      }
+    }
+
+    // ── Render everything; sequential to avoid global-state bleed ──
+    async function renderAll() {
+      const towersGrid   = document.getElementById('towers-grid');
+      const monstersGrid = document.getElementById('monsters-grid');
+      towersGrid.innerHTML   = '';
+      monstersGrid.innerHTML = '';
+      captured.length = 0;
+
+      const status = document.getElementById('status');
+      const saveBtn = document.getElementById('save-all');
+      saveBtn.disabled = true;
+
+      let i = 0;
+      const total = TOWER_LIST.length + MONSTER_LIST.length;
+
+      for (const def of TOWER_LIST) {
+        i++;
+        status.textContent = `Rendering ${i}/${total} — tower ${def.name}…`;
+        await renderAndDisplay('tower', def, towersGrid);
+      }
+      for (const def of MONSTER_LIST) {
+        i++;
+        status.textContent = `Rendering ${i}/${total} — monster ${def.name}…`;
+        await renderAndDisplay('monster', def, monstersGrid);
+      }
+
+      status.textContent = `✓ ${captured.length} thumbnails ready. Click "Save all" to download.`;
+      saveBtn.disabled = false;
+    }
+
+    // ── Save all captured blobs (sequential, with small gap between downloads) ──
+    async function saveAll() {
+      const status = document.getElementById('status');
+      let i = 0;
+      for (const item of captured) {
+        i++;
+        status.textContent = `Saving ${i}/${captured.length} — ${item.name}…`;
+        downloadBlob(item.blob, item.name);
+        await new Promise(r => setTimeout(r, 180));
+      }
+      status.textContent = `✓ ${captured.length} files downloaded. Move them to docs/assets/codex/{towers,monsters}/ and commit.`;
+    }
+
+    // ── p5 entry ──
+    function setup() {
+      bootGameGlobals();
+      const c = createCanvas(SIZE, SIZE);
+      c.parent('hidden-mount');
+
+      MONSTER_CLS = {
+        MechSnake, MechSpider, MechTank, MechRobot, MechPhoenix, GhostBird,
+        BossFission, BossPhantom, BossAntMech, BossCarrier,
+      };
+
+      noLoop();   // we drive rendering manually
+
+      document.getElementById('save-all').addEventListener('click', saveAll);
+      document.getElementById('rerender').addEventListener('click', renderAll);
+
+      // Kick off the first render
+      renderAll();
+    }
+  </script>
+</body>
+</html>
